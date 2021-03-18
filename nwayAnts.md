@@ -175,4 +175,29 @@ ID: `twoway 1614613162852`
 Name:`UNIL_Sinv_3.0_vs_Mphar_ASM`
 ID:`twoway 1614613580306`
 
+## Run n-ways
+After uploading the three ant genomes and all final 2-ways to the n-way tool, the following n-ways were run:
+
+```bash
+# 1. Mphar (target) vs Sinvi (query)
+Project: Ants
+Target: pharaoh ant
+query: red fire ant
+File: Mphar.intron.coordinates.tsv
+
+Result: 100 perfect +/- coordinates
+
+# 2. Sinvi (Target) vs Mphar (query)
+Project: Ants
+Target: red fire ant
+query: pharaoh ant
+File: Sinvi.intron.coordinates.tsv
+
+Result: 74 perfect +/- coordinates 
+
+```
+
+After obtaining the result, perfect hits were selected and sorted for -
+The perfect +/- hits were then downloaded as an Excel file to note manual investigations and downloaded as MUSCLE files for further investigations.
+
 Last saved & changed on 18/03/21
