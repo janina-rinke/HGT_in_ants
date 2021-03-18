@@ -193,11 +193,11 @@ Target: red fire ant
 query: pharaoh ant
 File: Sinvi.intron.coordinates.tsv
 
-Result: 74 perfect +/- coordinates 
+Result: 74 perfect +/- coordinates
 
 ```
 
 After obtaining the result, perfect hits were selected and sorted for -
 The perfect +/- hits were then downloaded as an Excel file to note manual investigations and downloaded as MUSCLE files for further investigations.
 
-Last saved & changed on 18/03/21
+Last saved & changed on 18/03/2021
