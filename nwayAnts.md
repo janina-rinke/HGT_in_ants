@@ -200,4 +200,25 @@ Result: 74 perfect +/- coordinates
 After obtaining the result, perfect hits were selected and sorted for -
 The perfect +/- hits were then downloaded as an Excel file to note manual investigations and downloaded as MUSCLE files for further investigations.
 
-Last saved & changed on 18/03/2021
+## Manual investigation
+
+Possible intron losses were investigated with the program `PhyDE`.
+If splice sites AG and GT were not present in the possible intron loss, further species from NCBI via `blastn` were added.
+
+
+### Annotation of exons
+Exon coordinates were extracted from regions of interest with the following commands:
+
+```bash
+# submit the sequence name for $1 and for $4 the start coordinate of the exon (can be observed from n-way Excel table)
+cat Mphar_gff3 | awk ' $1=="NC_050473.1" && $4=="4176639" { print $1"\t"$3"\t"$4"\t"$5}'
+
+# Output:
+# NC_050473.1 exon 4176639 4177307
+
+# Search for the exon region within the fasta file:
+samtools faidx GCF_013373865.1_ASM1337386v2_genomic.fna NC_050473.1:4176639-4177307
+```
+
+
+Last saved & changed on 14/04/2021
