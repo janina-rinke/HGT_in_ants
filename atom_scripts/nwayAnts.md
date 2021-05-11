@@ -217,7 +217,7 @@ cat Mphar_gff3 | awk ' $1=="NC_050473.1" && $4>"4176000" && $4<"4177000" { print
 # NC_050473.1 exon 4176639 4177307
 
 # Search for the exon region within the fasta file:
-samtools faidx GCF_013373865.1_ASM1337386v2_genomic.fna NC_050473.1:4176639-4177307 # This is the Monomorium Fasta file 
+samtools faidx GCF_013373865.1_ASM1337386v2_genomic.fna NC_050473.1:4176639-4177307 # This is the Monomorium Fasta file
 
 # Output:
 >NC_050473.1:4176639-4177307
@@ -235,4 +235,4 @@ TGTATTACAAACTGTATTTAGTTGTACTTTAAGTGGGCTCTTGTACGAATCTGAACTGTC
 TGAGTTATC
 ```
 
-Last saved & changed on 14/04/2021
+Last saved & changed on 14/04/2021. 

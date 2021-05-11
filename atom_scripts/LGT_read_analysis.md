@@ -75,4 +75,4 @@ bedtools intersect -a LGTs.Scaffold96.windows.bed -b LGTs.coordinates.bed -f 1 -
 `biowak`
 
 Last updated 2021/05/11
-#### Added the file to GitHub on 11/05/2021. 
+#### Added the file to GitHub on 11/05/2021
