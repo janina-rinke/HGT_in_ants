@@ -59,3 +59,51 @@ Create an indexed file of a BAM file:
 ```bash
 samtools index *.bam *.bam.bai
 ```
+
+## Bedtools
+`bedtools bamtobed`: converts sequence alignments in `BAM` format into `BED`
+By default, each alignment in the BAM file is converted to a 6 column BED
+
+```
+bedtools bamtobed -i *.bam
+bedtools bamtobed -i *.bam | grep "Scaffold8"
+```
+Output:
+```
+Scaffold8	1741882	1765016	m54220_190716_142950/68354179/833_24479	60	+
+Scaffold8	1742240	1764794	m54212_190712_185746/12910675/11749_35641	60	+
+Scaffold8	1744601	1761860	m54220_190716_041618/14025124/0_19153	60	+
+```
+
+
+`bedtools makewindows`: Makes adjacent or sliding windows across a genome or BED file.
+```
+bedtools makewindows -g <genome>
+                     -b <bed>
+
+                     -w <window size>
+                     -s <step size>
+                     -n <number of windows>
+
+
+# -w: Divide to fixed-size windows. (e.g. -w 500, divides into windows of 500 bp)
+# -s: Step size, i.e. how many basepairs to step before creating a new window. Used to create overlapping windows.
+# -n: Divide each input interval to a fixed number of windows, with varying window sizes.
+```
+
+
+`bedtools intersect`: Asking whether features overlap with each other = feature intersection. Allows one to screen for overlaps between two sets of genomic features. Works with both `BED/GFF/VCF`and `BAM` files as input.
+
+```bash
+bedtools intersect -a <file>.
+                   -b <file1, file2 ...>
+
+
+
+# -a: BAM/BED/GFF/VCF file, Each feature in A is compared to B in search of overlaps.
+# -b: one ore more files of the above format.
+# -abam: BAM file A. Each BAM file is compared to B in search of overlaps.
+# -c: For each entry in A, report the number of hits in B while restricting to -f. Reports 0 for A entries that have no overlap with B. Restricted -f, -F, -r and -s
+# -f: Minimum overlap required as a fraction of A. Default is 1E-9 (i.e. 1 bp)
+# -F: Minimum overlap required as a fraction of B.
+```

@@ -53,5 +53,25 @@ awk < GAGA-0515_nextpolish_final.fasta '/^>Scaffold9/ { print $0 }' #get only he
 ## Identify start and stop coordinates of all reads from LGT candidates
 
 ```bash
+# Shows all start and stop coordinates from this file
 bedtools bamtobed -i *.bam
 ```
+## Identify missassemblies by using bedtools
+```bash
+# Divide the border region on the scaffold of interest (e.g. Scaffold96) into windows, requires BED file
+bedtools bamtobed -i LGTs.5kb.candidateregions.PacBio.bam > LGTs.coordinates.bed
+cat LGTs.coordinates.bed | awk '$1=="Scaffold96" && $2>22000 { print }' > LGTs.Scaffold96_22000.coordinates.bed
+
+# Windows will be created for each interval in the file, Scaffold96 is now divided into windows of 100 bp.
+bedtools makewindows -b LGTs.Scaffold96_22000.coordinates.bed -w 100 > LGTs.Scaffold96_22000.windows.bed
+
+# Find overlaps of reads between the windows of 100 bp and the read coordinates from LGTs.coordinates.bed
+bedtools intersect -a LGTs.Scaffold96.windows.bed -b LGTs.coordinates.bed -f 1 -c
+```
+
+## FASTA manipulation
+`seqkit`
+`seqtk`
+`biowak`
+
+Last updated 2021/05/11

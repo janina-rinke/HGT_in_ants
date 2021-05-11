@@ -211,14 +211,28 @@ Exon coordinates were extracted from regions of interest with the following comm
 
 ```bash
 # submit the sequence name for $1 and for $4 the start coordinate of the exon (can be observed from n-way Excel table)
-cat Mphar_gff3 | awk ' $1=="NC_050473.1" && $4=="4176639" { print $1"\t"$3"\t"$4"\t"$5}'
+cat Mphar_gff3 | awk ' $1=="NC_050473.1" && $4>"4176000" && $4<"4177000" { print $1"\t"$3"\t"$4"\t"$5 }'
 
 # Output:
 # NC_050473.1 exon 4176639 4177307
 
 # Search for the exon region within the fasta file:
-samtools faidx GCF_013373865.1_ASM1337386v2_genomic.fna NC_050473.1:4176639-4177307
-```
+samtools faidx GCF_013373865.1_ASM1337386v2_genomic.fna NC_050473.1:4176639-4177307 # This is the Monomorium Fasta file 
 
+# Output:
+>NC_050473.1:4176639-4177307
+AGGAATTGTGGACATTATTGGTTTCTGTTGAATGAATTCAACCCATGAacctaattgttt
+atttaaacctAAATCtttcaaattcaatttaatatcagGACCAACTCCTCCCCAATTTTT
+TCTTGGTGATCTGTCATCATTATACTTCGAGTTAGGACTATCGATATCAGATTCTGAAat
+tccaatatttttctcttttttattagatgttacattgttttttttaggAGTCCATAATTG
+TTCATCTTTTGTACTCTTAGGTATTATGTCATTGTCATCATCAAgttctattttcttttg
+ccTATTTTCCTCTAACAATGTTGCACCACTAGAAGAAGGAAAATCTTCACTGTTGTATTT
+ATCATACTTATACATTTGTGAAATGACAGCTTGCTTTTCCTCATCTTTCATttccaattt
+atttggatttaaACGCAAGCATCTTCTCACATTATTTTCATCTTTCTCACTATCAGAAGA
+TTCAGAAATAACACAAGTTTTCAGAGAGTTGCTGTTCTTTCGCAATAACTTTGAAAATcc
+aaattctttttcaatttcatcttttttctctGTTGGGCTTTTAACATGATACAATTCCGT
+TGTATTACAAACTGTATTTAGTTGTACTTTAAGTGGGCTCTTGTACGAATCTGAACTGTC
+TGAGTTATC
+```
 
 Last saved & changed on 14/04/2021
