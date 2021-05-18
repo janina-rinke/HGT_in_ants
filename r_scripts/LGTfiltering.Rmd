@@ -26,8 +26,8 @@ dataFiles <- lapply(Sys.glob(tsv2load), read.csv,sep="\t")
 
 # add the name
 Add the GAGA id as a name to the different list elements.
-Add the database origin as a name to the different list elements. 
-Set the GAGA-id and database origin separated with a "." as a name for each element of the list "dataFiles". 
+Add the database origin as a name to the different list elements.
+Set the GAGA-id and database origin separated with a "." as a name for each element of the list "dataFiles".
 Each element in the list is one genome, either from the noAnt or the eukaryotic database including the candidates.
 ```{r}
 ids<-gsub(".*/(.+-[0-9]+)\\..+.lgt.good.candidates.tsv","\\1",Sys.glob(tsv2load))
@@ -43,8 +43,8 @@ Combine tsv files from all GAGA ids in the large list element ("dataFiles") to o
 df<-rbindlist(dataFiles,idcol = T)
 ```
 
-The unfiltered df containes 5218 candidates from all 50 selected genomes (from folder: GAGA.LGT) together. 
-Each row in the dataframe represents one candidate. 
+The unfiltered df containes 5218 candidates from all 50 selected genomes (from folder: GAGA.LGT) together.
+Each row in the dataframe represents one candidate.
 ```{r}
 head(df)
 ```
@@ -53,8 +53,8 @@ head(df)
 # extract eval
 1. Extract the evalue of the best prokaryotic hit (take column "bestProHit". In this column, the evalue is located  
    between other values and will be extracted in the next command).
-   Make a new data table (called "bestblasthits"), separating the original column bestProHit into different columns,    with the each value being separated by ";". 
-   
+   Make a new data table (called "bestblasthits"), separating the original column bestProHit into different columns,    with the each value being separated by ";".
+
 2. Add a column called "besteval" to the df, taking only the eval (column V4) from the bestblasthits dataframe.
 
 ```{r}
@@ -68,14 +68,14 @@ df$besteval<-bestblasthits$V4
 df$cand.length<-df$cand.end-df$cand.start
 ```
 # extract broad locus start and stop
-To cluster candidates in one close region together and view them as one single LGT, take the broad locus. 
+To cluster candidates in one close region together and view them as one single LGT, take the broad locus.
 
-1. The broad locus (columns "scaffold", start","end" or summarized together in column "locus" of df) clusters all 
-   candidates within +/- 20kb region together and assigns them the same start and stop codon. Thereby, single 
+1. The broad locus (columns "scaffold", start","end" or summarized together in column "locus" of df) clusters all
+   candidates within +/- 20kb region together and assigns them the same start and stop codon. Thereby, single
    candidates can be grouped by the same start and stop codon in the broad locus region.
    Separate the column "locus" from the df into scaffold (V1), start (V2) and end (V3) in the new dataframe "loci".
-   
-2. Add a column called "locus.start", "locus.end" and "locus.length" to the df, taking the now separated columns 
+
+2. Add a column called "locus.start", "locus.end" and "locus.length" to the df, taking the now separated columns
    from the new dataframe "loci".
 ```{r}
 loci<-read.csv(text=gsub(":","-",df$locus),sep = "-",as.is = T,fill = T,blank.lines.skip = F,header=F)
@@ -103,7 +103,7 @@ ggplot(df, aes(x=ct4)) +
 ggplot(df, aes(x=ct6)) +
   geom_histogram(fill="red", alpha=0.5, position="identity")+theme_classic()
 
-# length of broad locus 
+# length of broad locus
 ggplot(df, aes(x=locus.length)) +
   geom_histogram(fill="red", alpha=0.5, position="identity")+theme_classic()
 
@@ -111,7 +111,7 @@ ggplot(df, aes(x=locus.length)) +
 ggplot(df, aes(x=cand.length)) +
   geom_histogram(fill="red", alpha=0.5, position="identity")+theme_classic()
 
-# log of best e-value 
+# log of best e-value
 df$log.besteval<- -log(df$besteval,10)
 df$log.besteval[df$log.besteval==Inf]<-max(df$log.besteval[df$log.besteval!=Inf])+1
 ggplot(df, aes(x=df$log.besteval)) +
@@ -123,7 +123,7 @@ ggplot(df, aes(x=BitDiffSum)) +
 ```
 
 
-# Filter the candidate dataset to exclude false-positives and missassemblies 
+# Filter the candidate dataset to exclude false-positives and missassemblies
 
 Filter by evalue (evalue< 1e-25), ct4 (ct4>0.25), ce (ce>1.5), BitDiffSum (BitDiffSum>150) and the length of the candidate (length>100)
 
@@ -140,24 +140,29 @@ dfFilter2<-subset(dfFilter,locus.start > 1000 & cand.length < 20000)
 ```
 Filtering by the above criteria reduces the number of candidates further to 1725 candidates (originally: 5218) in all 50 genomes.
 
-Remove anything at the end of a scaffold. 
-1. Add the scaffolds with their lengths for every genome from the file "genome.file". 
-2. Create a large dataframe with scaffold length information for every genome 
+Remove anything at the end of a scaffold.
+1. Add the scaffolds with their lengths for every genome from the file "genome.file".
+2. Create a large dataframe with scaffold length information for every genome called "dscf"
+3. Merge the scaffold information together with the information for the LGTs
 ```{r}
 #data2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/genome.file"
 data2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/genome.file"  # load data from all genome.files
-genomeFiles <- lapply(Sys.glob(data2load), read.csv,sep="\t",header=F)     # create a large list out of all genome.files 
+genomeFiles <- lapply(Sys.glob(data2load), read.csv,sep="\t",header=F) # create large list of all genome.files
 
-# Create a large df with information on scaffold number and length for every genome 
-<<<<<<< HEAD
-genome_ids<-gsub(".*/(.+-[0-9]+)","\\1",Sys.glob(data2load))
-ids<-gsub(".*/(.+-[0-9]+)\\..+.lgt.good.candidates.tsv","\\1",Sys.glob(tsv2load))
-=======
+# Create a large df with information on scaffold number and length for every genome
 genome_ids<-gsub(".*\\/(.*)\\/results\\/genome.file","\\1",Sys.glob(data2load))
->>>>>>> a92d99af37e153d8a3fff8a02bf449aedc042641
 names(genomeFiles)<-paste(genome_ids)
 
 dscf<-rbindlist(genomeFiles,idcol = T)
+
+colnames(dscf)
+names(dscf)[2]<-"cand.scaffold" #rename the second column of dscf to merge later by this column 
+
+gsub(df$.id,"\\..*","") #separate the first row of df to merge by column ".id"
+
+
+# Merge dscf together with the information for every LGT candidate 
+tryout_df<- merge(dscf, df, by=".id","cand.scaffold")
 
 dfFilter3<-subset(dfFilter2, )
 ```
@@ -252,4 +257,4 @@ lapply(1:length(list.of.plots), function(i){
 ```
 
 Last changed 2021/05/18
-##### Added the file to GitHub on 11/05/2021. 
+##### Added the file to GitHub on 11/05/2021.
