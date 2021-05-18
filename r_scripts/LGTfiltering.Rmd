@@ -19,8 +19,8 @@ library(data.table)
 
 Load all tsv files for the different GAGA ids in a list of data frames.
 ```{r}
-#tsv2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
-tsv2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
+tsv2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
+#tsv2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
 dataFiles <- lapply(Sys.glob(tsv2load), read.csv,sep="\t")
 ```
 
@@ -144,11 +144,12 @@ Remove anything at the end of a scaffold.
 1. Add the scaffolds with their lengths for every genome from the file "genome.file". 
 2. Create a large dataframe with scaffold length information for every genome 
 ```{r}
+#data2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/genome.file"
 data2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/genome.file"  # load data from all genome.files
-genomeFiles <- lapply(Sys.glob(data2load), read.csv,sep="\t")     # create a large list out of all genome.files 
+genomeFiles <- lapply(Sys.glob(data2load), read.csv,sep="\t",header=F)     # create a large list out of all genome.files 
 
 # Create a large df with information on scaffold number and length for every genome 
-genome_ids<-gsub(".*/","\\1",Sys.glob(data2load))
+genome_ids<-gsub(".*\\/(.*)\\/results\\/genome.file","\\1",Sys.glob(data2load))
 names(genomeFiles)<-paste(genome_ids)
 
 dscf<-rbindlist(genomeFiles,idcol = T)
