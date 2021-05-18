@@ -62,6 +62,11 @@ bestblasthits<-read.csv(text=as.character(df$bestProHit),sep = ";",as.is = T,fil
 df$besteval<-bestblasthits$V4
 ```
 
+# add column with length of candidate
+
+```{r}
+df$cand.length<-df$cand.end-df$cand.start
+```
 # extract broad locus start and stop
 To cluster candidates in one close region together and view them as one single LGT, take the broad locus. 
 
@@ -103,7 +108,7 @@ ggplot(df, aes(x=locus.length)) +
   geom_histogram(fill="red", alpha=0.5, position="identity")+theme_classic()
 
 # length of candidate
-ggplot(df, aes(x=cand.end-cand.start)) +
+ggplot(df, aes(x=cand.length)) +
   geom_histogram(fill="red", alpha=0.5, position="identity")+theme_classic()
 
 # log of best e-value 
@@ -120,20 +125,36 @@ ggplot(df, aes(x=BitDiffSum)) +
 
 # Filter the candidate dataset to exclude false-positives and missassemblies 
 
-Filter by evalue (evalue< 1e-50), ct4 (ct4>0.25), ce (ce>1.5), BitDiffSum (BitDiffSum>100) and the length of the candidate (length>100)
+Filter by evalue (evalue< 1e-25), ct4 (ct4>0.25), ce (ce>1.5), BitDiffSum (BitDiffSum>150) and the length of the candidate (length>100)
 
 ```{r}
-dfFilter<-subset(df,log.besteval>50 & ct4>0.25 & ce>1.5 & BitDiffSum>100 & cand.end-cand.start>100)
+dfFilter<-subset(df,log.besteval>25 & ct4>0.25 & ce>1.5 & BitDiffSum>150 & cand.end-cand.start>100)
 ```
-Filtering by the above criteria reduces the number of candidates to 1959 candidates (originally: 5218) in all 50 genomes.
+Filtering by the above criteria reduces the number of candidates to 2625 candidates (originally: 5218) in all 50 genomes.
 
 
-Remove anything at the beginning of a scaffold and loci over 50 kb.
+Remove anything at the beginning of a scaffold and candidates with a length over 20 kb.
 These are more likely to be misassemblies. (Note that this still leaves in candidates at the very end of scaffolds, which also are more likely misassemblies).
 ```{r}
-dfFilter2<-subset(dfFilter,locus.start > 1000)
+dfFilter2<-subset(dfFilter,locus.start > 1000 & cand.length < 20000)
 ```
-Filtering by the above criteria reduces the number of candidates further to 1302 candidates (originally: 5218) in all 50 genomes.
+Filtering by the above criteria reduces the number of candidates further to 1725 candidates (originally: 5218) in all 50 genomes.
+
+Remove anything at the end of a scaffold. 
+1. Add the scaffolds with their lengths for every genome from the file "genome.file". 
+2. Create a large dataframe with scaffold length information for every genome 
+```{r}
+data2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/genome.file"  # load data from all genome.files
+genomeFiles <- lapply(Sys.glob(data2load), read.csv,sep="\t")     # create a large list out of all genome.files 
+
+# Create a large df with information on scaffold number and length for every genome 
+genome_ids<-gsub(".*/","\\1",Sys.glob(data2load))
+names(genomeFiles)<-paste(genome_ids)
+
+dscf<-rbindlist(genomeFiles,idcol = T)
+
+dfFilter3<-subset(dfFilter2, )
+```
 
 
 # Summarize candidates in close proximity into one larger locus
@@ -224,5 +245,5 @@ lapply(1:length(list.of.plots), function(i){
   })
 ```
 
-Last changed 2021/05/15
+Last changed 2021/05/18
 ##### Added the file to GitHub on 11/05/2021. 
