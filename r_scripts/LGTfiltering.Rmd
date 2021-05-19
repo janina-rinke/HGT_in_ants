@@ -13,6 +13,7 @@ output: html_notebook
 ```{r}
 library(ggplot2)
 library(data.table)
+library(dplyr)
 ```
 
 # Load all good candidates for all GAGA species (1st filter: Take only good candidates from both databases)
@@ -49,6 +50,34 @@ Each row in the dataframe represents one candidate.
 head(df)
 ```
 
+
+# Add scaffold length for every genome 
+1. Add the scaffolds with their lengths for every genome from the file "genome.file".
+2. Create a large dataframe with scaffold length information for every genome called "dscf"
+3. Merge the scaffold information together with the information for the LGTs
+```{r}
+#data2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/genome.file"
+data2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/genome.file"  # load data from all genome.files
+genomeFiles <- lapply(Sys.glob(data2load), read.csv,sep="\t",header=F) # create large list of all genome.files
+
+# Create a large df with information on scaffold number and length for every genome
+genome_ids<-gsub(".*\\/(.*)\\/results\\/genome.file","\\1",Sys.glob(data2load))
+names(genomeFiles)<-paste(genome_ids)
+
+dscf<-rbindlist(genomeFiles,idcol = T)
+
+colnames(dscf)
+names(dscf)[2]<-"cand.scaffold" #rename the second column of dscf to merge later by this column 
+names(dscf)[1]<-"GAGA_id"
+
+df$GAGA_id<-gsub("\\..*","",df$.id) #separate the first row of df to merge by column "GAGA_id" 
+
+
+# Merge dscf together with the information for every LGT candidate from df
+df<-left_join(df, dscf, by = c("GAGA_id","cand.scaffold"))
+names(df)[61]<-"scaffold.length"        
+head(df)
+```
 
 # extract eval
 1. Extract the evalue of the best prokaryotic hit (take column "bestProHit". In this column, the evalue is located  
@@ -141,31 +170,11 @@ dfFilter2<-subset(dfFilter,locus.start > 1000 & cand.length < 20000)
 Filtering by the above criteria reduces the number of candidates further to 1725 candidates (originally: 5218) in all 50 genomes.
 
 Remove anything at the end of a scaffold.
-1. Add the scaffolds with their lengths for every genome from the file "genome.file".
-2. Create a large dataframe with scaffold length information for every genome called "dscf"
-3. Merge the scaffold information together with the information for the LGTs
 ```{r}
-#data2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/genome.file"
-data2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/genome.file"  # load data from all genome.files
-genomeFiles <- lapply(Sys.glob(data2load), read.csv,sep="\t",header=F) # create large list of all genome.files
-
-# Create a large df with information on scaffold number and length for every genome
-genome_ids<-gsub(".*\\/(.*)\\/results\\/genome.file","\\1",Sys.glob(data2load))
-names(genomeFiles)<-paste(genome_ids)
-
-dscf<-rbindlist(genomeFiles,idcol = T)
-
-colnames(dscf)
-names(dscf)[2]<-"cand.scaffold" #rename the second column of dscf to merge later by this column 
-
-gsub(df$.id,"\\..*","") #separate the first row of df to merge by column ".id"
-
-
-# Merge dscf together with the information for every LGT candidate 
-tryout_df<- merge(dscf, df, by=".id","cand.scaffold")
-
-dfFilter3<-subset(dfFilter2, )
+# Filter the dataframe to remove candidates at the end of the scaffold       
+dfFilter3<-subset(dfFilter2, cand.end != scaffold.length)
 ```
+This further reduces the number of candidates to 1716 possible LGTs (originally: 5218) in all 50 genomes.
 
 
 # Summarize candidates in close proximity into one larger locus
@@ -185,24 +194,25 @@ library(ggrepel)
 dfC <- dplyr::group_by(df, locus) %>%
         dplyr::summarise_each(funs(paste(unique(.), collapse = ";")))
 
-# filter this by locus dataframe to only keep loci that have at least one good candidate (i.e. that was contained in the dfFilter2 dataframe)
-dfC.filtered<-subset(dfC,locus %in% unique(dfFilter2$locus),select=c(locus,.id,cand.locus,cand.start,cand.end,bestProHit,scaffold,start,end,gc,gcs,ce))
+# filter this by locus dataframe to only keep loci that have at least one good candidate (i.e. that was contained in the dfFilter3 dataframe)
+dfC.filtered<-subset(dfC,locus %in% unique(dfFilter3$locus),select=c(locus,.id,cand.locus,cand.start,cand.end,bestProHit,BitDiffSum,scaffold,start,end,gc,gcs,ce))
 
 # save data frame to file
 #write.table(dfC.filtered,"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT.filtered.tsv",sep="\t",quote = F,row.names = F)
-write.table(dfC.filtered,"/Users/Janina/sciebo/GAGA.LGT.filtered.tsv",sep="\t",quote = F,row.names = F)
+write.table(dfC.filtered,"/Users/Janina/sciebo/Master.LGTs/GAGA.LGT.50.filtered.tsv",sep="\t",quote = F,row.names = F)
 
 # for plotting
 # split the unfiltered large df dataframe by "locus" into a list of dataframes (one list element per locus)
 dfSplit<-split(df,f=paste(df$.id,df$locus,sep="."))
 
-# filter the list of dataframes to only retain those that contain a LGT from the dfFilter2 dataframe
-dfSplit.filtered<-dfSplit[unique(paste(dfFilter2$.id,dfFilter2$locus,sep="."))]
+# filter the list of dataframes to only retain those that contain a LGT from the dfFilter3 dataframe
+dfSplit.filtered<-dfSplit[unique(paste(dfFilter3$.id,dfFilter3$locus,sep="."))]
 
 
 ```
-Merging candidates in close proximity together and filtering by the above criteria to only obtain candidates which are also in the dfFilter2 dataframe reduces the number of candidates further to 188 candidates (originally: 5218) in all 50 genomes.
+Merging candidates in close proximity together and filtering by the above criteria to only obtain candidates which are also in the dfFilter3 dataframe reduces the number of candidates further to 250 candidates (originally: 5218) in all 50 genomes.
 
+Note: The filtered.tsv file only contains candidates, which remain after filtering, but the simple plots created by the above commands contain all candidates in this region, even if they would have been filtered out before. 
 
 # Plot each locus
 
@@ -238,7 +248,7 @@ plotLGTlocus<-function(locusData){
 
 ```{r}
 # test the plotting function
-plotLGTlocus(dfSplit.filtered[[16]])
+plotLGTlocus(dfSplit.filtered[[180]])
 ```
 
 
@@ -256,5 +266,5 @@ lapply(1:length(list.of.plots), function(i){
   })
 ```
 
-Last changed 2021/05/18
+Last changed 2021/05/19
 ##### Added the file to GitHub on 11/05/2021.
