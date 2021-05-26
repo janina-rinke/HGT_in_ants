@@ -6,7 +6,7 @@ output: html_notebook
 
 ## TODO
 - group by start/end - done -
-- plot by large candidate
+- plot by large candidate -done -
 - include noAnt - done -
 - set thresholds for evaluation of candidates - done -
 
