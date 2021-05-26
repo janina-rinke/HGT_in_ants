@@ -51,7 +51,7 @@ head(df)
 ```
 
 
-# Add scaffold length for every genome 
+# Add scaffold length for every genome
 1. Add the scaffolds with their lengths for every genome from the file "genome.file".
 2. Create a large dataframe with scaffold length information for every genome called "dscf"
 3. Merge the scaffold information together with the information for the LGTs
@@ -67,10 +67,10 @@ names(genomeFiles)<-paste(genome_ids)
 dscf<-rbindlist(genomeFiles,idcol = T)
 
 colnames(dscf)
-names(dscf)[2]<-"cand.scaffold" #rename the second column of dscf to merge later by this column 
+names(dscf)[2]<-"cand.scaffold" #rename the second column of dscf to merge later by this column
 names(dscf)[1]<-"GAGA_id"
 
-df$GAGA_id<-gsub("\\..*","",df$.id) #separate the first row of df to merge by column "GAGA_id" 
+df$GAGA_id<-gsub("\\..*","",df$.id) #separate the first row of df to merge by column "GAGA_id"
 
 
 # Merge dscf together with the information for every LGT candidate from df
@@ -212,7 +212,7 @@ dfSplit.filtered<-dfSplit[unique(paste(dfFilter3$.id,dfFilter3$locus,sep="."))]
 ```
 Merging candidates in close proximity together and filtering by the above criteria to only obtain candidates which are also in the dfFilter3 dataframe reduces the number of candidates further to 250 candidates (originally: 5218) in all 50 genomes.
 
-Note: The filtered.tsv file only contains candidates, which remain after filtering, but the simple plots created by the above commands contain all candidates in this region, even if they would have been filtered out before. 
+Note: The filtered.tsv file only contains candidates, which remain after filtering, but the simple plots created by the above commands contain all candidates in this region, even if they would have been filtered out before.
 
 # Plot each locus
 
@@ -267,4 +267,3 @@ lapply(1:length(list.of.plots), function(i){
 ```
 
 Last changed 2021/05/19
-##### Added the file to GitHub on 11/05/2021.

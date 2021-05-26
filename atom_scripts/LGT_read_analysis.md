@@ -1,6 +1,8 @@
-LGT analysis: Extraction of border regions in PACBIO reads
+# LGT analysis
 
-## Viewing PacBio reads in the IGV web browser application
+##1. Extraction of border regions in PACBIO reads
+
+### 1.1 Viewing PacBio reads in the IGV web browser application
 
 Create a fasta index file of the genome file to view the data:
 
@@ -20,7 +22,7 @@ samtools index LGTs.5kb.candidateregions.PacBio.bam LGTs.5kb.candidateregions.Pa
 
 You can then search for the scaffold of interest.
 
-## Extract PacBio reads from a region of interest
+### 1.2 Extract PacBio reads from a region of interest
 
 To extract reads of a SAM/BAM file by reference and region:
 ```bash
@@ -35,7 +37,7 @@ To extract multiple regions of a bam file:
 samtools view -b input.bam "Scaffold96:22250-22260 Scaffold96:30000-30010 Scaffold96:40000-40010" > output.BAM
 ```
 
-## Count the number of reads in a region of interest
+### 1.2 Count the number of reads in a region of interest
 
 ```bash
 # if you have extracted a region of interest before from bam file:
@@ -50,13 +52,15 @@ awk < GAGA-0515_nextpolish_final.fasta '/^>/ { print $0 }' #get all headers
 awk < GAGA-0515_nextpolish_final.fasta '/^>Scaffold9/ { print $0 }' #get only headers starting with 9
 ```
 
-## Identify start and stop coordinates of all reads from LGT candidates
+### 1.3 Identify start and stop coordinates of all reads from LGT candidates
 
 ```bash
 # Shows all start and stop coordinates from this file
 bedtools bamtobed -i *.bam
 ```
-## Identify missassemblies by using bedtools
+
+
+## 2. Identify missassemblies by using bedtools
 ```bash
 # Divide the border region on the scaffold of interest (e.g. Scaffold96) into windows, requires BED file
 bedtools bamtobed -i LGTs.5kb.candidateregions.PacBio.bam > LGTs.coordinates.bed
@@ -69,10 +73,13 @@ bedtools makewindows -b LGTs.Scaffold96_22000.coordinates.bed -w 100 > LGTs.Scaf
 bedtools intersect -a LGTs.Scaffold96.windows.bed -b LGTs.coordinates.bed -f 1 -c
 ```
 
-## FASTA manipulation
+## 3. FASTA manipulation
 `seqkit`
 `seqtk`
 `biowak`
 
-Last updated 2021/05/11
-#### Added the file to GitHub on 11/05/2021. 
+### 3.1 Extract a region of interest from FASTA file
+```bash
+samtools faidx genome.fasta scaffold1:1000-100000
+```
+Last updated 2021/05/19
