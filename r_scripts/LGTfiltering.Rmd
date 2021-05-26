@@ -20,8 +20,9 @@ library(dplyr)
 
 Load all tsv files for the different GAGA ids in a list of data frames.
 ```{r}
-tsv2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
+#tsv2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
 #tsv2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
+tsv2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.*.lgt.good.candidates.tsv"
 dataFiles <- lapply(Sys.glob(tsv2load), read.csv,sep="\t")
 ```
 
@@ -41,10 +42,10 @@ names(dataFiles)<-paste(ids,type,sep=".")
 Combine tsv files from all GAGA ids in the large list element ("dataFiles") to one big data frame ("df").
 ```{r}
 
-df<-rbindlist(dataFiles,idcol = T)
+df<-rbindlist(dataFiles,idcol = T, fill=TRUE) #the fill=TRUE option fills missing columns 
 ```
 
-The unfiltered df containes 5218 candidates from all 50 selected genomes (from folder: GAGA.LGT) together.
+The unfiltered df containes 13664 candidates from all 162 selected genomes together.
 Each row in the dataframe represents one candidate.
 ```{r}
 head(df)
@@ -57,7 +58,8 @@ head(df)
 3. Merge the scaffold information together with the information for the LGTs
 ```{r}
 #data2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/genome.file"
-data2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/genome.file"  # load data from all genome.files
+#data2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/genome.file"  # load data from all genome.files
+data2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/genome.file"  # load data from all genome.files
 genomeFiles <- lapply(Sys.glob(data2load), read.csv,sep="\t",header=F) # create large list of all genome.files
 
 # Create a large df with information on scaffold number and length for every genome
@@ -75,7 +77,8 @@ df$GAGA_id<-gsub("\\..*","",df$.id) #separate the first row of df to merge by co
 
 # Merge dscf together with the information for every LGT candidate from df
 df<-left_join(df, dscf, by = c("GAGA_id","cand.scaffold"))
-names(df)[61]<-"scaffold.length"        
+names(df)[55]<-"scaffold.length"
+df$V2<- NULL
 head(df)
 ```
 
@@ -154,12 +157,12 @@ ggplot(df, aes(x=BitDiffSum)) +
 
 # Filter the candidate dataset to exclude false-positives and missassemblies
 
-Filter by evalue (evalue< 1e-25), ct4 (ct4>0.25), ce (ce>1.5), BitDiffSum (BitDiffSum>150) and the length of the candidate (length>100)
+Filter by evalue (evalue > 1e-25), ct4 (ct4>0.25), ce (ce>1.5), BitDiffSum (BitDiffSum>150) and the length of the candidate (length>100)
 
 ```{r}
 dfFilter<-subset(df,log.besteval>25 & ct4>0.25 & ce>1.5 & BitDiffSum>150 & cand.end-cand.start>100)
 ```
-Filtering by the above criteria reduces the number of candidates to 2625 candidates (originally: 5218) in all 50 genomes.
+Filtering by the above criteria reduces the number of candidates to 5355 candidates (originally: 13664) in all 162 genomes.
 
 
 Remove anything at the beginning of a scaffold and candidates with a length over 20 kb.
@@ -167,14 +170,14 @@ These are more likely to be misassemblies. (Note that this still leaves in candi
 ```{r}
 dfFilter2<-subset(dfFilter,locus.start > 1000 & cand.length < 20000)
 ```
-Filtering by the above criteria reduces the number of candidates further to 1725 candidates (originally: 5218) in all 50 genomes.
+Filtering by the above criteria reduces the number of candidates further to 3631 candidates in all 162 genomes.
 
 Remove anything at the end of a scaffold.
 ```{r}
 # Filter the dataframe to remove candidates at the end of the scaffold       
 dfFilter3<-subset(dfFilter2, cand.end != scaffold.length)
 ```
-This further reduces the number of candidates to 1716 possible LGTs (originally: 5218) in all 50 genomes.
+This further reduces the number of candidates to 3610 possible LGTs in all 162 genomes.
 
 
 # Summarize candidates in close proximity into one larger locus
@@ -199,7 +202,7 @@ dfC.filtered<-subset(dfC,locus %in% unique(dfFilter3$locus),select=c(locus,.id,c
 
 # save data frame to file
 #write.table(dfC.filtered,"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT.filtered.tsv",sep="\t",quote = F,row.names = F)
-write.table(dfC.filtered,"/Users/Janina/sciebo/Master.LGTs/GAGA.LGT.50.filtered.tsv",sep="\t",quote = F,row.names = F)
+write.table(dfC.filtered,"/global/scratch2/j_rink02/master/lgt/2_analysis/GAGA.LGT.162.filtered.tsv",sep="\t",quote = F,row.names = F)
 
 # for plotting
 # split the unfiltered large df dataframe by "locus" into a list of dataframes (one list element per locus)
@@ -210,7 +213,7 @@ dfSplit.filtered<-dfSplit[unique(paste(dfFilter3$.id,dfFilter3$locus,sep="."))]
 
 
 ```
-Merging candidates in close proximity together and filtering by the above criteria to only obtain candidates which are also in the dfFilter3 dataframe reduces the number of candidates further to 250 candidates (originally: 5218) in all 50 genomes.
+Merging candidates in close proximity together and filtering by the above criteria to only obtain candidates which are also in the dfFilter3 dataframe reduces the number of candidates further to 928 candidates in all 162 genomes.
 
 Note: The filtered.tsv file only contains candidates, which remain after filtering, but the simple plots created by the above commands contain all candidates in this region, even if they would have been filtered out before.
 
@@ -262,8 +265,8 @@ list.of.plots<-lapply(dfSplit.filtered,FUN=plotLGTlocus)
 #  })
 
 lapply(1:length(list.of.plots), function(i){
-      ggsave(filename=paste0("/Users/Janina/sciebo/Master.LGTs/LGT.filtered/",gsub(":","-",names(list.of.plots)[i]),".pdf"), plot=list.of.plots[[i]])
+      ggsave(filename=paste0("/global/scratch2/j_rink02/master/lgt/2_analysis/LGT.filtered/",gsub(":","-",names(list.of.plots)[i]),".pdf"), plot=list.of.plots[[i]])
   })
 ```
 
-Last changed 2021/05/19
+Last changed 2021/05/26
