@@ -108,5 +108,61 @@ bedtools intersect -a <file>.
 # -F: Minimum overlap required as a fraction of B.
 ```
 
-Last changed 2021/05/11
-#### Added to GitHub 
+## Samtools
+
+`samtools mpileup`: produces "pileup" textual format from an alignment.
+Generates a text pileup output for one or multiple BAM files.
+The pileup format consists of TAB-separated lines, with each line representing the pileup of reads at a single genomic position.
+
+The first three columns give the position and reference:
+- Chromosome name /Scaffold
+- 1-based position on the scaffold
+- Reference base at this position (will be "N" on all lines, if `-f / --fasta-ref` has not been used)
+
+Remaining columns show:
+- Number of reads covering this position
+- Read bases (information on matches, mismatches, indels..)
+
+One can, for example, run this on a bam file to find positions at which coverage is < n and then read the bam file again to exclude reads which map to positions in coverage low positions on a scaffold.
+
+`samtools depth`: Computes the read depth at each position or region
+
+```bash
+samtools depth <file.bam> <file.sam>
+
+# -a: Output all positions (including those with 0 depths)
+# -b: Compute depth at list of positions or regions in specified BED file
+# -f: Use the BAM files specified in the FILE
+# -H: Write a comment line showing column names at the beginning of the output
+# -o: Write output to file.
+# -q INT: Only count reads with base quality greater than or equal to INT
+# -r SCAFFOLD:FROM-TO: Only report depth in specified region
+```  
+
+`samtools coverage`: produces a histogram or table of coverage per scaffold / computes the depth at each position or region
+
+Headings of the tabulated form:
+######rname         Reference name/scaffold
+######startpos      Start position
+######endpos        End position
+######numreads      Number of reads aligned to the region
+######covbases      Number of covered bases with depth >= 1
+######coverage      Proportion of covered bases
+######meandepth     Mean depth of coverage
+######meanbaseq     MeanbaseQ in covered region
+######meanmapq      Mean mapq of selected reads
+
+```bash  
+samtools coverage <file.sam> <file.bam>
+
+Input options:
+# -b FILE: List of input BAM files, one file per line
+# -l INT: Ignore reads shorter than INT base pairs
+# -q INT: Minimum mapping quality for an alignment to be used
+# -Q INT: Minimum base quality for a base to be considered
+
+Output options:
+# -m: Show histogram instead of tabular output
+# -o FILE: Write output to file
+# -r: Show specified region. Format: scaffold:start-end.
+```

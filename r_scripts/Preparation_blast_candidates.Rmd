@@ -1,0 +1,63 @@
+# Script to prepare .tsv file for blast of candidates
+# Janina Rinke, 21.06.2021
+
+```{r}
+library(ggplot2)
+library(data.table)
+library(dplyr)
+library(tidyr)
+```
+
+Load the file with all good candidates from Excel 
+```{r}
+data <- GAGA_LGT_162_filtered_good_candidates
+```
+
+Remove all unnecessary columns from the dataframe data
+```{r}
+data$LGT_quality <- NULL
+data$ce <- NULL
+data$gcs <- NULL
+data$locus <- NULL
+data$cand.locus <- NULL
+data$nr_predicted_loci <- NULL
+data$bestProHit <- NULL
+data$BitDiffSum <- NULL
+```
+
+### Get only one candidate per row 
+
+Possibility 1: Split the columns with several candidates to only contain one candidate per row
+```{r}
+head(data)
+new_df <- data %>% separate_rows(cand.start,cand.end) #separate, if several values exist in one column
+head(new_df)
+```
+
+Possibility 2: Take the smallest value from the column cand.start and the highest value from the cand.end column
+```{r}
+new_data <- data$start + 20000
+new_data2 <- data$end - 20000
+
+data$start <- new_data
+data$end <- new_data2
+```
+
+```{r}
+data$cand.start <- NULL
+data$cand.end <- NULL 
+data$gc <- NULL
+data$suggested_prokaryote_origin <- NULL
+data$predicted_protein <- NULL
+```
+
+### Keep only the GAGA-id
+```{r}
+data2 <- sapply(strsplit(data$.id, "[.]"), "[", 1)
+data$.id <- data2
+```
+
+### Save file as tsv file 
+```{r}
+write.table(data,"/Users/Janina/sciebo/Master.LGTs/blastCandidates.tsv",sep="\t",quote = F,row.names = F, col.names = F)
+```
