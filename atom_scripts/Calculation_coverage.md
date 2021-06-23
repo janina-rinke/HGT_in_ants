@@ -99,3 +99,5 @@ p1 <-     ggplot(lgt.stackedL.good[[selection]],aes(x=covWindowCenter,y=log(cov/
 Z.B sowas filtern wie: subset(cov = 0) column `cov` und `c_overlap` in Betracht ziehen
 
 -> Wenn column `c_overlap`= 0 heißt es dann, in diesem Bereich gibt es höchstwahrscheinlich keine mapped PacBio reads?
+
+Last changed 23/06/2021 
