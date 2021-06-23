@@ -166,3 +166,5 @@ Output options:
 # -o FILE: Write output to file
 # -r: Show specified region. Format: scaffold:start-end.
 ```
+
+Last changed 23/06/2021
