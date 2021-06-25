@@ -86,13 +86,24 @@ Structure of command for mmseqs modules:
 mmseqs module input_db output_db args [options]
 ```
 
-Run mmseqs2 on all three databases separately
+#### 1. Pre-format the databases
+
+######QUERY DB: `all.candidates.fa`
+######TARGET DB: `uniRef90`, `NT`, `NR`
 ```bash
-mmseq2 easy-search $id.$scf.$start.$end.fa /global/scratch2/databases/mmseq -outfmt 6 > $id.$scf.$start.$end.bls`
+# Query database
+mmseqs createdb /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/all.candidates.fa all.candidates.queryDB
+
+# Target database
+mmseqs createdb /global/scratch2/databases/mmseq/uniRef90/uniRef90-2021_06_22 uniRef90-2021_06_22
+```  
+#### 2. Start the search with mmseqs
+```bash
+mmseqs search all.candidates.fa /global/scratch2/databases/mmseq/uniRef90/uniRef90-2021_06_22 all.candidates.bls
 ```
 
 Expected output:
-```#!/usr/bin/env bash
+```bash
 GAGA-0003.Scaffold1:3000-5000 200 400 Wolbachia pbla 6949218 6811581 1e-160
 GAGA-0003.Scaffold1:3000-5000 300 320 ecoli 1949218 1811581 1e-10
 ```
