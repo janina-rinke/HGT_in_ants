@@ -99,7 +99,35 @@ mmseqs createdb /global/scratch2/databases/mmseq/uniRef90/uniRef90-2021_06_22 un
 ```  
 #### 2. Start the search with mmseqs
 ```bash
-mmseqs search all.candidates.fa /global/scratch2/databases/mmseq/uniRef90/uniRef90-2021_06_22 all.candidates.bls
+mmseqs easy-search all.candidates.fa /global/scratch2/databases/mmseq/uniRef90/uniRef90-2021_06_22 all.candidates.bls tmp
+```
+##### Submit the job to the cluster with Gridengine
+```bash
+#$ -S /bin/bash
+#$ -l h_vmem=1G
+#$ -pe smp 10
+#$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/all.candidates.fasta.bls
+#$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/all.candidates.fasta.err
+#$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta
+
+cmd="mmseqs easy-search all.candidates.fa /global/scratch2/databases/mmseq/uniRef90/uniRef90-2021_06_22 all.candidates.bls tmp"
+
+echo $cmd  # save the actual command for the logs
+eval $cmd  # run the command
+```
+
+Submit the job with:
+```
+qsub -l hostname=ebbsrv09 blastCandidates.sh
+```
+
+
+#### Another way to run mmseqs2
+Start Screen session with `screen -R mmseqs`
+
+Run the command for mmseqs:
+```bash
+/global/projects/programs/source/mmseqs/mmseqs2-avx2-13-45111/bin//mmseqs easy-search -s 1 --split-memory-limit 25G all.candidates.fa /global/scratch2/databases/mmseq/uniRef90/uniRef90-2021_06_22 all.candidates.bls tmp
 ```
 
 Expected output:
@@ -107,10 +135,21 @@ Expected output:
 GAGA-0003.Scaffold1:3000-5000 200 400 Wolbachia pbla 6949218 6811581 1e-160
 GAGA-0003.Scaffold1:3000-5000 300 320 ecoli 1949218 1811581 1e-10
 ```
-​
-5. select best hit based on evalue/bitscore
+
+Then select best hit based on evalue/bitscore
    `cat $id.$scf.$start.$end.bls | sort -k4,4 -nr -k5,5`
 ​
+##### Try to run `mmseqs`with one file only to see if it works:
+```bash
+# Prepare your file of choice as a query database
+mmseqs createdb /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/GAGA-0020.Scaffold107.144838-147367.fa GAGA-0020.Scaffold107.144838-147367.fa.queryDB
+
+# start a Screen session to not loose any output
+screen -R mmseqs2
+
+# Run mmseqs with your prepared query database against the targetdb `UniRef90`
+mmseqs easy-search -s 1 --split-memory-limit 25G  GAGA-0020.Scaffold107.144838-147367.fa /global/scratch2/databases/mmseq/uniRef90/uniRef90-2021_06_22 GAGA-0020.Scaffold107.144838-147367.bls tmp
+```   
 # databases to use:
 - NR                  	Aminoacid 	       -	https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA
 - NT                  	Nucleotide	       -	https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA
