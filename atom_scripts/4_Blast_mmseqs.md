@@ -161,8 +161,8 @@ qsub -l hostname=ebbsrv03 mmseqs_script.sh
 #$ -S /bin/bash
 #$ -N mmseqsjob
 #$ -cwd
-#$ -pe smp 62
-#$ -l h_vmem=2G
+#$ -pe smp 50
+#$ -l h_vmem=6G
 #$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/all.candidates.fasta.nr.out
 #$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/all.candidates.fasta.nr.err
 #$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta
@@ -171,12 +171,15 @@ source /usr/share/modules/init/bash  # enables the module package
 module use /global/projects/programs/modules/
 module load seq-search/mmseqs/sse2-13-45111
 
-mmseqs easy-search -s 1 --split-memory-limit 25G all.candidates.fa /global/scratch2/databases/mmseq/nr/nr-2021_06_22 all.candidates.nr.bls tmp
+mmseqs easy-search -s 1 --split-memory-limit 300G all.candidates.fa /global/scratch2/databases/mmseq/nr/nr-2021_06_22 all.candidates.nr.bls tmp
 ```
 Submit the job with:
 ```bash
-qsub -l hostname=ebbsrv03 mmseqs_script_nr.sh
+qsub mmseqs_script_nr.sh
 ```
+
+The job will only run on servers which provide enough RAM, so you do not need to specify a server with `hostname`!
+
 -----------------------------------------------------------------------
 Expected output:
 ```bash
