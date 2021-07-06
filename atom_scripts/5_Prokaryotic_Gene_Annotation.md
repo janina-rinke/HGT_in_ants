@@ -1,12 +1,13 @@
 ## Prokaryotic gene annotation with `dfast`, `prodigal` and `metageneannotator`
 
-### Janina Rinke, 02.07.2021
+##### Janina Rinke, 02.07.2021
 
 metageneannotator: http://metagene.nig.ac.jp/
 dfast: https://dfast.ddbj.nig.ac.jp/
 
 
 ## 1. Prokaryotic gene annotation with `dfast`
+DFAST is a flexible and customizable pipeline for prokaryotic genome annotation.
 #### 1.1 Run LGT candidate file on `dfast` website to annotate prokaryotic genes
 
 File with LGT candidates:
@@ -35,7 +36,7 @@ rm "GAGA-0200" all.candidates.fa > all.candidates.noBM.fa ## Code hinzufügen
 ```
 
 ####1.2 Run `dfast` on the cluster
-
+The dfast command-line tool is also referred to as dfast-core to differentiate it from its online version.
 ##### Install `dfast` with `conda`:
 ```bash
 # Create a conda environment with python
@@ -58,7 +59,7 @@ How to install databases for `dfast`: https://github.com/nigyta/dfast_core/#inst
 
 ##### Run `dfast`:
 ```bash
-dfast --genome all.candidates.fa  --force --minimum_length 100 --metagenome
+dfast --genome all.candidates.fa  --force --minimum_length 100 --metagenome -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast
 ```
 -------------------------------------------------------------------------
 ## 2. Prokaryotic gene annotation with `prodigal`
