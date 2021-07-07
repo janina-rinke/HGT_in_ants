@@ -8,7 +8,7 @@ dfast: https://dfast.ddbj.nig.ac.jp/
 
 ## 1. Prokaryotic gene annotation with `dfast`
 DFAST is a flexible and customizable pipeline for prokaryotic genome annotation.
-#### 1.1 Run LGT candidate file on `dfast` website to annotate prokaryotic genes
+#### 1.1 Run `dfast` on the website
 
 File with LGT candidates:
 ```bash
@@ -30,9 +30,16 @@ Number of tRNAs:	52
 Number of CRISPRs:	2
 ```
 
-Remove the *Blochmannia* LGT from the file, to exclude this single large region:
+######Remove the *Blochmannia* LGT from the file, to exclude this single large region:
+
+Use `samtools`:
+1. Create an index of the fasta file
 ```bash
-rm "GAGA-0200" all.candidates.fa > all.candidates.noBM.fa ## Code hinzufügen
+samtools faidx all.candidates.fa
+```
+2. Filter the fasta file with the help of the index:
+```bash
+samtools faidx -o all.candidates.nB.fa all.candidates.fa ids…
 ```
 
 ####1.2 Run `dfast` on the cluster
