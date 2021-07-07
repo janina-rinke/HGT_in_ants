@@ -226,20 +226,7 @@ GAGA-0511.Scaffold5.3127011-3129187	WP_141457075.1	0.840	1470	78	0	2106	637	1	49
 ##### 3.1 Find the best blast hit for every candidate in the `NR`file
 
 ```bash
-cat all.candidates.nr.bls |sort -k1,1 -k11,11g -k12,12gr | sort -u -k1,1 --merge > all.candidates.nr.bestHit.bls
+cat all.candidates.nr.bls |sort -t$'\t' -k1,1 -k12,12gr -k11,11g| sort -u -k1,1 --merge > all.candidates.nr.bestHit.bls
 ```
 `-k` option sorts the output based on a certain column.
 We will sort first based on e-value (column 12) and after that based on bitscore (column 11). Now the hit which is at the top should always have the highest bitscore.
-
-###### 3.2 Find the taxonomy for the best hits with `eutils`
-Loop over each hit in the file `all.candidates.nr.bestHit.bls` with `parallel`. Restrict the jobs to `-j 3` to not crash the NCBI server. 
-
-```bash
-proteinQuery=WP_065094361.1
-esearch -db protein -query ${proteinQuery}|elink -target taxonomy|efetch -mode xml|xtract -pattern Lineage -element Lineage
-```
-
-Output:
-```bash
-cellular organisms; Bacteria; Proteobacteria; Alphaproteobacteria; Rickettsiales; Anaplasmataceae; Wolbachieae; Wolbachia
-```
