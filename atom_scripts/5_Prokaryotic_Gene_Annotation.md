@@ -111,28 +111,13 @@ gc_cont: % GC content of the sequence.
 transl_table: The genetic code used to analyze the sequence.
 uses_sd: Set to 1 if Prodigal used its default RBS finder, 0 if it scanned for other motifs.
 
-####3. Compare prokaryotic genes (predicted with `dfast`) to a prokaryotic database with `mmseqs`
-
-Create a queryDB of the `protein.faa` file from `dfast`:
+Number of predicted LGTs which have an annotation with `prodigal` and `dfast`:
 ```bash
-createb protein.faa protein.faa 
-```
+# prodigal
+cat protein.translations.faa | grep ">" | wc -l
+#2182
 
-Change the `mmseqs`script to take the protein fasta file predicted with `dfast`:
-
-```bash
-#$ -S /bin/bash
-#$ -N dfastmmseqsrun
-#$ -cwd
-#$ -pe smp 62
-#$ -l h_vmem=2G
-#$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/all.candidates.fasta.nr.out
-#$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/all.candidates.fasta.nr.err
-#$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta
-
-source /usr/share/modules/init/bash  # enables the module package
-module use /global/projects/programs/modules/
-module load seq-search/mmseqs/sse2-13-45111
-
-mmseqs easy-search -s 1 --split-memory-limit 50G /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/protein.faa /global/scratch2/databases/mmseq/uniRef90/uniRef90-2021_06_22 dfast_proteins.bls tmp
+#dfast
+cat protein.faa | grep ">" | wc -l
+#1980 
 ```
