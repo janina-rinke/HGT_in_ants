@@ -84,20 +84,31 @@ module load annotation/prodigal/2.6.3
 
 Run the gene annotation with:
 ```bash
-prodigal -p meta -i all.candidates.fa -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/annotated_genes_prodigal.gbk
+prodigal -p meta -i all.candidates.fa -a protein.translations.faa -d annotated_genes_prodigal.cds -w prodigal.statistics -f gff -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/prodigal/prodigal_annotated_genes.gff
 ```
-Output:
+
+By default, `prodigal`produces one output file, which consists of gene coordinates and some metadata associated with each gene.
+To produce four more output files:
+`-a`option: protein translations
+`-d`option: nucleotide sequences
+`-s`option: complete listing of all start/stop pairs with score information
+`-w`option: summary of statistical information about the genome or metagenome
+`-f`option: specify another output type e.g. `gff` format
+
+Produced output files:
 ```bash
-DEFINITION  seqnum=1;seqlen=2530;seqhdr="GAGA-0020.Scaffold107.144838-147367";version=Prodigal.v2.6.3;run_type=Metagenomic;model="39|Rickettsia_conorii_Malish_7|B|32.4|11|1";gc_cont=32.40;transl_table=11;uses_sd=1
-FEATURES             Location/Qualifiers
-     CDS             complement(<2..>2530)
-                     /note="ID=1_1;partial=11;start_type=Edge;rbs_motif=None;rbs_spacer=None;gc_cont=0.361;conf=99.99;score=348.99;cscore=347.38;sscore=1.61;rscore=0.00;uscore=0.00;tscore=1.61;"
-//
-DEFINITION  seqnum=2;seqlen=168;seqhdr="GAGA-0020.Scaffold1.5322877-5323044";version=Prodigal.v2.6.3;run_type=Metagenomic;model="0|Mycoplasma_bovis_PG45|B|29.3|4|1";gc_cont=29.30;transl_table=4;uses_sd=1
-FEATURES             Location/Qualifiers
-     CDS             complement(38..>166)
-                     /note="ID=2_1;partial=01;start_type=Edge;rbs_motif=None;rbs_spacer=None;gc_cont=0.295;conf=98.17;score=17.33;cscore=14.11;sscore=3.22;rscore=0.00;uscore=0.00;tscore=3.22;"
-//
+annotated_genes_prodigal.cds  prodigal_annotated_genes.gff  protein.translations.faa
+annotated_genes_prodigal.gbk  prodigal.statistics
 ```
+Fields in this header are as follows:
+seqnum: An ordinal ID for this sequence, beginning at 1.
+seqlen: Number of bases in the sequence.
+seqhdr: The entire FASTA header line.
+version: Version of Prodigal used to analyze this sequence.
+run_type: "Ab initio" for normal mode, "Anonymous" for anonymous mode.
+model (Anonymous mode only): Information about the preset training file used to analyze the sequence.
+gc_cont: % GC content of the sequence.
+transl_table: The genetic code used to analyze the sequence.
+uses_sd: Set to 1 if Prodigal used its default RBS finder, 0 if it scanned for other motifs.
 
 ####2.2 Compare prokaryotic genes (predicted with `prodigal`) to a prokaryotic database with `mmseqs`
