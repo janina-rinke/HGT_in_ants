@@ -1,8 +1,6 @@
-## Prokaryotic gene annotation with `dfast`, `prodigal` and `metageneannotator`
+## Prokaryotic gene annotation with `dfast` and `prodigal`
 
 ##### Janina Rinke, 02.07.2021
-
-metageneannotator: http://metagene.nig.ac.jp/
 dfast: https://dfast.ddbj.nig.ac.jp/
 
 
@@ -68,6 +66,14 @@ How to install databases for `dfast`: https://github.com/nigyta/dfast_core/#inst
 ```bash
 dfast --genome all.candidates.fa  --force --minimum_length 100 --metagenome -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast
 ```
+
+##### Run `dfast` against the UniProt bacterial database only:
+```bash
+# activate environment first
+conda activate dfast
+
+dfast --genome all.candidates.fa --force --use_original_name t --minimum_length 100 --metagenome --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/all.candidates.uniprot.bacteria  
+```
 -------------------------------------------------------------------------
 ## 2. Prokaryotic gene annotation with `prodigal`
 
@@ -119,5 +125,5 @@ cat protein.translations.faa | grep ">" | wc -l
 
 #dfast
 cat protein.faa | grep ">" | wc -l
-#1980 
+#1980
 ```

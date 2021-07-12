@@ -1,0 +1,34 @@
+# Script to plot average length of good candidates 
+# Janina Rinke, 09.07.2021
+
+```{r}
+library(ggplot2)
+library(data.table)
+library(dplyr)
+library(tidyr)
+```
+
+# Load the file with all good candidates from Excel 
+```{r}
+df <- GAGA_LGT_162_filtered_good_candidates_taxonomy
+```
+
+# Split the candidate regions into single candidates 
+```{r}
+
+```
+
+
+# add column with length of candidate
+
+```{r}
+df$cand.length<-df$cand.end-df$cand.start
+```
+
+# plot overview plot
+plot histogram of length to see how the candidates are distributed 
+```{r}
+# length of candidate
+ggplot(df, aes(x=cand.length)) +
+  geom_histogram(fill="red", alpha=0.5, position="identity")+theme_classic()
+```
