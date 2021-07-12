@@ -11,11 +11,12 @@ library(tidyr)
 # Load the file with all good candidates from Excel 
 ```{r}
 df <- GAGA_LGT_162_filtered_good_candidates_taxonomy
+head(df)
 ```
 
 # Split the candidate regions into single candidates 
 ```{r}
-
+new_df <- df %>% separate_rows(df$cand.start)
 ```
 
 

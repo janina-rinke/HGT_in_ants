@@ -68,11 +68,23 @@ dfast --genome all.candidates.fa  --force --minimum_length 100 --metagenome -o /
 ```
 
 ##### Run `dfast` against the UniProt bacterial database only:
-```bash
-# activate environment first
-conda activate dfast
 
-dfast --genome all.candidates.fa --force --use_original_name t --minimum_length 100 --metagenome --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/all.candidates.uniprot.bacteria  
+Write a GridEngine Script to run the process:
+`nano dfast_bacteria.sh`:
+
+```bash
+#$ -S /bin/bash
+#$ -N dfastjob
+#$ -cwd
+#$ -pe smp 62
+#$ -l h_vmem=2G
+#$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.out
+#$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.err
+#$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta
+
+conda activate dfast 
+
+dfast -g all.candidates.fa --force --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/all.candidates.uniprot.bacteria  
 ```
 -------------------------------------------------------------------------
 ## 2. Prokaryotic gene annotation with `prodigal`
@@ -127,3 +139,51 @@ cat protein.translations.faa | grep ">" | wc -l
 cat protein.faa | grep ">" | wc -l
 #1980
 ```
+
+## 3. Prokaryotic gene annotation with `kraken`
+
+Kraken is a system for assigning taxonomic labels to short DNA sequences, usually obtained through metagenomic studies.
+
+
+`Input:` Fasta files of all GAGA-genomes with evaluated good candidates.
+Output was produced by Ding He with the `kraken` tool.
+
+ All candidates were re-evaluated for being good candidates based on the prokaryotic gene annotation from Kraken.
+
+The LGT in GAGA-0515 is a good example how the annotation for a good
+LGT candidate should look like:
+
+
+##### Output Files:
+```bash
+GAGA-0515.k2_bracken.report
+GAGA-0515.k2.class.bracken
+GAGA-0515.k2.krona
+GAGA-0515.k2.out
+GAGA-0515.k2.report
+GAGA-0515.k2.species.bracken
+GAGA-0515.krona.html
+```
+
+Output of `GAGA-0515.k2_bracken.report`:
+```bash
+0.00	0	0	U	0	unclassified
+100.00	1	0	R	1	root
+100.00	1	0	R1	131567	  cellular organisms
+100.00	1	0	D	2	    Bacteria
+100.00	1	0	P	1224	      Proteobacteria
+100.00	1	0	C	1236	        Gammaproteobacteria
+100.00	1	0	O	91347	          Enterobacterales
+100.00	1	0	F	1903411	            Yersiniaceae
+100.00	1	1	G	613	              Serratia
+```
+
+Output of `GAGA-0515.k2.class.bracken`:
+```bash
+name	taxonomy_id	taxonomy_lvl	kraken_assigned_reads	added_reads	new_est_reads	fraction_total_reads
+Gammaproteobacteria	1236	C	1	0	1	1.00000
+```
+
+The `GAGA-0515.krona.html` file (file:///Users/Janina/Downloads/taxonomy_classification/GAGA-0515.krona.html) shows the taxonomic assignment graphically.
+
+Based on this good examples, all candidates were evaluated.
