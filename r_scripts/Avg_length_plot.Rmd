@@ -6,6 +6,8 @@ library(ggplot2)
 library(data.table)
 library(dplyr)
 library(tidyr)
+#install.packages("tidyverse")
+library(tidyverse)
 ```
 
 # Load the file with all good candidates from Excel 
@@ -16,20 +18,25 @@ head(df)
 
 # Split the candidate regions into single candidates 
 ```{r}
-new_df <- df %>% separate_rows(df$cand.start)
+new_df <- separate_rows(df, cand.start, cand.end, convert = T)
 ```
 
 
 # add column with length of candidate
 
 ```{r}
-df$cand.length<-df$cand.end-df$cand.start
+new_df$cand.length<-new_df$cand.end-new_df$cand.start
+```
+
+# remove everything from GAGA-0200 to exclude the large region with the whole Blochmannia genome 
+```{r}
+dfnoGAGA200 <-subset(new_df, .id != "GAGA-0200.euk")
 ```
 
 # plot overview plot
 plot histogram of length to see how the candidates are distributed 
 ```{r}
 # length of candidate
-ggplot(df, aes(x=cand.length)) +
+ggplot(dfnoGAGA200, aes(x=cand.length)) +
   geom_histogram(fill="red", alpha=0.5, position="identity")+theme_classic()
 ```
