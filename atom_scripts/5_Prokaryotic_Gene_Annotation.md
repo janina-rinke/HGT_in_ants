@@ -130,6 +130,27 @@ Number of rRNAs	7
 
 ##### Run `dfast` against the UniProt bacterial database only:
 
+For one candidate only to test if script is working:
+
+`nano dfast_bacteria_onecandidate.sh`:
+
+```bash
+#$ -S /bin/bash
+#$ -N dfastjob
+#$ -cwd
+#$ -pe smp 50
+#$ -l h_vmem=1G
+#$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.onecandidate.out
+#$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.onecandidate.err
+#$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta
+
+conda activate dfast
+
+dfast -g GAGA-0020.Scaffold107.144838-147367.fa --force --cpu 50 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/one.candidate.uniprot.bacteria --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
+```
+
+For all candidates together:
+
 Write a GridEngine Script to run the process:
 `nano dfast_bacteria.sh`:
 
@@ -137,16 +158,21 @@ Write a GridEngine Script to run the process:
 #$ -S /bin/bash
 #$ -N dfastjob
 #$ -cwd
-#$ -pe smp 62
-#$ -l h_vmem=2G
+#$ -pe smp 20
+#$ -l h_vmem=6G
 #$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.out
 #$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.err
 #$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta
 
 conda activate dfast
 
-dfast -g all.candidates.fa --force --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/all.candidates.uniprot.bacteria  
+source /usr/share/modules/init/bash  # enables the module package
+module use /global/projects/programs/modules/
+module load seq-search/mmseqs/sse2-13-45111
+
+dfast -g all.candidates.fa --force --metagenome --cpu 20 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/all.candidates.uniprot.bacteria --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
 ```
+
 -------------------------------------------------------------------------
 ## 2. Prokaryotic gene annotation with `prodigal`
 
