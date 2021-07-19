@@ -21,8 +21,8 @@ library(dplyr)
 Load all tsv files for the different GAGA ids in a list of data frames.
 ```{r}
 #tsv2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
-#tsv2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
-tsv2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.*.lgt.good.candidates.tsv"
+tsv2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
+#tsv2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.*.lgt.good.candidates.tsv"
 dataFiles <- lapply(Sys.glob(tsv2load), read.csv,sep="\t")
 ```
 
@@ -58,8 +58,8 @@ head(df)
 3. Merge the scaffold information together with the information for the LGTs
 ```{r}
 #data2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/genome.file"
-#data2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/genome.file"  # load data from all genome.files
-data2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/genome.file"  # load data from all genome.files
+data2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/genome.file"  # load data from all genome.files
+#data2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/genome.file"  # load data from all genome.files
 genomeFiles <- lapply(Sys.glob(data2load), read.csv,sep="\t",header=F) # create large list of all genome.files
 
 # Create a large df with information on scaffold number and length for every genome
@@ -269,4 +269,49 @@ lapply(1:length(list.of.plots), function(i){
   })
 ```
 
-Last changed 2021/05/26
+
+
+Plot the LGT filters 
+```{r}
+# Assign names to x
+x <- c( "original", "1st_filtering_step", "2nd_filtering_step", "3rd_filtering_step", "merging_of_loci","manual_investigation")
+# Assign names to y
+y <- c( 13664, 5355, 3631, 3610, 928, 410)
+# Assign x to "Filtering_step" as column name
+# Assign y to "nr_candidates" as column name
+filtering_df <- data.frame( "Filtering_step" = x, "Nr_candidates" = y)
+# Print the data frame
+filtering_df
+```
+
+
+```{r}
+library(forcats)
+
+p0 <- ggplot(filtering_df, aes(x=reorder(Filtering_step, -Nr_candidates), y=Nr_candidates, fill=Nr_candidates)) +
+  geom_bar(stat="identity")+theme_classic()+
+  coord_flip()
+p0
+
+# flipped version
+p1 <- ggplot(filtering_df, aes(x = reorder(Filtering_step, Nr_candidates), y = Nr_candidates)) +
+  geom_bar(aes(fill = as.factor(Nr_candidates)), stat="identity", width = 0.4) + theme_classic() +
+  geom_text(aes(label=Nr_candidates), hjust=1.3, color = "white", position=position_dodge(width=1.0), size = 3) +
+  scale_fill_gradient(low="darkgreen", high="darkblue") +
+  theme(legend.position = "none") +
+  coord_flip() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_viridis_d(breaks = rev, direction = -1)+
+  scale_y_continuous(position = "right", breaks = seq(0,14000, 2000)) +
+  labs(title = "Filtering of predicted LGT candidates", x = NULL, y="Number of candidates")
+p1 
+
+setwd("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced")
+library(export)
+graph2ppt(file="LGT_filtering")
+```
+```{r}
+
+ggsave("LGT_filtering.png", path = "/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced")
+```
+Last changed 2021/07/15
