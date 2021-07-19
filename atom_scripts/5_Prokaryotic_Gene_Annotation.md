@@ -148,6 +148,21 @@ conda activate dfast
 
 dfast -g GAGA-0020.Scaffold107.144838-147367.fa --force --cpu 50 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/one.candidate.uniprot.bacteria --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
 ```
+For another candidate with slightly different options:
+```bash
+#$ -S /bin/bash
+#$ -N dfastjob
+#$ -cwd
+#$ -pe smp 20
+#$ -l h_vmem=6G
+#$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.GAGA-0024.Scaffold1.16539177-16545088.out
+#$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.GAGA-0024.Scaffold1.16539177-16545088.err
+#$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta
+
+conda activate dfast
+
+dfast -g GAGA-0024.Scaffold1.16539177-16545088.fa --force --metagenome --cpu 20 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/GAGA-0024.Scaffold1.16539177-16545088.uniprot.bacteria --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
+```
 
 For all candidates together:
 
@@ -172,7 +187,39 @@ module load seq-search/mmseqs/sse2-13-45111
 
 dfast -g all.candidates.fa --force --metagenome --cpu 20 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/all.candidates.uniprot.bacteria --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
 ```
+###### This does not work for the file `all.candidates.fa`. The dfast script for one candidate will be run on each genome to obtain dfast results:
 
+`cd by.genome`
+nano `batch.dfastjob.sh`:
+
+```bash
+#$ -S /bin/bash
+#$ -N batchdfastjob
+#$ -cwd
+#$ -w e
+#$ -V
+#$ -pe smp 20
+#$ -l h_vmem=6G
+#$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/$file.out
+#$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/$file.err
+#$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/by.genome
+
+conda activate dfast
+
+echo "Running on file: $file"
+
+dfast -g $file --force --metagenome --cpu 20 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/$file --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
+```
+
+Submit the script and parse bash variables to the script using `-v file="file1.fa"`
+
+Submit it with:
+```bash
+qsub -v file="GAGA-0020.fa" batch.dfastjob.sh
+qsub -v file="GAGA-0024.fa" batch.dfastjob.sh
+qsub -v file="GAGA-0025.fa" batch.dfastjob.sh
+....
+```
 -------------------------------------------------------------------------
 ## 2. Prokaryotic gene annotation with `prodigal`
 
