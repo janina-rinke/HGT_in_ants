@@ -314,4 +314,4 @@ graph2ppt(file="LGT_filtering")
 
 ggsave("LGT_filtering.png", path = "/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced")
 ```
-Last changed 2021/07/15
+Last changed 2021/07/19
