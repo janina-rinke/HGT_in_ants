@@ -220,6 +220,16 @@ qsub -v file="GAGA-0024.fa" batch.dfastjob.sh
 qsub -v file="GAGA-0025.fa" batch.dfastjob.sh
 ....
 ```
+
+To submit jobs more easily, use `parallel`:
+```bash
+find . -name "GAGA*" | parallel -I% --max-args 1 qsub -v file="%" batch.dfastjob.sh
+
+find . -name "NCBI*" | parallel -I% --max-args 1 qsub -v file="%" batch.dfastjob.sh
+
+find . -name "OUT*" | parallel -I% --max-args 1 qsub -v file="%" batch.dfastjob.sh
+```
+
 -------------------------------------------------------------------------
 ## 2. Prokaryotic gene annotation with `prodigal`
 
