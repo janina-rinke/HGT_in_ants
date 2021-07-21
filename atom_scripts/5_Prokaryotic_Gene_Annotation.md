@@ -330,4 +330,4 @@ Gammaproteobacteria	1236	C	1	0	1	1.00000
 
 The `GAGA-0515.krona.html` file (file:///Users/Janina/Downloads/taxonomy_classification/GAGA-0515.krona.html) shows the taxonomic assignment graphically.
 
-Based on this good examples, all candidates were evaluated.
+Based on this good example, all candidates were evaluated.
