@@ -187,10 +187,9 @@ module load seq-search/mmseqs/sse2-13-45111
 
 dfast -g all.candidates.fa --force --metagenome --cpu 20 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/all.candidates.uniprot.bacteria --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
 ```
-###### This does not work for the file `all.candidates.fa`. The dfast script for one candidate will be run on each genome to obtain dfast results:
+Running `dfast` against the additional UniProtDatabase does not work for the file `all.candidates.fa`. `Dfast` can not read multiple fasta sequences files with the additional database. Therefore, the `dfast` script will be run on each candidate spearately with `parallel` to obtain dfast results:
 
-`cd by.genome`
-nano `batch.dfastjob.sh`:
+nano `batch_dfast_job.sh`:
 
 ```bash
 #$ -S /bin/bash
@@ -213,14 +212,6 @@ dfast -g $file --force --metagenome --cpu 20 --debug --use_original_name t --min
 
 Submit the script and parse bash variables to the script using `-v file="file1.fa"`
 
-Submit it with:
-```bash
-qsub -v file="GAGA-0020.fa" batch.dfastjob.sh
-qsub -v file="GAGA-0024.fa" batch.dfastjob.sh
-qsub -v file="GAGA-0025.fa" batch.dfastjob.sh
-....
-```
-
 To submit jobs more easily, use `parallel`:
 ```bash
 find . -name "GAGA*" | parallel -I% --max-args 1 qsub -v file="%" batch.dfastjob.sh
@@ -229,6 +220,33 @@ find . -name "NCBI*" | parallel -I% --max-args 1 qsub -v file="%" batch.dfastjob
 
 find . -name "OUT*" | parallel -I% --max-args 1 qsub -v file="%" batch.dfastjob.sh
 ```
+
+After running the script, not all candidates contain all files from the complete pipeline (Possible bug in GridEngine). Files, which do not contain all resulting dfast files need to be identified and the `dfast`pipeline needs to be re-run for them.
+
+####1.3 Debugging of incomplete `dfast` candidates
+
+Find all directories which do not contain a `cds.fna` file and save them into a list:
+```bash
+cd /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast
+
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/cds.fna ]] && echo "$dir"; done > ../dfast2repeat.lst
+```
+
+Re-run the `dfast_batch_job.sh` script on all genomes in the `candidates.fasta` folder based on the elements given by the `dfast2repeat.lst`:
+
+```bash
+cd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta
+
+cat ../gene_annotation/dfast2repeat.lst| cut -f 2 -d "/"| parallel -I% --max-args 1 qsub -v file="%" batch_dfast_job.sh -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/%.out -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/%.err
+```
+
+Control, that all candidates have a completed pipeline:
+```bash
+cd /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast
+
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/cds.fna ]] && echo "$dir"; done | wc -l
+```
+If all candidates have successfully completed the pipeline, no more candidate directories should be showing up here.
 
 -------------------------------------------------------------------------
 ## 2. Prokaryotic gene annotation with `prodigal`
