@@ -315,3 +315,15 @@ graph2ppt(file="LGT_filtering")
 ggsave("LGT_filtering.png", path = "/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced")
 ```
 Last changed 2021/07/19
+
+
+for (i in 1:nrow(filtering_df)) {
+data$Nr_candidates[i]<-geoMean(c(data$Nr_candidates[i],data$Nr_candidates[i]))
+}
+
+print(i)
+
+
+for (i in 1:nrow(filtering_df)) {
+print(i)
+}
