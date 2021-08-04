@@ -47,7 +47,7 @@ Scaffold8       1761241 1761241 Scaffold8-1760778:1761241.end
 
 For all LGT candidates:
 ```bash
-find */results/LGTs.candidateloci.bed | parallel -I% --dryrun --max-args 1 cat % --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' ">" LGTboundaries.bed
+ls | parallel --dryrun cat {}/results/LGTs.candidateloci.bed "|" parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' ">" {}/results/{}.LGTboundaries.bed
 ```
 
 ###### DOES NOT WORK YET.
@@ -66,18 +66,19 @@ bedtools intersect -abam GAGA-0515/results/merged.candidateloci.loose.bam -b GAG
 samtools index GAGA-0515/results/GAGA-0515.LGTboundaries.PacBio.overlap.bam
 ```
 
-## Slop
+### 3. Expand the required overlap
+##### Slop
 
 Now, if we want to expand the required overlap, and want e.g. that reads overlap the LGT start position by 1000 bp on both sides, we can do that with `bedtools slop` and `bedtools intersect`
 
 First, we `slop` the boundaries
 ```bash
 # create a genome file containing the length of all scaffolds in the assembly (required by bedtools)
-samtools faidx ../../data/GAGA-0200_SLR-superscaffolder_final_dupsrm_filt.fasta
-cut -f 1-2 ../../data/GAGA-0200_SLR-superscaffolder_final_dupsrm_filt.fasta.fai > GAGA-0200.genome
+samtools faidx assemblies/GAGA-0515_SLR-superscaffolder_final_dupsrm_filt.fasta
+cut -f 1-2 assemblies/GAGA-0515_SLR-superscaffolder_final_dupsrm_filt.fasta.fai > GAGA-0515.genome
 
 # then slop the bed file by 50 bp.
-bedtools slop -i GAGA-0200.LGTboundaries.bed -g GAGA-0200.genome -b 50 > GAGA-0200.LGTboundaries.50bp.up.down.bed
+bedtools slop -i GAGA-0515/results/GAGA-0515.LGTboundaries.bed -g GAGA-0515.genome -b 50 > GAGA-0515.LGTboundaries.50bp.up.down.bed
 ```
 
 ## intersect
