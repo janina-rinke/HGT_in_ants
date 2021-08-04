@@ -2,28 +2,68 @@
 
 ```bash
 # change to where you want to work
-#cd /global/homes/jg/schradel/data/GAGA/GAGA-0200-LGT/results/boundaryReads
+#cd /global/scratch2/j_rink02/master/lgt/0_data
 ```
 
 To start, we need 2 files: One `bam` file holding the PacBio reads and one `bed` file containing the LGT start and stop coordinates.
 
-We start with a file containing the LGT candidates you want to screen (I used `LGTs.candidateloci.bed`, see if that makes sense) to create a `bed` file with the start and stop positions as separate entries.
+We start with a file containing the LGT candidates you want to screen to create a `bed` file with the start and stop positions as separate entries.
+
+### 1. Use the file `LGTs.candidateloci.bed` to create a bed file with start+stop coordinates of the LGT as separate entries.
 
 ```bash
-cat ../../data/GAGA-0200/LGTs.candidateloci.bed|parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' >  GAGA-0200.LGTboundaries.bed
+cat GAGA-0515/results/LGTs.candidateloci.bed | parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' > GAGA-0515/results/GAGA-0515.LGTboundaries.bed
 ```
 
-Next, we can extract all the PacBio reads overlapping these boundaries
+Output of the above file:
+```bash
+Scaffold10      88994   88994   Scaffold10-88994:89221.start
+Scaffold10      89221   89221   Scaffold10-88994:89221.end
+Scaffold10      90067   90067   Scaffold10-90067:91033.start
+Scaffold10      91033   91033   Scaffold10-90067:91033.end
+Scaffold10      94503   94503   Scaffold10-94503:94704.start
+Scaffold10      94704   94704   Scaffold10-94503:94704.end
+Scaffold14      30015   30015   Scaffold14-30015:30210.start
+Scaffold14      30210   30210   Scaffold14-30015:30210.end
+Scaffold10      95463   95463   Scaffold10-95463:95627.start
+Scaffold10      95627   95627   Scaffold10-95463:95627.end
+Scaffold14      41250   41250   Scaffold14-41250:42034.start
+Scaffold14      42034   42034   Scaffold14-41250:42034.end
+Scaffold10      96605   96605   Scaffold10-96605:97289.start
+Scaffold10      97289   97289   Scaffold10-96605:97289.end
+Scaffold50      177554  177554  Scaffold50-177554:178683.start
+Scaffold50      178683  178683  Scaffold50-177554:178683.end
+Scaffold14      57096   57096   Scaffold14-57096:57916.start
+Scaffold14      57916   57916   Scaffold14-57096:57916.end
+Scaffold14      58799   58799   Scaffold14-58799:59000.start
+Scaffold14      59000   59000   Scaffold14-58799:59000.end
+Scaffold150     31481   31481   Scaffold150-31481:33376.start
+Scaffold150     33376   33376   Scaffold150-31481:33376.end
+Scaffold96      1       1       Scaffold96-1:22253.start
+Scaffold96      22253   22253   Scaffold96-1:22253.end
+Scaffold8       1760778 1760778 Scaffold8-1760778:1761241.start
+Scaffold8       1761241 1761241 Scaffold8-1760778:1761241.end
+```
+
+For all LGT candidates:
+```bash
+find */results/LGTs.candidateloci.bed | parallel -I% --dryrun --max-args 1 cat % --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' ">" LGTboundaries.bed
+```
+
+###### DOES NOT WORK YET.
+
+### 2. Extract all PacBio reads overlapping these boundaries.
+
 ```bash
 ## merge the two bam files for nAo and other
 #samtools merge <outfile.bam> <infile1.bam> <infile2.bam>
-samtools merge merged.candidateloci.loose.bam ../../data/GAGA-0200/LGTs.nAo.candidateloci.loose.PacBio.bam ../../data/GAGA-0200/LGTs.candidateloci.loose.PacBio.bam
+samtools merge GAGA-0515/results/merged.candidateloci.loose.bam GAGA-0515/results/LGTs.nAo.candidateloci.loose.PacBio.bam GAGA-0515/results/LGTs.candidateloci.loose.PacBio.bam
 
 
 # extract reads overlapping the boundaries
-bedtools intersect -abam merged.candidateloci.loose.bam -b GAGA-0200.LGTboundaries.bed > GAGA-0200.LGTboundaries.PacBio.overlap.bam
+bedtools intersect -abam GAGA-0515/results/merged.candidateloci.loose.bam -b GAGA-0515/results/GAGA-0515.LGTboundaries.bed > GAGA-0515/results/GAGA-0515.LGTboundaries.PacBio.overlap.bam
 # index the bam file
-samtools index GAGA-0200.LGTboundaries.PacBio.overlap.bam
+samtools index GAGA-0515/results/GAGA-0515.LGTboundaries.PacBio.overlap.bam
 ```
 
 ## Slop
