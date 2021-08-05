@@ -1,4 +1,4 @@
-# Quick commands to calculate the number of reads overlapping LGT boundaries
+# Calculate the number of reads overlapping LGT boundaries
 
 ```bash
 # change to where you want to work
@@ -76,13 +76,23 @@ GTs.candidateloci.bed.LGTboundaries.bed ]] && echo "$dir"; done
 ```
 ### 2. Extract all PacBio reads overlapping these boundaries.
 
+#### 2.1 Merge the bam files for nAo and other
 ```bash
-## merge the two bam files for nAo and other
 #samtools merge <outfile.bam> <infile1.bam> <infile2.bam>
+#for one file
 samtools merge GAGA-0515/results/merged.candidateloci.loose.bam GAGA-0515/results/LGTs.nAo.candidateloci.loose.PacBio.bam GAGA-0515/results/LGTs.candidateloci.loose.PacBio.bam
 
+#for all files
+for i in * ; do samtools merge $i/results/merged.candidateloci.loose.bam $i/result
+s/LGTs.nAo.candidateloci.loose.PacBio.bam $i/results/LGTs.candidateloci.loose.PacBio.bam; done
+```
+Check if all genomes have the file `merged.candidateloci.loose.bam`:
+```bash
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/merged.candidateloci.loose.bam ]] && echo "$dir"; done
+```
 
-# extract reads overlapping the boundaries
+#### 2.2 Extract the reads overlapping the boundaries:
+```
 bedtools intersect -abam GAGA-0515/results/merged.candidateloci.loose.bam -b GAGA-0515/results/GAGA-0515.LGTboundaries.bed > GAGA-0515/results/GAGA-0515.LGTboundaries.PacBio.overlap.bam
 # index the bam file
 samtools index GAGA-0515/results/GAGA-0515.LGTboundaries.PacBio.overlap.bam
