@@ -49,9 +49,31 @@ For all LGT candidates:
 ```bash
 ls | parallel --dryrun cat {}/results/LGTs.candidateloci.bed "|" parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' ">" {}/results/{}.LGTboundaries.bed
 ```
-
 ###### DOES NOT WORK YET.
 
+Write a GridEngine Script to produce this file for all GAGA genomes:
+`nano makeLGTboundaryfile.sh`
+```bash
+#$ -S /bin/bash
+#$ -N LGTboundarybedfile
+#$ -cwd
+#$ -pe smp 10
+#$ -l h_vmem=1G
+#$ -o /global/scratch2/j_rink02/master/lgt/0_data/tmp/bedfile.out
+#$ -e /global/scratch2/j_rink02/master/lgt/0_data/tmp/bedfile.err
+#$ -wd /global/scratch2/j_rink02/master/lgt/0_data
+
+cat $file | parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' > $file.LGTboundaries.bed
+```
+Execute the script with:
+`find */results/LGTs.candidateloci.bed | parallel -I% --max-args 1 qsub -v file="%"
+ makeLGTboundarybedfile.sh -o ./tmp/$file.out -e ./tmp/$file.err`
+
+Check if all genomes have this file:
+```bash
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/L
+GTs.candidateloci.bed.LGTboundaries.bed ]] && echo "$dir"; done
+```
 ### 2. Extract all PacBio reads overlapping these boundaries.
 
 ```bash
