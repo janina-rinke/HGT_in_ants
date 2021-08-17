@@ -105,7 +105,7 @@ bedtools intersect -abam GAGA-0515/results/merged.candidateloci.loose.bam -b GAG
 samtools index GAGA-0515/results/GAGA-0515.LGTboundaries.PacBio.overlap.bam
 ```
 
-`bedtools intersect` allows one to screen for overlaps between two sets of genomic features, in this case whether any of the reads from the `merged.candidateloci.loose.bam` file overlap with the LGT boundaries from the `LGT.boundaries.bed` file. The resulting overlap between the LGT boundaries and the reads is written into a new file with the name `LGTboundaries.PacBio.overlap.bam`.
+`bedtools intersect` allows one to screen for overlaps between two sets of genomic features, in this case whether any of the reads from the `merged.candidateloci.loose.bam` file overlap with the LGT boundaries from the `LGT.boundaries.bed` file. The resulting overlap between the LGT boundaries and the reads is written into a new file with the name `$GAGA-id.LGTboundaries.PacBio.overlap.bam`.
 
 For all genomes:
 ```bash
@@ -118,9 +118,10 @@ for i in * ; do samtools index $i/results/$i.LGTboundaries.PacBio.overlap.bam; d
 
 Check if all genomes have the file:
 ```bash
-for $i in *; do find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$i.LGTboundaries.PacBio.overlap.bam ]] && echo "$dir"; done
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.LGTboundaries.PacBio.overlap.bam ]] && echo "$dir"; done
 ```
 
+----- Stop here 17.08. ---------
 ### 3. Expand the required overlap
 ##### Slop
 
