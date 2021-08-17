@@ -91,6 +91,7 @@ Check if all genomes have the file `merged.candidateloci.loose.bam`:
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/merged.candidateloci.loose.bam ]] && echo "$dir"; done
 ```
 
+---------- STOP HERE AM 06.08.2021 -------------------------
 #### 2.2 Extract the reads overlapping the boundaries:
 ```
 bedtools intersect -abam GAGA-0515/results/merged.candidateloci.loose.bam -b GAGA-0515/results/GAGA-0515.LGTboundaries.bed > GAGA-0515/results/GAGA-0515.LGTboundaries.PacBio.overlap.bam
