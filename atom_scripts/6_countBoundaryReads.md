@@ -5,15 +5,19 @@
 #cd /global/scratch2/j_rink02/master/lgt/0_data
 ```
 
-To start, we need 2 files: One `bam` file holding the PacBio reads and one `bed` file containing the LGT start and stop coordinates.
+To start, we need 2 files: One `bam` file holding the PacBio reads and one `bed` file containing the LGT start and stop coordinates (`LGTs.candidateloci.bed`).
 
-We start with a file containing the LGT candidates you want to screen to create a `bed` file with the start and stop positions as separate entries.
+We start with the file containing the LGT candidates you want to screen to create a `bed` file with the start and stop positions as separate entries.
 
 ### 1. Use the file `LGTs.candidateloci.bed` to create a bed file with start+stop coordinates of the LGT as separate entries.
 
+For one genome only, with `GAGA-0515` as example:
 ```bash
+cd /global/scratch2/j_rink02/master/lgt/0_data
+
 cat GAGA-0515/results/LGTs.candidateloci.bed | parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' > GAGA-0515/results/GAGA-0515.LGTboundaries.bed
 ```
+The above command creates a new file called `GAGA-0515.LGTboundaries.bed` which now contains only the start and stop coordinates of each LGT as a separate entry. 
 
 Output of the above file:
 ```bash
