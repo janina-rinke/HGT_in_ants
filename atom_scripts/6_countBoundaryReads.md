@@ -11,7 +11,7 @@ We start with the file containing the LGT candidates you want to screen to creat
 
 ### 1. Use the file `LGTs.candidateloci.bed` to create a bed file with start+stop coordinates of the LGT as separate entries.
 
-##### 1.1 For one genome only, with `GAGA-0515` as example:
+#### 1.1 For one genome only, with `GAGA-0515` as example:
 ```bash
 cd /global/scratch2/j_rink02/master/lgt/0_data
 
@@ -49,7 +49,7 @@ Scaffold8       1760778 1760778 Scaffold8-1760778:1761241.start
 Scaffold8       1761241 1761241 Scaffold8-1760778:1761241.end
 ```
 
-##### 1.2 For all LGT candidates:
+#### 1.2 For all LGT candidates:
 
 Write a GridEngine Script to produce this file for all GAGA genomes:
 `nano makeLGTboundaryfile.sh`
@@ -71,19 +71,21 @@ Execute the script with:
 
 The file should be called `LGTs.candidateloci.bed.LGTboundaries.bed` and should be found in every GAGA genome folder.
 
-##### 1.3 Check if all genomes have this file:
+#### 1.3 Check if all genomes have this file:
 ```bash
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/LGTs.candidateloci.bed.LGTboundaries.bed ]] && echo "$dir"; done
 ```
+
+If all GAGA genomes contain this file, no GAGA genome folder should appear here.
 ### 2. Extract all PacBio reads overlapping these boundaries.
 
 #### 2.1 Merge the bam files for nAo and other
 ```bash
-#samtools merge <outfile.bam> <infile1.bam> <infile2.bam>
-#for one file
+#command: samtools merge <outfile.bam> <infile1.bam> <infile2.bam>
+#for one file (GAGA-0515 as example file):
 samtools merge GAGA-0515/results/merged.candidateloci.loose.bam GAGA-0515/results/LGTs.nAo.candidateloci.loose.PacBio.bam GAGA-0515/results/LGTs.candidateloci.loose.PacBio.bam
 
-#for all files
+#for all files:
 for i in * ; do samtools merge $i/results/merged.candidateloci.loose.bam $i/result
 s/LGTs.nAo.candidateloci.loose.PacBio.bam $i/results/LGTs.candidateloci.loose.PacBio.bam; done
 ```
@@ -91,15 +93,24 @@ Check if all genomes have the file `merged.candidateloci.loose.bam`:
 ```bash
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/merged.candidateloci.loose.bam ]] && echo "$dir"; done
 ```
-
----------- STOP HERE AM 06.08.2021 -------------------------
 #### 2.2 Extract the reads overlapping the boundaries:
-```
+
+For one genome only, with `GAGA-0515` as example:
+```bash
 bedtools intersect -abam GAGA-0515/results/merged.candidateloci.loose.bam -b GAGA-0515/results/GAGA-0515.LGTboundaries.bed > GAGA-0515/results/GAGA-0515.LGTboundaries.PacBio.overlap.bam
+
+# -abam: BAM/BED file A. Each BAM alignment in A is compared to B in search of overlaps.
+# -b: One or more BAM/BED file(s).
 # index the bam file
 samtools index GAGA-0515/results/GAGA-0515.LGTboundaries.PacBio.overlap.bam
 ```
 
+`bedtools intersect` allows one to screen for overlaps between two sets of genomic features, in this case whether any of the reads from the `merged.candidateloci.loose.bam` file overlap with the LGT boundaries from the `LGT.boundaries.bed` file. The resulting overlap between the LGT boundaries and the reads is written into a new file with the name `LGTboundaries.PacBio.overlap.bam`.
+
+For all genomes:
+```bash
+for i in * ; do bedtools intersect -abam $i/results/merged.candidateloci.loose.bam -b $i/results/LGTs.candidateloci.bed.LGTboundaries.bed > $i/results/$i.LGTboundaries.PacBio.overlap.bam; done 
+```
 ### 3. Expand the required overlap
 ##### Slop
 
