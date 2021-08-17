@@ -11,13 +11,13 @@ We start with the file containing the LGT candidates you want to screen to creat
 
 ### 1. Use the file `LGTs.candidateloci.bed` to create a bed file with start+stop coordinates of the LGT as separate entries.
 
-For one genome only, with `GAGA-0515` as example:
+##### 1.1 For one genome only, with `GAGA-0515` as example:
 ```bash
 cd /global/scratch2/j_rink02/master/lgt/0_data
 
 cat GAGA-0515/results/LGTs.candidateloci.bed | parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' > GAGA-0515/results/GAGA-0515.LGTboundaries.bed
 ```
-The above command creates a new file called `GAGA-0515.LGTboundaries.bed` which now contains only the start and stop coordinates of each LGT as a separate entry. 
+The above command creates a new file called `GAGA-0515.LGTboundaries.bed` which now contains only the start and stop coordinates of each LGT as a separate entry.
 
 Output of the above file:
 ```bash
@@ -49,11 +49,7 @@ Scaffold8       1760778 1760778 Scaffold8-1760778:1761241.start
 Scaffold8       1761241 1761241 Scaffold8-1760778:1761241.end
 ```
 
-For all LGT candidates:
-```bash
-ls | parallel --dryrun cat {}/results/LGTs.candidateloci.bed "|" parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' ">" {}/results/{}.LGTboundaries.bed
-```
-###### DOES NOT WORK YET.
+##### 1.2 For all LGT candidates:
 
 Write a GridEngine Script to produce this file for all GAGA genomes:
 `nano makeLGTboundaryfile.sh`
@@ -73,10 +69,11 @@ Execute the script with:
 `find */results/LGTs.candidateloci.bed | parallel -I% --max-args 1 qsub -v file="%"
  makeLGTboundarybedfile.sh -o ./tmp/$file.out -e ./tmp/$file.err`
 
-Check if all genomes have this file:
+The file should be called `LGTs.candidateloci.bed.LGTboundaries.bed` and should be found in every GAGA genome folder.
+
+##### 1.3 Check if all genomes have this file:
 ```bash
-find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/L
-GTs.candidateloci.bed.LGTboundaries.bed ]] && echo "$dir"; done
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/LGTs.candidateloci.bed.LGTboundaries.bed ]] && echo "$dir"; done
 ```
 ### 2. Extract all PacBio reads overlapping these boundaries.
 
