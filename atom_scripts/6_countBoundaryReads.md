@@ -109,8 +109,18 @@ samtools index GAGA-0515/results/GAGA-0515.LGTboundaries.PacBio.overlap.bam
 
 For all genomes:
 ```bash
-for i in * ; do bedtools intersect -abam $i/results/merged.candidateloci.loose.bam -b $i/results/LGTs.candidateloci.bed.LGTboundaries.bed > $i/results/$i.LGTboundaries.PacBio.overlap.bam; done 
+# calculate overlap with bedtools intersect
+for i in * ; do bedtools intersect -abam $i/results/merged.candidateloci.loose.bam -b $i/results/LGTs.candidateloci.bed.LGTboundaries.bed > $i/results/$i.LGTboundaries.PacBio.overlap.bam; done
+
+# index the bam file
+for i in * ; do samtools index $i/results/$i.LGTboundaries.PacBio.overlap.bam; done
 ```
+
+Check if all genomes have the file:
+```bash
+for $i in *; do find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$i.LGTboundaries.PacBio.overlap.bam ]] && echo "$dir"; done
+```
+
 ### 3. Expand the required overlap
 ##### Slop
 
