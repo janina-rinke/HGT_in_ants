@@ -143,9 +143,9 @@ mkdir stLFR
 ```
 Sort according to sequencing information from GAGA project.
 
-For genomes with long-read PacBio data:
+#### 3.3 Genomes with long-read PacBio data
 `cd PacBio`
-#### Slop
+##### Slop
 We `slop` the boundaries, so that the boundary is expanded by 1000 bp on each side.
 
 For one candidate (with `GAGA-0515` as an example):
@@ -156,8 +156,12 @@ bedtools slop -i GAGA-0515/results/LGTs.candidateloci.bed.LGTboundaries.bed -g G
 # -g: genome file
 # -b: increase the BED/GFF file by the same number of bp in each direction.
 ```
-
-#### intersect
+For all genomes:
+```bash
+# Expand the LGT boundaries by 1000 bp for long-read data with bedtools slop
+for i in *; do bedtools slop -i $i/results/LGTs.candidateloci.bed.LGTboundaries.bed -g $i/results/genome.file -b 1000 > $i/results/$i.LGTboundaries.1000bp.up.down.bed; done
+```
+##### intersect
 Now we can `intersect` the reads with the expanded LGT boundary. Here, we add the `-F 1` option, to require that the entire stretch defined in the bed file is covered by a given read.
 
 ```bash
