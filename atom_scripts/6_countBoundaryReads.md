@@ -156,6 +156,36 @@ bedtools slop -i GAGA-0515/results/LGTs.candidateloci.bed.LGTboundaries.bed -g G
 # -g: genome file
 # -b: increase the BED/GFF file by the same number of bp in each direction.
 ```
+Output of the file `GAGA-0515.LGTboundaries.1000bp.up.down.bed`:
+```bash
+Scaffold10      87994   89994   Scaffold10-88994:89221.start
+Scaffold10      88221   90221   Scaffold10-88994:89221.end
+Scaffold10      89067   91067   Scaffold10-90067:91033.start
+Scaffold10      90033   92033   Scaffold10-90067:91033.end
+Scaffold10      94463   96463   Scaffold10-95463:95627.start
+Scaffold10      94627   96627   Scaffold10-95463:95627.end
+Scaffold10      93503   95503   Scaffold10-94503:94704.start
+Scaffold10      93704   95704   Scaffold10-94503:94704.end
+Scaffold14      56096   58096   Scaffold14-57096:57916.start
+Scaffold14      56916   58916   Scaffold14-57096:57916.end
+Scaffold10      95605   97605   Scaffold10-96605:97289.start
+Scaffold10      96289   98289   Scaffold10-96605:97289.end
+Scaffold14      29015   31015   Scaffold14-30015:30210.start
+Scaffold14      29210   31210   Scaffold14-30015:30210.end
+Scaffold14      40250   42250   Scaffold14-41250:42034.start
+Scaffold14      41034   43034   Scaffold14-41250:42034.end
+Scaffold96      1       1001    Scaffold96-1:22253.start
+Scaffold96      21253   23253   Scaffold96-1:22253.end
+Scaffold14      57799   59799   Scaffold14-58799:59000.start
+Scaffold14      58000   60000   Scaffold14-58799:59000.end
+Scaffold150     30481   32481   Scaffold150-31481:33376.start
+Scaffold150     32376   34376   Scaffold150-31481:33376.end
+Scaffold50      176554  178554  Scaffold50-177554:178683.start
+Scaffold50      177683  179683  Scaffold50-177554:178683.end
+Scaffold8       1759778 1761778 Scaffold8-1760778:1761241.start
+Scaffold8       1760241 1762241 Scaffold8-1760778:1761241.end
+```
+
 For all genomes:
 ```bash
 # Expand the LGT boundaries by 1000 bp for long-read data with bedtools slop
@@ -165,11 +195,26 @@ for i in *; do bedtools slop -i $i/results/LGTs.candidateloci.bed.LGTboundaries.
 Now we can `intersect` the reads with the expanded LGT boundary. Here, we add the `-F 1` option, to require that the entire stretch defined in the bed file is covered by a given read.
 
 ```bash
-# extract reads completely overlapping the +-50 bp of the boundary
-bedtools intersect -F 1 -abam merged.candidateloci.loose.bam -b GAGA-0200.LGTboundaries.50bp.up.down.bed > GAGA-0200.LGTboundaries.50bp.PacBio.overlap.bam
+# extract reads completely overlapping the +-1000 bp of the boundary
+for i in *; do bedtools intersect -F 1 -abam $i/results/merged.candidateloci.loose.bam -b $i/results/$i.LGTboundaries.1000bp.up.down.bed > $i/results/$i.LGTboundaries.1000bp.PacBio.overlap.bam; done
 ```
 
-## Filter reads based on mapping quality
+#### 3.4 Genomes with short-read stLFR data
+`cd stLFR`
+##### Slop
+We `slop` the boundaries, so that the boundary is expanded by 50 bp on each side.
+
+For all genomes:
+```bash
+# Expand the LGT boundaries by 1000 bp for long-read data with bedtools slop
+for i in *; do bedtools slop -i $i/results/LGTs.candidateloci.bed.LGTboundaries.bed -g $i/results/genome.file -b 50 > $i/results/$i.LGTboundaries.50bp.up.down.bed; done
+```
+##### intersect
+```bash
+# extract reads completely overlapping the +-50 bp of the boundary
+bedtools intersect -F 1 -abam $i/results/merged.candidateloci.loose.bam -b $i/results/$i.LGTboundaries.50bp.up.down.bed > $i/results/$i.LGTboundaries.50bp.PacBio.overlap.bam
+```
+## 4. Filter reads based on mapping quality
 Finally, we filter reads that are not mapped very well to the region (e.g. they could also map somewhere else). Also, we remove reads that are in the file twice (because we merged the nAo and the other bam file above)
 ```bash
 # remove not primary alignments and supplementary alignments from bam file. Google "sam flags explained" for details
