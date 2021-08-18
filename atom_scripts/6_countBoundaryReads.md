@@ -127,11 +127,22 @@ find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results
 
 The required `genome.file`already exists for every genome in the respective folder (e.g. `GAGA-0515/results/genome.file`).
 
-First, we `slop` the boundaries, so that the reads overlap the LGT start position by 50 bp on both sides.
+#### 3.1 Find out the perfect size for expanding the LGT boundary
+
+Use `bedtools intersect` to report the number of read overlaps with the LGT boundary. Plot the LGT boundary overlaps of reads in R to calculate the expansion of the LGT boundary.
+
+```bash
+bedtools intersect -C -abam GAGA-0515/results/merged.candidateloci.loose.bam -b GAGA-0515/results/LGTs.candidateloci.bed.LGTboundaries.bed > GAGA-0515/results/GAGA-0515.LGTboundaries.PacBio.overlap.nr.bam
+```
+
+#### 3.2 Sort the genomes into short-read data (expand LGT boundary overlap by 50 bp) and long-read data (expand LGT boundary by 1000 bp)
+
+
+First, we `slop` the boundaries, so that boundary is expanded by 50 bp on each side.
 
 For one candidate (with `GAGA-0515` as an example):
 ```bash
-# Slop the bed file by 50 bp.
+# Expand the LGT boundaries by 50 bp with bedtools slop
 bedtools slop -i GAGA-0515/results/LGTs.candidateloci.bed.LGTboundaries.bed -g GAGA-0515/results/genome.file -b 50 > GAGA-0515/results/GAGA-0515.LGTboundaries.50bp.up.down.bed
 # -i: input file
 # -g: genome file
