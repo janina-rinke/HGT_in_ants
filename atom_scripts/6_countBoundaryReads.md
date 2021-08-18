@@ -121,23 +121,24 @@ Check if all genomes have the file:
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.LGTboundaries.PacBio.overlap.bam ]] && echo "$dir"; done
 ```
 
------ Stop here 17.08. ---------
 ### 3. Expand the required overlap
 ##### Slop
+`bedtools slop` will increase the size of each feature in a file by a user-defined number of bases. It will restrict resizing to the size of the chromosome (no end above chromosome size and no start below 0). In order to prevent extension beyond scaffold boundaries, `bedtools slop` requires a genome file, defining the length of each scaffold.
 
-Now, if we want to expand the required overlap, and want e.g. that reads overlap the LGT start position by 1000 bp on both sides, we can do that with `bedtools slop` and `bedtools intersect`
+The required `genome.file`already exists for every genome in the respective folder (e.g. `GAGA-0515/results/genome.file`).
 
-First, we `slop` the boundaries
+First, we `slop` the boundaries, so that the reads overlap the LGT start position by 50 bp on both sides.
+
+For one candidate (with `GAGA-0515` as an example):
 ```bash
-# create a genome file containing the length of all scaffolds in the assembly (required by bedtools)
-samtools faidx assemblies/GAGA-0515_SLR-superscaffolder_final_dupsrm_filt.fasta
-cut -f 1-2 assemblies/GAGA-0515_SLR-superscaffolder_final_dupsrm_filt.fasta.fai > GAGA-0515.genome
-
-# then slop the bed file by 50 bp.
-bedtools slop -i GAGA-0515/results/GAGA-0515.LGTboundaries.bed -g GAGA-0515.genome -b 50 > GAGA-0515.LGTboundaries.50bp.up.down.bed
+# Slop the bed file by 50 bp.
+bedtools slop -i GAGA-0515/results/LGTs.candidateloci.bed.LGTboundaries.bed -g GAGA-0515/results/genome.file -b 50 > GAGA-0515/results/GAGA-0515.LGTboundaries.50bp.up.down.bed
+# -i: input file
+# -g: genome file
+# -b: increase the BED/GFF file by the same number of bp in each direction.
 ```
 
-## intersect
+#### intersect
 Now we can `intersect` the reads with the expanded LGT boundary. Here, we add the `-F 1` option, to require that the entire stretch defined in the bed file is covered by a given read.
 
 ```bash
