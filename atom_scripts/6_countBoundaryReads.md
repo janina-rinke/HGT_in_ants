@@ -212,14 +212,28 @@ for i in *; do bedtools slop -i $i/results/LGTs.candidateloci.bed.LGTboundaries.
 ##### intersect
 ```bash
 # extract reads completely overlapping the +-50 bp of the boundary
-bedtools intersect -F 1 -abam $i/results/merged.candidateloci.loose.bam -b $i/results/$i.LGTboundaries.50bp.up.down.bed > $i/results/$i.LGTboundaries.50bp.PacBio.overlap.bam
+for i in *; do bedtools intersect -F 1 -abam $i/results/merged.candidateloci.loose.bam -b $i/results/$i.LGTboundaries.50bp.up.down.bed > $i/results/$i.LGTboundaries.50bp.PacBio.overlap.bam; done
 ```
 ## 4. Filter reads based on mapping quality
 Finally, we filter reads that are not mapped very well to the region (e.g. they could also map somewhere else). Also, we remove reads that are in the file twice (because we merged the nAo and the other bam file above)
+
+#### 4.1 Genomes with PacBio data:
+`cd PacBio`
+
+For one genome only (with `GAGA-0200` as an example):
 ```bash
 # remove not primary alignments and supplementary alignments from bam file. Google "sam flags explained" for details
-## I also remove duplicated reads (due to the merging of nAo Bam and other bam above), with the awk command
-samtools view -F 1024 -F 256 -F 2048 GAGA-0200.LGTboundaries.50bp.PacBio.overlap.bam -h |awk '!visited[$0]++|| $1 ~ /^@/' |samtools view -bS - > GAGA-0200.LGTboundaries.50bp.good.PacBio.overlap.bam
+## Additionally remove duplicated reads (due to the merging of nAo Bam and other bam above), with the awk command
+samtools view -F 1024 -F 256 -F 2048 GAGA-0200/results/GAGA-0200.LGTboundaries.1000bp.PacBio.overlap.bam -h |awk '!visited[$0]++|| $1 ~ /^@/' | samtools view -bS - > GAGA-0200/results/GAGA-0200.LGTboundaries.1000bp.good.PacBio.overlap.bam
+
+# -F 1024: read is PCR or optical duplicate
+# -F 256: not primary alignment
+# -F 2048: supplementary alignment
+```
+
+For all genomes with long-read PacBio data:
+```bash
+for i in *; do samtools view -F 1024 -F 256 -F 2048 $i/results/$i.LGTboundaries.1000bp.PacBio.overlap.bam -h |awk '!visited[$0]++|| $1 ~ /^@/' | samtools view -bS - > $i/results/$i.LGTboundaries.1000bp.good.PacBio.overlap.bam; done
 ```
 
 ## Stats
