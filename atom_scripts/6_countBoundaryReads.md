@@ -137,13 +137,21 @@ bedtools intersect -C -abam GAGA-0515/results/merged.candidateloci.loose.bam -b 
 
 #### 3.2 Sort the genomes into short-read data (expand LGT boundary overlap by 50 bp) and long-read data (expand LGT boundary by 1000 bp)
 
+```bash
+mkdir PacBio
+mkdir stLFR
+```
+Sort according to sequencing information from GAGA project.
 
-First, we `slop` the boundaries, so that boundary is expanded by 50 bp on each side.
+For genomes with long-read PacBio data:
+`cd PacBio`
+#### Slop
+We `slop` the boundaries, so that the boundary is expanded by 1000 bp on each side.
 
 For one candidate (with `GAGA-0515` as an example):
 ```bash
-# Expand the LGT boundaries by 50 bp with bedtools slop
-bedtools slop -i GAGA-0515/results/LGTs.candidateloci.bed.LGTboundaries.bed -g GAGA-0515/results/genome.file -b 50 > GAGA-0515/results/GAGA-0515.LGTboundaries.50bp.up.down.bed
+# Expand the LGT boundaries by 1000 bp for long-read data with bedtools slop
+bedtools slop -i GAGA-0515/results/LGTs.candidateloci.bed.LGTboundaries.bed -g GAGA-0515/results/genome.file -b 1000 > GAGA-0515/results/GAGA-0515.LGTboundaries.1000bp.up.down.bed
 # -i: input file
 # -g: genome file
 # -b: increase the BED/GFF file by the same number of bp in each direction.
