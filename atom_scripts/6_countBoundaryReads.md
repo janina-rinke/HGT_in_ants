@@ -403,7 +403,11 @@ find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results
 ```
 
 ### 5.2 Calculate the average length
+`bedtools bamtobed`is a conversion utility that converts sequence alignments in BAM format into BED.
+By default, each alignment in the BAM file is converted to a 6 column BED.
 ```bash
-# calculate average read length (not sure this is useful :) )
-bedtools bamtobed -bed12 -i GAGA-0200.LGTboundaries.50bp.good.PacBio.overlap.bam|cut -f 11|awk '{ total += $1; count++ } END { print total/count }'
+# calculate average read length
+bedtools bamtobed -bed12 -i GAGA-0200/results/GAGA-0200.LGTboundaries.1000bp.good.PacBio.overlap.bam|cut -f 11|awk '{ total += $1; count++ } END { print total/count }'
+# -bed12: Write a "blocked" BED format. This converts "spliced" BAM alignments to BED12.
+# -i: input file in BAM format
 ```
