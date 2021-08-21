@@ -1,0 +1,64 @@
+# Distribution plots of average read lengths in all GAGA genomes 
+# Janina Rinke, 21.08.2021
+
+---
+title: "R Notebook: Read lengths distribution plots"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(data.table)
+library(plyr)
+library(dplyr)
+```
+
+setwd("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data")
+
+# Load the data
+```{r}
+PacBio <- read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGT_avg_reads_boundary_region.csv") 
+stLFR <- read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGT_avg_reads_boundary_region_stLFR.csv")
+```
+
+```{r}
+PacBio[,2] <- as.numeric(as.character(PacBio[,2]))
+class(PacBio$avg_read_length_boundary_region)
+
+cleaned_PacBio <- na.omit(PacBio)
+
+mean <- mean(cleaned_PacBio$avg_read_length_boundary_region) #12748
+median <- median(cleaned_PacBio$avg_read_length_boundary_region) #12541
+``` 
+
+```{r}
+stLFR[,2] <- as.numeric(as.character(stLFR[,2]))
+class(stLFR$avg_read_length_boundary_region)
+
+cleaned_stLFR <- na.omit(stLFR)
+
+stLFRmean <- mean(cleaned_stLFR$avg_read_length_boundary_region) #107
+stLFRmedian <- median(cleaned_stLFR$avg_read_length_boundary_region) #100
+``` 
+# Plot the data
+```{r}
+ggplot(cleaned_PacBio, aes(x=avg_read_length_boundary_region)) +
+  geom_histogram(color = "black", fill="lightblue", alpha=0.5, position="identity")+theme_classic() +
+  scale_x_continuous(position = "bottom", breaks = seq(0,25000, 5000)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(title = "Average read lengths in PacBio genomes", x = "Average read length", y="Count") +
+  geom_vline(xintercept = median(cleaned_PacBio$avg_read_length_boundary_region), col = "red", lwd = 1) 
+
+graph2ppt(file="PacBio_read_distribution")
+``` 
+
+```{r}
+ggplot(cleaned_stLFR, aes(x=avg_read_length_boundary_region)) +
+  geom_histogram(color = "black", fill="black", alpha=0.5, position="identity")+theme_classic() +
+  scale_x_continuous(position = "bottom", breaks = seq(0,300, 20)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(title = "Average read lengths in stLFR genomes", x = "Average read length", y="Count") +
+  geom_vline(xintercept = median(cleaned_stLFR$avg_read_length_boundary_region), col = "red", lwd = 1) 
+
+graph2ppt(file="stLFR_read_distribution")
+``` 

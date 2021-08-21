@@ -21,8 +21,8 @@ library(dplyr)
 Load all tsv files for the different GAGA ids in a list of data frames.
 ```{r}
 #tsv2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
-tsv2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
-#tsv2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.*.lgt.good.candidates.tsv"
+#tsv2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
+tsv2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.*.lgt.good.candidates.tsv"
 dataFiles <- lapply(Sys.glob(tsv2load), read.csv,sep="\t")
 ```
 
@@ -58,8 +58,8 @@ head(df)
 3. Merge the scaffold information together with the information for the LGTs
 ```{r}
 #data2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/genome.file"
-data2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/genome.file"  # load data from all genome.files
-#data2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/genome.file"  # load data from all genome.files
+#data2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/genome.file"  # load data from all genome.files
+data2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/genome.file"  # load data from all genome.files
 genomeFiles <- lapply(Sys.glob(data2load), read.csv,sep="\t",header=F) # create large list of all genome.files
 
 # Create a large df with information on scaffold number and length for every genome
@@ -161,23 +161,55 @@ Filter by evalue (evalue > 1e-25), ct4 (ct4>0.25), ce (ce>1.5), BitDiffSum (BitD
 
 ```{r}
 dfFilter<-subset(df,log.besteval>25 & ct4>0.25 & ce>1.5 & BitDiffSum>150 & cand.end-cand.start>100)
+df_eval_Filter<-subset(df,log.besteval>25)
+df_ct4_Filter<-subset(df,ct4>0.25)
+df_ce_Filter<-subset(df,ce>1.5)
+df_BitDiffSum_Filter<-subset(df,BitDiffSum>150)
+df_length_Filter<-subset(df,cand.end-cand.start>100)
 ```
-Filtering by the above criteria reduces the number of candidates to 5355 candidates (originally: 13664) in all 162 genomes.
+Filtering by the above criteria reduces the number of candidates to 5355 candidates (originally: 13664) in all 162 genomes (dfFilter dataframe).
 
-
-Remove anything at the beginning of a scaffold and candidates with a length over 20 kb.
-These are more likely to be misassemblies. (Note that this still leaves in candidates at the very end of scaffolds, which also are more likely misassemblies).
+# Save all outfiltered candidates for a re-evalution later 
 ```{r}
-dfFilter2<-subset(dfFilter,locus.start > 1000 & cand.length < 20000)
-```
-Filtering by the above criteria reduces the number of candidates further to 3631 candidates in all 162 genomes.
+# Save all outfiltered candidates in separate dataframes, to have a look at them later & check the quality later manually
+df_outfiltered_eval<-subset(df,log.besteval<=25)
+df_outfiltered_ct4<-subset(df,ct4<=0.25)
+df_outfiltered_ce<-subset(df,ce<=1.5)
+df_outfiltered_BitDiffSum<-subset(df,BitDiffSum<=150)
+df_outfiltered_length<-subset(df,cand.end-cand.start<=100)
 
-Remove anything at the end of a scaffold.
+write.table(df_outfiltered_eval,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.eval.outfiltered.tsv",sep="\t",quote = F,row.names = F)
+write.table(df_outfiltered_ct4,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.ct4.outfiltered.tsv",sep="\t",quote = F,row.names = F)
+write.table(df_outfiltered_ce,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.ce.outfiltered.tsv",sep="\t",quote = F,row.names = F)
+write.table(df_outfiltered_BitDiffSum,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.BitDiffSum.outfiltered.tsv",sep="\t",quote = F,row.names = F)
+write.table(df_outfiltered_length,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.length.outfiltered.tsv",sep="\t",quote = F,row.names = F)
+```
+
+
+#Filter out candidates at beginning of scaffold 
+Remove anything at the beginning of a scaffold within the first 1000 bp.
+These are more likely to be misassemblies.
+```{r}
+dfFilter1<-subset(dfFilter,cand.start > 1000)
+
+df_outfiltered_scaffold_start<-subset(dfFilter, cand.start < 1000)
+
+write.table(df_outfiltered_scaffold_start,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.scaffold_start.outfiltered.tsv",sep="\t",quote = F,row.names = F)
+```
+Filtering by the above criteria reduces the number of candidates further to 5173 candidates (dfFilter1 dataframe).
+
+# Filter out candidates at end of scaffold 
+Remove anything at the end of a scaffold within the last 1000 bp.
+These are more likely to be misassemblies.
 ```{r}
 # Filter the dataframe to remove candidates at the end of the scaffold       
-dfFilter3<-subset(dfFilter2, cand.end != scaffold.length)
+dfFilter2<-subset(dfFilter1, cand.end < scaffold.length-1000)
+
+df_outfiltered_scaffold_end<-subset(dfFilter1, cand.end > scaffold.length-1000)
+
+write.table(df_outfiltered_scaffold_end,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.scaffold_end.outfiltered.tsv",sep="\t",quote = F,row.names = F)
 ```
-This further reduces the number of candidates to 3610 possible LGTs in all 162 genomes.
+This further reduces the number of candidates to 5081 possible LGTs (dfFilter2 dataframe). 
 
 
 # Summarize candidates in close proximity into one larger locus
@@ -197,20 +229,19 @@ library(ggrepel)
 dfC <- dplyr::group_by(df, locus) %>%
         dplyr::summarise_each(funs(paste(unique(.), collapse = ";")))
 
-# filter this by locus dataframe to only keep loci that have at least one good candidate (i.e. that was contained in the dfFilter3 dataframe)
-dfC.filtered<-subset(dfC,locus %in% unique(dfFilter3$locus),select=c(locus,.id,cand.locus,cand.start,cand.end,bestProHit,BitDiffSum,scaffold,start,end,gc,gcs,ce))
+# filter this by locus dataframe to only keep loci that have at least one good candidate (i.e. that was contained in the dfFilter2 dataframe)
+dfC.filtered<-subset(dfC,locus %in% unique(dfFilter2$locus),select=c(locus,.id,cand.locus,cand.start,cand.end,bestProHit,BitDiffSum,scaffold,start,end,gc,gcs,ce))
 
 # save data frame to file
 #write.table(dfC.filtered,"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT.filtered.tsv",sep="\t",quote = F,row.names = F)
-write.table(dfC.filtered,"/global/scratch2/j_rink02/master/lgt/2_analysis/GAGA.LGT.162.filtered.tsv",sep="\t",quote = F,row.names = F)
+#write.table(dfC.filtered,"/global/scratch2/j_rink02/master/lgt/2_analysis/GAGA.LGT.162.filtered.tsv",sep="\t",quote = F,row.names = F)
 
 # for plotting
 # split the unfiltered large df dataframe by "locus" into a list of dataframes (one list element per locus)
 dfSplit<-split(df,f=paste(df$.id,df$locus,sep="."))
 
-# filter the list of dataframes to only retain those that contain a LGT from the dfFilter3 dataframe
-dfSplit.filtered<-dfSplit[unique(paste(dfFilter3$.id,dfFilter3$locus,sep="."))]
-
+# filter the list of dataframes to only retain those that contain a LGT from the dfFilter2 dataframe
+dfSplit.filtered<-dfSplit[unique(paste(dfFilter2$.id,dfFilter2$locus,sep="."))] 
 
 ```
 Merging candidates in close proximity together and filtering by the above criteria to only obtain candidates which are also in the dfFilter3 dataframe reduces the number of candidates further to 928 candidates in all 162 genomes.
@@ -269,17 +300,73 @@ lapply(1:length(list.of.plots), function(i){
   })
 ```
 
+# LGT filtering Plot
+
+We want to find out how many genomes containing good candidates remain after each filtering step. 
+To do this, we will filter each dataframe for the GAGA-id and count the number of unique GAGA-ids:
+```{r}
+# Original df 
+s = df$.id
+s1 = sapply(strsplit(s, split = '.', fixed = TRUE), function(x) (x[1]))
+length(unique(s1)) #[1] 162
+
+#dfFilter
+t = dfFilter$.id
+t1 = sapply(strsplit(t, split = '.', fixed = TRUE), function(x) (x[1]))
+length(unique(t1)) #[1] 142
+
+#dfFilter1
+u = dfFilter1$.id
+u1= sapply(strsplit(u,split = '.', fixed = TRUE), function(x) (x[1]))
+length(unique(u1))#[1] 141
+
+#dfFilter2
+v= dfFilter2$.id
+v1=sapply(strsplit(v,split = '.', fixed = TRUE), function(x) (x[1]))
+length(unique(v1))#[1] 138
+
+#dfFilter3
+#w=dfFilter3$.id
+#w1=sapply(strsplit(w,split = '.', fixed = TRUE), function(x) (x[1]))
+#length(unique(w1))#[1] 129
+``` 
+
+# Plot the LGT filters 
+Original: df 13664 candidates, 162 genomes
+Without any filters; containing only the candidates predicted by the LGT pipeline with 13664 candidates in all 162 genomes. Hereby, all 162 contain at least one predicted candidate (13664 candidates, 162 genomes)
+
+1st filtering step: dfFilter 5355 remaining candidates, 142 genomes
+When looking at each filter separately: 
+Filtered by e-value (>1e-25, removed 7616 candidates)
+Filtered by ct4 (ct4 > 0.25, removed 2.646 candidates)
+Filtered by ce (ce > 1.5, removed 485 candidates)
+Filtered by BitDiffSum (BitDiffSum > 150, removed 4610 candidates)
+Filtered by candidate length (length > 100, removed 2209 candidates)
+
+2nd filtering step: dfFilter1 5173 remaining candidates, 141 genomes 
+Filtering out candidates starting within the first 1000 bp of the scaffold (cand.start >1000 bp, removed 182 candidates)
+
+3rd filtering step: dfFilter2 5081 remaining candidates, 138 genomes 
+Filtering out all candidates within the last 1000 bp at the end of scaffold(cand.end != scaffold.length - 1000, removed 92 candidates)
+
+4th filtering step: dfFilter3 3610 candidates 
+Filtering out all candidates at the end of the scaffold  (cand.end != scaffold.end, removed 11 candidates)
+
+Merge candidates in close proximity together: dfC filtered 
+Merging all candidates within 20kb range further reduces the number to 928 candidate regions 
 
 
-Plot the LGT filters 
 ```{r}
 # Assign names to x
-x <- c( "original", "1st_filtering_step", "2nd_filtering_step", "3rd_filtering_step", "merging_of_loci","manual_investigation")
+x <- c("original", "1st_filtering_step", "2nd_filtering_step", "3rd_filtering_step","4th filtering step", "Merging candidates into close regions", "Manual investigation")
 # Assign names to y
-y <- c( 13664, 5355, 3631, 3610, 928, 410)
+y <- c(13664, 5355, 5173,5081,3610,928,410)
+# Assign names to z 
+z <- c(162, 142, 141, 138,129,0,0)
 # Assign x to "Filtering_step" as column name
 # Assign y to "nr_candidates" as column name
-filtering_df <- data.frame( "Filtering_step" = x, "Nr_candidates" = y)
+# Assign z to "Nr_of_genomes" as column name 
+filtering_df <- data.frame( "Filtering_step" = x, "Nr_candidates" = y, "Nr_of_genomes" = z)
 # Print the data frame
 filtering_df
 ```
@@ -315,15 +402,3 @@ graph2ppt(file="LGT_filtering")
 ggsave("LGT_filtering.png", path = "/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced")
 ```
 Last changed 2021/07/19
-
-
-for (i in 1:nrow(filtering_df)) {
-data$Nr_candidates[i]<-geoMean(c(data$Nr_candidates[i],data$Nr_candidates[i]))
-}
-
-print(i)
-
-
-for (i in 1:nrow(filtering_df)) {
-print(i)
-}
