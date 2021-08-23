@@ -5,17 +5,17 @@
 #cd /global/scratch2/j_rink02/master/lgt/0_data
 ```
 
-To start, we need 2 files: One `bam` file holding the PacBio reads and one `bed` file containing the LGT start and stop coordinates (`LGTs.candidateloci.bed`).
+To start, we need 2 files: One `bam` file holding the PacBio reads and one `bed` file containing the LGT start and stop coordinates (`LGTs.candidateloci.loose.bed`).
 
 We start with the file containing the LGT candidates you want to screen to create a `bed` file with the start and stop positions as separate entries.
 
-### 1. Use the file `LGTs.candidateloci.bed` to create a bed file with start+stop coordinates of the LGT as separate entries.
+### 1. Use the file `LGTs.candidateloci.loose.bed` to create a bed file with start+stop coordinates of the LGT as separate entries.
 
 #### 1.1 For one genome only, with `GAGA-0515` as example:
 ```bash
 cd /global/scratch2/j_rink02/master/lgt/0_data
 
-cat GAGA-0515/results/LGTs.candidateloci.bed | parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' > GAGA-0515/results/GAGA-0515.LGTboundaries.bed
+cat GAGA-0515/results/LGTs.candidateloci.loose.bed | parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' > GAGA-0515/results/GAGA-0515.LGTboundaries.bed
 ```
 The above command creates a new file called `GAGA-0515.LGTboundaries.bed` which now contains only the start and stop coordinates of each LGT as a separate entry.
 
@@ -66,18 +66,18 @@ Write a GridEngine Script to produce this file for all GAGA genomes:
 cat $file | parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' > $file.LGTboundaries.bed
 ```
 Execute the script with:
-`find */results/LGTs.candidateloci.bed | parallel -I% --max-args 1 qsub -v file="%"
+`find */results/LGTs.candidateloci.loose.bed | parallel -I% --max-args 1 qsub -v file="%"
  makeLGTboundarybedfile.sh -o ./tmp/$file.out -e ./tmp/$file.err`
 
-The file should be called `LGTs.candidateloci.bed.LGTboundaries.bed` and should be found in every GAGA genome folder.
+The file should be called `LGTs.candidateloci.loose.bed.LGTboundaries.bed` and should be found in every GAGA genome folder.
 
 #### 1.3 Check if all genomes have this file:
 ```bash
-find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/LGTs.candidateloci.bed.LGTboundaries.bed ]] && echo "$dir"; done
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/LGTs.candidateloci.loose.bed.LGTboundaries.bed ]] && echo "$dir"; done
 ```
 
 If all GAGA genomes contain this file, no GAGA genome folder should appear here.
-### 2. Extract all PacBio reads overlapping these boundaries.
+### 2. Extract all reads overlapping these boundaries.
 
 #### 2.1 Merge the bam files for nAo and other
 ```bash
@@ -110,7 +110,7 @@ samtools index GAGA-0515/results/GAGA-0515.LGTboundaries.PacBio.overlap.bam
 For all genomes:
 ```bash
 # calculate overlap with bedtools intersect
-for i in * ; do bedtools intersect -abam $i/results/merged.candidateloci.loose.bam -b $i/results/LGTs.candidateloci.bed.LGTboundaries.bed > $i/results/$i.LGTboundaries.PacBio.overlap.bam; done
+for i in * ; do bedtools intersect -abam $i/results/merged.candidateloci.loose.bam -b $i/results/LGTs.candidateloci.loose.bed.LGTboundaries.bed > $i/results/$i.LGTboundaries.PacBio.overlap.bam; done
 
 # index the bam file
 for i in * ; do samtools index $i/results/$i.LGTboundaries.PacBio.overlap.bam; done
@@ -170,7 +170,7 @@ We `slop` the boundaries, so that the boundary is expanded by 1000 bp on each si
 For one candidate (with `GAGA-0515` as an example):
 ```bash
 # Expand the LGT boundaries by 1000 bp for long-read data with bedtools slop
-bedtools slop -i GAGA-0515/results/LGTs.candidateloci.bed.LGTboundaries.bed -g GAGA-0515/results/genome.file -b 1000 > GAGA-0515/results/GAGA-0515.LGTboundaries.1000bp.up.down.bed
+bedtools slop -i GAGA-0515/results/LGTs.candidateloci.loose.bed.LGTboundaries.bed -g GAGA-0515/results/genome.file -b 1000 > GAGA-0515/results/GAGA-0515.LGTboundaries.1000bp.up.down.bed
 # -i: input file
 # -g: genome file
 # -b: increase the BED/GFF file by the same number of bp in each direction.
@@ -208,7 +208,7 @@ Scaffold8       1760241 1762241 Scaffold8-1760778:1761241.end
 For all genomes:
 ```bash
 # Expand the LGT boundaries by 1000 bp for long-read data with bedtools slop
-for i in *; do bedtools slop -i $i/results/LGTs.candidateloci.bed.LGTboundaries.bed -g $i/results/genome.file -b 1000 > $i/results/$i.LGTboundaries.1000bp.up.down.bed; done
+for i in *; do bedtools slop -i $i/results/LGTs.candidateloci.loose.bed.LGTboundaries.bed -g $i/results/genome.file -b 1000 > $i/results/$i.LGTboundaries.1000bp.up.down.bed; done
 ```
 
 Check if all genomes have the file:
@@ -235,7 +235,7 @@ We `slop` the boundaries, so that the boundary is expanded by 25 bp on each side
 For all genomes:
 ```bash
 # Expand the LGT boundaries by 25 bp for short-read data with bedtools slop
-for i in *; do bedtools slop -i $i/results/LGTs.candidateloci.bed.LGTboundaries.bed -g $i/results/genome.file -b 25 > $i/results/$i.LGTboundaries.25bp.up.down.bed; done
+for i in *; do bedtools slop -i $i/results/LGTs.candidateloci.loose.bed.LGTboundaries.bed -g $i/results/genome.file -b 25 > $i/results/$i.LGTboundaries.25bp.up.down.bed; done
 ```
 Check if all genomes have the file:
 ```bash
