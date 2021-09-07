@@ -437,6 +437,38 @@ Filtering out all candidates with 0 or only 1 read at the boundaries (reads_star
 5th filtering step: dfC.new.filtered 1148 candidates
 Merging all candidates within 20kb range further reduces the number to 1148 candidate regions.
 
+# Merge the old .tsv file with candidates already evaluated together with the new tsv files based on the newly applied filters.
+1. Load the two tsv files into R
+```{r}
+# Loaded the tsv files into the environment by hand to not lose any data
+Evaluated_df <- GAGA.LGT.162.filtered.good.candidates.taxonomy
+
+newlyfiltered_df <- GAGA.LGT.162.new.filtered
+```
+2. Merge the two dataframes,such that only the newly added candidates need to be evaluated again.
+This means, keep all rows from the newlyfiltered_df, but add the information from the evaluated_df (left_join)
+```{r}
+complete_df <- merge(x=newlyfiltered_df, y =Evaluated_df, by = "locus", all.x = TRUE)
+head(complete_df)
+```
+3. Edit the complete_df to start the manual investigation
+```{r}
+complete_df$cand.locus.y <- NULL
+complete_df$cand.start.y <- NULL
+complete_df$cand.end.y <- NULL
+complete_df$bestProHit.y <- NULL
+complete_df$BitDiffSum.y <- NULL
+complete_df$start.y <- NULL
+complete_df$end.y <- NULL
+complete_df$gc.y <- NULL
+complete_df$gcs.y <- NULL
+complete_df$ce.y <- NULL
+complete_df$.id.y <- NULL
+
+write.table(complete_df,"/global/scratch2/j_rink02/master/lgt/2_analysis/GAGA.LGT.162.evaluation.tsv",sep="\t",quote = F,row.names = F)
+```
+
+
 # Plot the LGT filters
 ```{r}
 # Assign names to x
@@ -481,4 +513,5 @@ p1
 
 #ggsave("LGT_filtering.png", path = "/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced")
 ```
+
 Last changed 2021/09/07
