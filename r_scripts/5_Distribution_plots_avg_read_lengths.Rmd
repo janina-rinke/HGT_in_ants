@@ -62,3 +62,23 @@ ggplot(cleaned_stLFR, aes(x=avg_read_length_boundary_region)) +
 
 graph2ppt(file="stLFR_read_distribution")
 ``` 
+
+# Load the data for plotting the number of candidates per genome 
+```{r}
+LGTcount <- read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/GAGA.LGT.162.filtered.good.candidates.LGT.count.csv")
+LGTcount_clean <- na.omit(LGTcount)
+
+LGTcount_clean[,3] <- as.character(LGTcount_clean[,3])
+class(LGTcount_clean$species)
+```
+
+# Plot the number of LGT candidates 
+```{r}
+ggplot(LGTcount_clean, aes(species)) +
+  geom_bar(color = "black", fill="darkred", alpha=0.5, position="identity")+theme_classic() +
+  labs( x = "genomes with detected LGTs", y="Nr of LGT candidates") +
+  theme(axis.text.x=element_blank())
+
+graph2ppt(file="LGT_candidate_numbers")
+``` 
+

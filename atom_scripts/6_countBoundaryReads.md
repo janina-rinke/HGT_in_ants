@@ -67,7 +67,7 @@ cat $file | parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3
 ```
 Execute the script with:
 `find */results/LGTs.candidateloci.loose.bed | parallel -I% --max-args 1 qsub -v file="%"
- makeLGTboundarybedfile.sh -o ./tmp/$file.out -e ./tmp/$file.err`
+ makeLGTboundaryfile.sh -o ./tmp/$file.out -e ./tmp/$file.err`
 
 The file should be called `LGTs.candidateloci.loose.bed.LGTboundaries.bed` and should be found in every GAGA genome folder.
 
