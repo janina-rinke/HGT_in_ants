@@ -5,10 +5,11 @@ output: html_notebook
 
 
 ## TODO
-- group by start/end - done -
+- group by start/end - done - 
 - plot by large candidate -done -
 - include noAnt - done -
 - set thresholds for evaluation of candidates - done -
+- Include read counts for stLFR assembled genomes
 
 ```{r}
 library(ggplot2)
@@ -99,6 +100,61 @@ df$besteval<-bestblasthits$V4
 ```{r}
 df$cand.length<-df$cand.end-df$cand.start
 ```
+
+# Filter candidates based on the number of reads at the LGT boundary, by adding the read count at each boundary
+1. Load the .tsv files into R with all good PacBio overlaps (GAGA-id.LGTboundaries.1000bp.good.PacBio.overlap.tsv) in a list of dataframes
+```{r}
+#For PacBio assembled genomes only:
+#reads2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.LGTboundaries.1000bp.good.PacBio.overlap.tsv"
+
+# For all genomes:
+reads2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.LGTboundaries.*.good.*.overlap.tsv"
+readFiles <- lapply(Sys.glob(reads2load), read.csv,sep="\t",header=F) # create large list of all read .tsv files
+```
+
+2. Add the GAGA id as a name to the different list elements.
+Set the GAGA-id as a name for each element of the list "readFiles".
+Each element in the list is one genome. 
+```{r}
+# Create a large df with information on the reads in the boundary region for every genome
+read_ids<-gsub(".*/(.+-[0-9]+)\\.LGTboundaries.*.good.*.overlap.tsv","\\1",Sys.glob(reads2load))
+names(readFiles)<-paste(read_ids)
+
+#Combine tsv files from all GAGA ids in the large list element ("readFiles") to one big data frame ("df_reads").
+df_reads<-rbindlist(readFiles,idcol = T)
+
+#Edit the df_reads dataframe 
+names(df_reads)[2]<-"scaffold" #rename the second column of df_reads to merge later by this column
+names(df_reads)[1]<-"GAGA_id" #rename first column to merge later by this column
+names(df_reads)[6]<-"reads_start"
+names(df_reads)[11]<-"reads_end"
+names(df_reads)[3]<-"start-1000or25bp"
+names(df_reads)[4]<-"start+1000or25bp"
+names(df_reads)[5]<-"cand.locus"
+names(df_reads)[8]<-"end-1000or25bp"
+names(df_reads)[9]<-"end+1000or25bp"
+
+df_reads$V6 <- NULL
+df_reads$V9 <- NULL
+
+df_reads$cand.locus <-gsub(".start","",df_reads$cand.locus)
+df_reads$cand.locus <-gsub(":","-",df_reads$cand.locus)
+df_reads$cand.locus <-sub("-",":",df_reads$cand.locus)
+
+df_reads$reads_start <- as.numeric(df_reads$reads_start)
+df_reads$reads_end <- as.numeric(df_reads$reads_end)
+colnames(df_reads)
+```
+
+3. Merge the df_reads dataframe together with the df dataframe based on the columns "GAGA-id" and "cand.locus"
+```{r}
+# Merge df_reads together with the information for every LGT candidate from df
+df<-left_join(df, df_reads, by = c("GAGA_id","cand.locus"))
+df$scaffold.y <- NULL
+df$scaffold.x <- NULL
+head(df)
+```
+
 # extract broad locus start and stop
 To cluster candidates in one close region together and view them as one single LGT, take the broad locus.
 
@@ -116,8 +172,9 @@ df$locus.end<-loci$V3
 df$locus.length<-df$locus.end-df$locus.start
 ```
 
-# plot overview plots
+# Plot overview plots
 plot histograms of different metrics to see how they are distributed.
+
 ```{r}
 # gc-content
 ggplot(df, aes(x=gc)) +
@@ -152,13 +209,20 @@ ggplot(df, aes(x=df$log.besteval)) +
 # BitDiffSum
 ggplot(df, aes(x=BitDiffSum)) +
   geom_histogram(fill="red", alpha=0.5, position="identity")+theme_classic()
+
+# Reads at the start of the LGT
+ggplot(df, aes(x=reads_start)) +
+  geom_histogram(fill="red", alpha=0.5, position="identity")+theme_classic()
+
+# Reads at the end of the LGT
+ggplot(df, aes(x=reads_end)) +
+  geom_histogram(fill="red", alpha=0.5, position="identity")+theme_classic()
 ```
 
 
 # Filter the candidate dataset to exclude false-positives and missassemblies
 
 Filter by evalue (evalue > 1e-25), ct4 (ct4>0.25), ce (ce>1.5), BitDiffSum (BitDiffSum>150) and the length of the candidate (length>100)
-
 ```{r}
 dfFilter<-subset(df,log.besteval>25 & ct4>0.25 & ce>1.5 & BitDiffSum>150 & cand.end-cand.start>100)
 df_eval_Filter<-subset(df,log.besteval>25)
@@ -194,8 +258,9 @@ dfFilter1<-subset(dfFilter,cand.start > 1000)
 
 df_outfiltered_scaffold_start<-subset(dfFilter, cand.start < 1000)
 
-write.table(df_outfiltered_scaffold_start,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.scaffold_start.outfiltered.tsv",sep="\t",quote = F,row.names = F)
+#write.table(df_outfiltered_scaffold_start,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.scaffold_start.outfiltered.tsv",sep="\t",quote = F,row.names = F)
 ```
+
 Filtering by the above criteria reduces the number of candidates further to 5173 candidates (dfFilter1 dataframe).
 
 # Filter out candidates at end of scaffold 
@@ -207,10 +272,22 @@ dfFilter2<-subset(dfFilter1, cand.end < scaffold.length-1000)
 
 df_outfiltered_scaffold_end<-subset(dfFilter1, cand.end > scaffold.length-1000)
 
-write.table(df_outfiltered_scaffold_end,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.scaffold_end.outfiltered.tsv",sep="\t",quote = F,row.names = F)
+#write.table(df_outfiltered_scaffold_end,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.scaffold_end.outfiltered.tsv",sep="\t",quote = F,row.names = F)
 ```
 This further reduces the number of candidates to 5081 possible LGTs (dfFilter2 dataframe). 
 
+# Filter candidates based on the number of reads
+4. Filter out candidates with zero or only one read at the start (left boundary) and zero or only 1 read at the end (right boundary) of the LGT boundaries. Boundaries, which do not contain any reads, are no real LGTs incorporated into the ant genome, because no read is overlapping the ant DNA and the bacterial DNA.
+```{r}
+# Filter the dataframe to remove candidates with zero reads at the boundaries
+dfFilter3<-subset(dfFilter2, reads_start > 1 & reads_end > 1 | is.na(reads_start & reads_end)) #keep rows where the read count is not available 
+
+df_outfiltered_reads<-subset(dfFilter2, reads_start < 2 & reads_end < 2)
+
+write.table(df_outfiltered_reads,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.reads.outfiltered.tsv",sep="\t",quote = F,row.names = F)
+```
+
+This further reduces the number of candidates to 4785 possible LGTs (dfFilter3 dataframe).
 
 # Summarize candidates in close proximity into one larger locus
 One row per broad start/stop coordinate
@@ -227,24 +304,24 @@ library(ggrepel)
 
 ## https://stackoverflow.com/questions/40033625/concatenating-all-rows-within-a-group-using-dplyr/40033725
 dfC <- dplyr::group_by(df, locus) %>%
-        dplyr::summarise_each(funs(paste(unique(.), collapse = ";")))
+       dplyr::summarise_each(funs(paste(unique(.), collapse = ";")))
 
-# filter this by locus dataframe to only keep loci that have at least one good candidate (i.e. that was contained in the dfFilter2 dataframe)
-dfC.filtered<-subset(dfC,locus %in% unique(dfFilter2$locus),select=c(locus,.id,cand.locus,cand.start,cand.end,bestProHit,BitDiffSum,scaffold,start,end,gc,gcs,ce))
+# filter this by locus dataframe to only keep loci that have at least one good candidate (i.e. that was contained in the dfFilter3 dataframe)
+dfC.new.filtered<-subset(dfC,locus %in% unique(dfFilter3$locus),select=c(locus,.id,cand.locus,cand.start,cand.end,bestProHit,BitDiffSum,cand.scaffold,start,end,gc,gcs,ce,reads_start,reads_end))
 
 # save data frame to file
 #write.table(dfC.filtered,"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT.filtered.tsv",sep="\t",quote = F,row.names = F)
-#write.table(dfC.filtered,"/global/scratch2/j_rink02/master/lgt/2_analysis/GAGA.LGT.162.filtered.tsv",sep="\t",quote = F,row.names = F)
+write.table(dfC.new.filtered,"/global/scratch2/j_rink02/master/lgt/2_analysis/GAGA.LGT.162.new.filtered.tsv",sep="\t",quote = F,row.names = F)
 
 # for plotting
 # split the unfiltered large df dataframe by "locus" into a list of dataframes (one list element per locus)
 dfSplit<-split(df,f=paste(df$.id,df$locus,sep="."))
 
-# filter the list of dataframes to only retain those that contain a LGT from the dfFilter2 dataframe
-dfSplit.filtered<-dfSplit[unique(paste(dfFilter2$.id,dfFilter2$locus,sep="."))] 
+# filter the list of dataframes to only retain those that contain a LGT from the dfFilter3 dataframe
+dfSplit.filtered<-dfSplit[unique(paste(dfFilter3$.id,dfFilter3$locus,sep="."))] 
 
 ```
-Merging candidates in close proximity together and filtering by the above criteria to only obtain candidates which are also in the dfFilter3 dataframe reduces the number of candidates further to 928 candidates in all 162 genomes.
+Merging candidates in close proximity together and filtering by the above criteria to only obtain candidates which are also in the dfFilter3 dataframe reduces the number of candidates further to 1148 candidates in all 162 genomes (dfC.new.filtered dataframe 1148 candidates remaining).
 
 Note: The filtered.tsv file only contains candidates, which remain after filtering, but the simple plots created by the above commands contain all candidates in this region, even if they would have been filtered out before.
 
@@ -326,12 +403,17 @@ v1=sapply(strsplit(v,split = '.', fixed = TRUE), function(x) (x[1]))
 length(unique(v1))#[1] 138
 
 #dfFilter3
-#w=dfFilter3$.id
-#w1=sapply(strsplit(w,split = '.', fixed = TRUE), function(x) (x[1]))
-#length(unique(w1))#[1] 129
+w= dfFilter3$.id
+w1=sapply(strsplit(w,split = '.', fixed = TRUE), function(x) (x[1]))
+length(unique(w1))#[1] 134
+
+#dfC.new.filtered
+z= dfC.new.filtered$.id
+z1=sapply(strsplit(z,split = '.', fixed = TRUE), function(x) (x[1]))
+length(unique(z1))#[1] 134
 ``` 
 
-# Plot the LGT filters 
+# Summary of the LGT filters
 Original: df 13664 candidates, 162 genomes
 Without any filters; containing only the candidates predicted by the LGT pipeline with 13664 candidates in all 162 genomes. Hereby, all 162 contain at least one predicted candidate (13664 candidates, 162 genomes)
 
@@ -349,20 +431,20 @@ Filtering out candidates starting within the first 1000 bp of the scaffold (cand
 3rd filtering step: dfFilter2 5081 remaining candidates, 138 genomes 
 Filtering out all candidates within the last 1000 bp at the end of scaffold(cand.end != scaffold.length - 1000, removed 92 candidates)
 
-4th filtering step: dfFilter3 3610 candidates 
-Filtering out all candidates at the end of the scaffold  (cand.end != scaffold.end, removed 11 candidates)
+4th filtering step: dfFilter3 4785 candidates 
+Filtering out all candidates with 0 or only 1 read at the boundaries (reads_start & reads_end > 1, removed 251 candidates)
 
-Merge candidates in close proximity together: dfC filtered 
-Merging all candidates within 20kb range further reduces the number to 928 candidate regions 
+5th filtering step: dfC.new.filtered 1148 candidates
+Merging all candidates within 20kb range further reduces the number to 1148 candidate regions.
 
-
+# Plot the LGT filters
 ```{r}
 # Assign names to x
-x <- c("original", "1st_filtering_step", "2nd_filtering_step", "3rd_filtering_step","4th filtering step", "Merging candidates into close regions", "Manual investigation")
+x <- c("original", "1st_filtering_step", "2nd_filtering_step", "3rd_filtering_step","4th filtering step", "Merging candidate loci", "Manual investigation")
 # Assign names to y
-y <- c(13664, 5355, 5173,5081,3610,928,410)
+y <- c(13664, 5355, 5173, 5081, 4785, 1148, 410)
 # Assign names to z 
-z <- c(162, 142, 141, 138,129,0,0)
+z <- c(162, 142, 141, 138, 134, 134, 0)
 # Assign x to "Filtering_step" as column name
 # Assign y to "nr_candidates" as column name
 # Assign z to "Nr_of_genomes" as column name 
@@ -374,6 +456,8 @@ filtering_df
 
 ```{r}
 library(forcats)
+library(ggplot2)
+library(viridisLite)
 
 p0 <- ggplot(filtering_df, aes(x=reorder(Filtering_step, -Nr_candidates), y=Nr_candidates, fill=Nr_candidates)) +
   geom_bar(stat="identity")+theme_classic()+
@@ -381,10 +465,10 @@ p0 <- ggplot(filtering_df, aes(x=reorder(Filtering_step, -Nr_candidates), y=Nr_c
 p0
 
 # flipped version
-p1 <- ggplot(filtering_df, aes(x = reorder(Filtering_step, Nr_candidates), y = Nr_candidates)) +
-  geom_bar(aes(fill = as.factor(Nr_candidates)), stat="identity", width = 0.4) + theme_classic() +
+p1 <- ggplot(filtering_df, aes(x =reorder(Filtering_step, Nr_candidates), y = Nr_candidates)) +
+  geom_bar(aes(fill=as.factor(Nr_candidates)), stat="identity", width = 0.4) + theme_classic() +
   geom_text(aes(label=Nr_candidates), hjust=1.3, color = "white", position=position_dodge(width=1.0), size = 3) +
-  scale_fill_gradient(low="darkgreen", high="darkblue") +
+  scale_fill_gradient(low="darkgreen", high ="darkblue") +
   theme(legend.position = "none") +
   coord_flip() +
   theme(plot.title = element_text(hjust = 0.5)) +
@@ -392,13 +476,9 @@ p1 <- ggplot(filtering_df, aes(x = reorder(Filtering_step, Nr_candidates), y = N
   scale_y_continuous(position = "right", breaks = seq(0,14000, 2000)) +
   labs(title = "Filtering of predicted LGT candidates", x = NULL, y="Number of candidates")
 p1 
-
-setwd("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced")
-library(export)
-graph2ppt(file="LGT_filtering")
 ```
 ```{r}
 
-ggsave("LGT_filtering.png", path = "/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced")
+#ggsave("LGT_filtering.png", path = "/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced")
 ```
-Last changed 2021/07/19
+Last changed 2021/09/07
