@@ -10,54 +10,49 @@ library(tidyr)
 
 Load the file with all good candidates from Excel 
 ```{r}
-data <- GAGA_LGT_162_filtered_good_candidates
+# data <- GAGA_LGT_162_filtered_good_candidates
+
+# newly filtered candidates, only the newly detected good candidates (21 additional candidates compared to the old dataset)
+new_candidates <- GAGA_LGT_162_new_filtered_evaluated
 ```
 
-Remove all unnecessary columns from the dataframe data
+# Keep only the columns you are interested in from the dataframe
 ```{r}
-data$LGT_quality <- NULL
-data$ce <- NULL
-data$gcs <- NULL
-data$locus <- NULL
-data$cand.locus <- NULL
-data$nr_predicted_loci <- NULL
-data$bestProHit <- NULL
-data$BitDiffSum <- NULL
+new_candidates %>%
+  select(.id, cand.scaffold, cand.start.x, cand.end.x)
 ```
 
 ### Get only one candidate per row 
 
 Possibility 1: Split the columns with several candidates to only contain one candidate per row
 ```{r}
-head(data)
-new_df <- data %>% separate_rows(cand.start,cand.end) #separate, if several values exist in one column
+head(new_candidates)
+new_df <- new_candidates %>% separate_rows(cand.start.x,cand.end.x) #separate, if several values exist in one column
 head(new_df)
 ```
 
 Possibility 2: Take the smallest value from the column cand.start and the highest value from the cand.end column
 ```{r}
-new_data <- data$start + 20000
-new_data2 <- data$end - 20000
+#new_data <- new_candidates$start + 20000
+new_data2 <- new_candidates$end - 20000
 
-data$start <- new_data
-data$end <- new_data2
+#data$start <- new_data
+new_candidates$end <- new_data2
 ```
 
 ```{r}
-data$cand.start <- NULL
-data$cand.end <- NULL 
-data$gc <- NULL
-data$suggested_prokaryote_origin <- NULL
-data$predicted_protein <- NULL
+new_df <- new_candidates %>%
+  select(.id, cand.scaffold, start, end)
 ```
 
 ### Keep only the GAGA-id
 ```{r}
-data2 <- sapply(strsplit(data$.id, "[.]"), "[", 1)
-data$.id <- data2
+data2 <- sapply(strsplit(new_df$.id, "[.]"), "[", 1)
+new_df$.id <- data2
+new_df <- new_df[-c(8, 12), ] # rows with negative end coordinates removed
 ```
 
 ### Save file as tsv file 
 ```{r}
-write.table(data,"/Users/Janina/sciebo/Master.LGTs/blastCandidates.tsv",sep="\t",quote = F,row.names = F, col.names = F)
+write.table(new_df,"/Users/Janina/sciebo/Master.LGTs/blastNewCandidates.tsv",sep="\t",quote = F,row.names = F, col.names = F)
 ```
