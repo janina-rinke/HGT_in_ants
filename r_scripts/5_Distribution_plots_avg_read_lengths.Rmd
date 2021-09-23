@@ -65,20 +65,23 @@ graph2ppt(file="stLFR_read_distribution")
 
 # Load the data for plotting the number of candidates per genome 
 ```{r}
-LGTcount <- read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/GAGA.LGT.162.filtered.good.candidates.LGT.count.csv")
+LGTcount <- read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/GAGA.LGT.162.resulting.good.candidates.csv")
 LGTcount_clean <- na.omit(LGTcount)
 
-LGTcount_clean[,3] <- as.character(LGTcount_clean[,3])
-class(LGTcount_clean$species)
+LGTcount[,16] <- as.character(LGTcount[,16])
+LGTcount[,17] <- as.character(LGTcount[,17])
+class(LGTcount$species)
+class(LGTcount$subfamily)
 ```
 
 # Plot the number of LGT candidates 
 ```{r}
-ggplot(LGTcount_clean, aes(species)) +
-  geom_bar(color = "black", fill="darkred", alpha=0.5, position="identity")+theme_classic() +
+ggplot(LGTcount, aes(x=reorder(species, species, function(x)-length(x)), fill=subfamily, color = subfamily)) +
+  geom_bar(position="identity", alpha=0.2) +theme_classic() +
   labs( x = "genomes with detected LGTs", y="Nr of LGT candidates") +
   theme(axis.text.x=element_blank())
 
-graph2ppt(file="LGT_candidate_numbers")
+#library(export)
+graph2ppt(file="LGT_candidate_numbers_sorted")
 ``` 
 
