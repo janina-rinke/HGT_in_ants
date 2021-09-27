@@ -97,6 +97,7 @@ Add the species identity from `FAS.genes.and.names.tsv`
 tp$data$label[tp$data$isTip==T]<-gsub("_.*","",tp$data$label[tp$data$isTip==T])
 
 tp2<-tp %<+% data2add
+tp2
 ```
 
 Make complex tree
@@ -114,46 +115,104 @@ tp3 #plot the tree
 #ggsave("../../misc/plots/GAGA.phylogeny.pdf",width = 8,height=12) #save the tree in a pdf
 ```
 
-# read LGT data
+# Manipulate the tree 
+Make the tree circular
 ```{r}
+tp_new<-ggtree(tree.rooted.subset,ladderize = T, layout = "circular")+geom_rootedge(.01)
+tp_new
+
+# Add species labels 
+tp_new$data$label[tp_new$data$isTip==T]<-gsub("_.*","",tp_new$data$label[tp_new$data$isTip==T])
+
+tp2_new<-tp_new %<+% data2add
+```
+Make complex circular tree
+```{r}
+tp3_new<-tp2_new + 
+  geom_tiplab(aes(label=paste(label,cleanSpeciesID,sep=" ")),size=2,align = T,linesize = .1)+    #add the tip labels
+  geom_nodepoint(aes(fill=UFboot),stroke=0.5,pch=21,size=2)+       #add the info about bootstrapping success as points of different colors to the nodes
+  scale_fill_viridis_c()+                                          #change the color of the node points to a viridis color scale
+  theme(legend.position = c(-0.2,.9))
+tp3_new
+```
+# A) LGT data: Include the LGT data in the circular phylogeny
+```{r}
+#Add the raw LGT dataframe 
 library(readxl)
-```
-
-```{r}
 LGTs.raw<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/GAGA.LGT.162.resulting.good.candidates.xlsx")
-```
+LGTs.raw$...27 <- NULL
+LGTs.raw$...28 <- NULL
+LGTs.raw$...29 <- NULL
+LGTs.raw$comment <- NULL
 
-Clean up the LGT dataframe to remove the database origin (GAGA-0001.euk -> GAGA-0001)
-```{r}
+#Clean up the LGT dataframe to remove the database origin (GAGA-0001.euk -> GAGA-0001)
 LGTs<-LGTs.raw
 LGTs$GAGAid<-gsub("\\..*","",LGTs$.id)
 ```
 
-Create a tally dataframe that counts how many LGT candidates we have per species. 
-```{r}
+# A.1) LGT data: Add the LGT candidate numbers per genome to the phylogeny
+Plot the circular phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified LGTs.
+````{r}
+#Create a tally dataframe that counts how many LGT candidates we have per species. 
 LGT.tally<-as.data.frame(table(select(LGTs,GAGAid)))
 colnames(LGT.tally)<-c("GAGAid","LGT.count")
+
+#Add the LGT.tally dataframe to the phylogeny object as additional data.
+tp4_new<-tp3_new %<+% LGT.tally
+#see tp4_new$data$LGT.count
+
+#Plot the phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified LGTs
+tp5_new<-tp4_new+geom_tippoint(aes(size=LGT.count),col="red", alpha=.5)
+tp5_new
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.LGTs.pdf",width = 12,height=24) #save the tree in a pdf
+```
+# A.2) Color the species by subfamily
+```{r}
+#Create a subfamily dataframe that shows the subfamily for every species
+LGT.subfamily<-as.data.frame(table(select(data2add,GAGA.id,Subfamily)))
+colnames(LGT.subfamily)<-c("GAGAid","subfamily", "occurences")
 ```
 
-Add the LGT.tally dataframe to the phylogeny object as additional data.
 ```{r}
-tp4<-tp3 %<+% LGT.tally
+library(dplyr)
+LGTs.subfam <- filter(LGT.subfamily, LGT.subfamily$occurences > 0)
+LGTs.subfam$occurences <- NULL
+
+#Add the subfamily dataframe to the phylo object as additional data
+tp6_new<-tp5_new %<+% LGTs.subfam
+#see tp6_new$data$Subfamily
+tp7_new<-tp6_new + geom_tiplab(aes(color=Subfamily))
+tp7_new
+```
+
+# A.3) LGT data: Add the different LGT categories to the phylogeny
+Create a dataframe that counts the genomes with ankyrin repeats
+```{r}
+LGT.ankyrins<-as.data.frame(table(select(LGTs,GAGAid,predicted_protein)))
+#colnames(LGT.tally)<-c("GAGAid","LGT.count")
+```
+
+Add the LGT.ankyrins dataframe to the phylogeny object as additional data.
+```{r}
+tp6<-tp5 %<+% LGT.ankyrins
 # see tp4$data$LGT.count
 ```
 
-Plot the phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified LGTs
+Plot the phylogeny and add green dot to the tip, where the size of the green dot represents the number of ankyrin repeats
 ```{r}
-tp5<-tp4+geom_tippoint(aes(size=LGT.count),col="red",alpha=.5)
-tp5
-ggsave("../../misc/plots/GAGA.phylogeny.LGTs.pdf",width = 8,height=12) #save the tree in a pdf
+tp6<-tp5+geom_tippoint(aes(size=LGT.ankyrins),col="green",alpha=.5)
+tp6
+#ggsave("../../misc/plots/GAGA.phylogeny.LGTs.pdf",width = 8,height=12) #save the tree in a pdf
 ```
 
 
+# A.4) Subset the LGT count into Wolbachia and Blochmannia origin
 ```{r}
 LGT.Wolbachia.tally<-subset(LGTs,suggested_prokaryote_origin=="Wolbachia") %>% group_by(GAGAid) %>% tally()
 colnames(LGT.Wolbachia.tally)<-c("GAGAid","LGT.Wolbachia.count")
 
 tp6<-tp5 %<+% LGT.Wolbachia.tally
+tp6
 ```
 
 
