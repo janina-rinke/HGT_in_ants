@@ -124,9 +124,27 @@ ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/Subfa
 width = 15,height=30) #save the tree in a pdf
 ```
 
-Gather subfamily info for NCBI IDs as well
+Gather subfamily info for NCBI IDs as well and manually add the subfamily
 ```{r}
-tp3$data[is.na(tp3$data$Subfamily) & tp3$data$isTip==T,]
+subset(data2add,is.na(Subfamily))
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0001"]<-"Dorylinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0002"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0003"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0004"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0005"]<-"Formicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0006"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0007"]<-"Ponerinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0008"]<-"Formicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0009"]<-"Ponerinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0011"]<-"Ponerinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0012"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0013"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0014"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0015"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0016"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0017"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="OUT-0001"]<-"Formicinae"
+data2add$Subfamily[data2add$GAGA.id=="OUT-0002"]<-"Formicinae"
 ```
 
 # A.1) LGT data: Include the LGT data in the circular phylogeny
@@ -181,7 +199,7 @@ colnames(LGT.anks.lys)<-c("GAGAid","protein","count")
 knitr::kable(head(LGT.anks.lys))
 ```
 
-Plot the phylogeny and add ankyrin repeat proteins and lysozymes as a heatmap layer
+
 ```{r}
 library(ggtree)
 library(ggtreeExtra)
@@ -192,43 +210,6 @@ library(tidytree)
 library(ggstar)
 ```
 
-```{r}
-# For the bar layer outside of the tree
-tp5.5 <- tp5 +
-  new_scale_fill() +
-  geom_fruit(
-          data=LGT.anks.lys,
-          geom=geom_bar,
-          mapping=aes(y=GAGAid, x=count,fill=protein), #The count will be mapped to x
-          pwidth=1,      # Width of the external layer
-          stat="identity",
-          orientation="y", #The orientation of the axis
-          position=position_stackx(hexpand=.7),   #Adjust the position of the geom_layer
-          axis.params =list(
-                          axis="x",       # add axis text of the layer.
-                          vjust=0.2,
-                          text.angle=0,   # the text size of axis.
-                          text.size=1.5,
-                          hjust=1,        # adjust the horizontal position of text of axis
-                          nbreak=2,       # number of lines within geom_layer, 
-                          ),
-          grid.params=list(alpha=.3)      # Parameter to adjust gridlines around the tree
-      ) +
-      scale_fill_manual(
-        values=c("#339933","#dfac03"),   #color of the external geom_layer
-        name="Protein",        #name of the legend for the external geom_layer
-        guide=guide_legend(keywidth=0.9,keyheight=0.9,order=6)
-      ) +
-      theme(legend.position=c(0.96, 0.5), # the position of legend.
-          legend.background=element_rect(fill=NA), # the background of legend.
-          legend.title=element_text(size=9), # the title size of legend.
-          legend.text=element_text(size=7), # the text size of legend.
-          legend.spacing.y = unit(0.02, "cm") 
-      )
-tp5.5
-
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.anks.lys.pdf",width=13,height=26) #save the tree in a pdf
-```
 # A.4) Plot all predicted proteins onto the phylogeny
 ```{r}
 LGT.proteins<-LGTs[,c(24,26)]
@@ -251,16 +232,16 @@ tp5.5 <- tp5 +
           pwidth=1,      # Width of the external layer
           stat="identity",
           orientation="y", #The orientation of the axis
-          position=position_stackx(hexpand=.7)   #Adjust the position of the geom_layer
-         # axis.params =list(
-                         # axis="x",       # add axis text of the layer.
-                         # vjust=0.2,
-                         # text.angle=0,   # the text size of axis.
-                         # text.size=1.5,
-                         # hjust=1,        # adjust the horizontal position of text of axis
-                         # nbreak=2,       # number of lines within geom_layer, 
-                         # ),
-        #  grid.params=list(alpha=.5)      # Parameter to adjust gridlines around the tree
+          position=position_stackx(hexpand=.9),   #Adjust the position of the geom_layer
+          axis.params =list(
+                         axis="x",       # add axis text of the layer.
+                         vjust=0.2,
+                         text.angle=0,   # the text size of axis.
+                         text.size=1.8,
+                         hjust=1,        # adjust the horizontal position of text of axis
+                         nbreak=1,       # number of lines within geom_layer, 
+                           ),
+         grid.params=list(alpha=.5)      # Parameter to adjust gridlines around the tree
       ) +
       scale_fill_discrete(     #color of the external geom_layer
        name="Protein",        #name of the legend for the external geom_layer
@@ -279,8 +260,8 @@ ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.
 
 # A.5) Subset the LGT count into Wolbachia and Blochmannia origin
 ```{r}
-LGT.bacteria<-LGTs[,c(20,26)]
-LGT.bacteria <- LGT.bacteria %>% count(GAGAid,suggested_prokaryote_origin, sort = T)
+LGT.bacteria<-LGTs[,c(21,28)]
+LGT.bacteria <- LGT.bacteria %>% count(GAGAid,prokaryote_origin, sort = T)
 colnames(LGT.bacteria)<-c("GAGAid","prokaryote_origin","count")
 
 LGT.bacteria <- na.omit(LGT.bacteria)
@@ -288,30 +269,30 @@ LGT.bacteria.WB.BM <- subset(LGT.bacteria,prokaryote_origin %in% c("Wolbachia", 
 knitr::kable(head(LGT.bacteria.WB.BM)) 
 ```
 
-Add the Wolbachia and Blochmannia origin
+Add the bacterial origin
 ```{r}
 tp6 <- tp5.5 +
   new_scale_fill() +
   geom_fruit(
-          data=LGT.bacteria.WB.BM,
+          data=LGT.bacteria,
           geom=geom_bar,
           mapping=aes(y=GAGAid, x=count,fill=prokaryote_origin), #The count will be mapped to x
           pwidth=1,      # Width of the external layer
           stat="identity",
           orientation="y", #The orientation of the axis
-          #position=position_stackx(hexpand=.7)#,   #Adjust the position of the geom_layer
-          #axis.params =list(
-                          #axis="x",       # add axis text of the layer.
-                         # vjust=0.2,
-                          #text.angle=0,   # the text size of axis.
-                          #text.size=1.5,
-                         # hjust=1,        # adjust the horizontal position of text of axis
-                         # nbreak=2,       # number of lines within geom_layer, 
-                         # ),
-         # grid.params=list(alpha=.4)      # Parameter to adjust gridlines around the tree
+          position=position_stackx(hexpand=.7),   #Adjust the position of the geom_layer
+          axis.params =list(
+                          axis="x",       # add axis text of the layer.
+                          vjust=0.2,
+                          text.angle=0,   # the text size of axis.
+                          text.size=1.5,
+                          hjust=1,        # adjust the horizontal position of text of axis
+                          nbreak=1,       # number of lines within geom_layer, 
+                          ),
+          grid.params=list(alpha=.5)      # Parameter to adjust gridlines around the tree
       ) +
       scale_fill_manual(
-       values=c("black","grey"),          #color of the external geom_layer
+       values=c("grey","lightblue","blue","black"),          #color of the external geom_layer
        name="Prokaryote origin",        #name of the legend for the external geom_layer
        guide=guide_legend(keywidth=0.9,keyheight=0.9,order=6, ncol=1)
       ) +
@@ -323,5 +304,5 @@ tp6 <- tp5.5 +
       )
 tp6
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.WB.BM.pdf",width=15,height=30) #save the tree in a pdf
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacterialorigin.pdf",width=15,height=30) #save the tree in a pdf
 ```
