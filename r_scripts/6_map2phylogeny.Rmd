@@ -304,5 +304,6 @@ tp6 <- tp5.5 +
       )
 tp6
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacterialorigin.pdf",width=15,height=30) #save the tree in a pdf
+# ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacterialorigin.pdf",width=15,height=30) #save the tree in a pdf
+graph2ppt(file="/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacterialorigin.ppt", width=12, height=12)
 ```

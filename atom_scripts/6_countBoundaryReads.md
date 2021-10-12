@@ -71,6 +71,13 @@ Execute the script with:
 
 The file should be called `LGTs.candidateloci.loose.bed.LGTboundaries.bed` and should be found in every GAGA genome folder.
 
+##### 1.2.1 For all no ant LGT candidates:
+Execute the script with:
+`find */results/LGTs.nAo.candidateloci.loose.bed | parallel -I% --max-args 1 qsub -v file="%"
+ makeLGTboundaryfile.sh -o ./tmp/$file.out -e ./tmp/$file.err`
+
+The file should be called `LGTs.nAo.candidateloci.loose.bed.LGTboundaries.bed` and should be found in every GAGA genome folder.
+
 #### 1.3 Check if all genomes have this file:
 ```bash
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/LGTs.candidateloci.loose.bed.LGTboundaries.bed ]] && echo "$dir"; done
