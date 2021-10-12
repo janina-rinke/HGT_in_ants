@@ -289,6 +289,17 @@ Check if all genomes have the file:
 ```bash
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.LGTboundaries.25bp.up.down.bed ]] && echo "$dir"; done
 ```
+
+For all nAo genomes:
+```bash
+# Expand the LGT boundaries by 25 bp for short-read data with bedtools slop
+for i in *; do bedtools slop -i $i/results/LGTs.nAo.candidateloci.loose.bed.LGTboundaries.bed -g $i/results/genome.file -b 25 > $i/results/$i.nAo.LGTboundaries.25bp.up.down.bed; done
+```
+Check if all genomes have the file:
+```bash
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.nAo.LGTboundaries.25bp.up.down.bed ]] && echo "$dir"; done
+```
+
 ##### intersect
 ```bash
 # extract reads completely overlapping the +-25 bp of the boundary
@@ -298,6 +309,17 @@ Check if all genomes have the file:
 ```bash
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.LGTboundaries.25bp.PacBio.overlap.bam ]] && echo "$dir"; done
 ```
+
+For all nAo genomes:
+```bash
+# extract reads completely overlapping the +-25 bp of the boundary
+for i in *; do bedtools intersect -F 1 -abam $i/results/merged.candidateloci.loose.bam -b $i/results/$i.nAo.LGTboundaries.25bp.up.down.bed > $i/results/$i.nAo.LGTboundaries.25bp.PacBio.overlap.bam; done
+```
+Check if all genomes have the file:
+```bash
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.nAo.LGTboundaries.25bp.PacBio.overlap.bam ]] && echo "$dir"; done
+```
+
 ## 4. Filter reads based on mapping quality
 Finally, we filter reads that are not mapped very well to the region (e.g. they could also map somewhere else). Also, we remove reads that are in the file twice (because we merged the nAo and the other bam file above)
 
@@ -342,6 +364,16 @@ Check if all genomes have the file:
 ```bash
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.LGTboundaries.25bp.good.stLFR.overlap.bam ]] && echo "$dir"; done
 ```
+
+For all nAo genomes with short-read stLFR data:
+```bash
+for i in *; do samtools view -F 1024 -F 256 -F 2048 $i/results/$i.nAo.LGTboundaries.25bp.PacBio.overlap.bam -h |awk '!visited[$0]++|| $1 ~ /^@/' | samtools view -bS - > $i/results/$i.nAo.LGTboundaries.25bp.good.stLFR.overlap.bam; done
+```
+Check if all genomes have the file:
+```bash
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.nAo.LGTboundaries.25bp.good.stLFR.overlap.bam ]] && echo "$dir"; done
+```
+
 ## 5. Stats
 
 ### 5.1 Count the number of reads per boundary
@@ -463,6 +495,18 @@ Check if all genomes have the file:
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.LGTboundaries.25bp.good.stLFR.overlap.tsv ]] && echo "$dir"; done
 ```
 
+
+For all nAo short-read genomes:
+```bash
+# Count how many reads you get per boundary
+for i in *; do bedtools coverage -f 1 -b $i/results/$i.nAo.LGTboundaries.25bp.good.stLFR.overlap.bam -a $i/results/$i.nAo.LGTboundaries.25bp.up.down.bed  -counts > $i/results/$i.nAo.LGTboundaries.25bp.good.stLFR.overlap.bed; done
+
+for i in *; do cat $i/results/$i.nAo.LGTboundaries.25bp.good.stLFR.overlap.bed | paste - - > $i/results/$i.nAo.LGTboundaries.25bp.good.stLFR.overlap.tsv; done
+```
+Check if all genomes have the file:
+```bash
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.nAo.LGTboundaries.25bp.good.stLFR.overlap.tsv ]] && echo "$dir"; done
+```
 
 ### 5.2 Calculate the average read length across all genomes to estimate LGT boundary expansion
 `bedtools bamtobed`is a conversion utility that converts sequence alignments in BAM format into BED.
