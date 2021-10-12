@@ -83,6 +83,11 @@ The file should be called `LGTs.nAo.candidateloci.loose.bed.LGTboundaries.bed` a
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/LGTs.candidateloci.loose.bed.LGTboundaries.bed ]] && echo "$dir"; done
 ```
 
+##### 1.3.1 Check if all nA genomes have this file:
+```bash
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/LGTs.nAo.candidateloci.loose.bed.LGTboundaries.bed ]] && echo "$dir"; done
+```
+
 If all GAGA genomes contain this file, no GAGA genome folder should appear here.
 ### 2. Extract all reads overlapping these boundaries.
 
@@ -126,6 +131,20 @@ for i in * ; do samtools index $i/results/$i.LGTboundaries.PacBio.overlap.bam; d
 Check if all genomes have the file:
 ```bash
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.LGTboundaries.PacBio.overlap.bam ]] && echo "$dir"; done
+```
+
+For all nAo genomes:
+```bash
+# calculate overlap with bedtools intersect
+for i in * ; do bedtools intersect -abam $i/results/merged.candidateloci.loose.bam -b $i/results/LGTs.nAo.candidateloci.loose.bed.LGTboundaries.bed > $i/results/$i.nAo.LGTboundaries.PacBio.overlap.bam; done
+
+# index the bam file
+for i in * ; do samtools index $i/results/$i.nAo.LGTboundaries.PacBio.overlap.bam; done
+```
+
+Check if all genomes have the file:
+```bash
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.nAo.LGTboundaries.PacBio.overlap.bam ]] && echo "$dir"; done
 ```
 
 ### 3. Expand the required overlap
