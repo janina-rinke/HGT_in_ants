@@ -1,7 +1,7 @@
 # Blast of LGT candidates with MMseqs2
-The file with all 410 LGT candidates can be found here:
+The file with all 496 LGT candidates can be found here:
 ```bash
-/global/scratch2/j_rink02/master/lgt/0_data/candidatefiles/blastCandidates.tsv
+/global/scratch2/j_rink02/master/lgt/0_data/candidatefiles/GAGA.LGTs.allcoordinates.tsv
 ```
 
 Structure of the file:
@@ -30,14 +30,14 @@ GAGA-0020	Scaffold1	5322877	5323044
 
 2. Find the corresponding genome fasta file:
 ```
-id=GAGA-0003
+id=GAGA-0020
 /0_data/GAGAgenomes/$id.fa
 ```
 3. extract the correct region from the genome fasta ($id.fa).
 ​
 All together with the `parallel` command:
 ```bash
-cat /global/scratch2/j_rink02/master/lgt/0_data/blastCandidates.tsv | parallel --colsep '\t' "samtools faidx /global/scratch2/j_rink02/master/lgt/0_data/assemblies/{1}*.fasta {2}:{3}-{4} > /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/{1}.{2}.{3}-{4}.fa"
+cat /global/scratch2/j_rink02/master/lgt/0_data/candidatefiles/GAGA.LGTs.allcoordinates.tsv | parallel --colsep '\t' "samtools faidx /global/scratch2/j_rink02/master/lgt/0_data/assemblies/{1}*.fasta {2}:{3}-{4} > /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/{1}.{2}.{3}-{4}.fa"
 ```
 
 What the above command does:
