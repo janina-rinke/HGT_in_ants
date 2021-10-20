@@ -167,27 +167,6 @@ dfast -g GAGA-0024.Scaffold1.16539177-16545088.fa --force --metagenome --cpu 20 
 For all candidates together:
 
 Write a GridEngine Script to run the process:
-`nano dfast_bacteria.sh`:
-
-```bash
-#$ -S /bin/bash
-#$ -N dfastjob
-#$ -cwd
-#$ -pe smp 20
-#$ -l h_vmem=6G
-#$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.out
-#$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.err
-#$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta
-
-conda activate dfast
-
-source /usr/share/modules/init/bash  # enables the module package
-module use /global/projects/programs/modules/
-module load seq-search/mmseqs/sse2-13-45111
-
-dfast -g all.candidates.fa --force --metagenome --cpu 20 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/all.candidates.uniprot.bacteria --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
-```
-Running `dfast` against the additional UniProtDatabase does not work for the file `all.candidates.fa`. `Dfast` can not read multiple fasta sequences files with the additional database. Therefore, the `dfast` script will be run on each candidate spearately with `parallel` to obtain dfast results:
 
 nano `batch_dfast_job.sh`:
 
@@ -214,11 +193,11 @@ Submit the script and parse bash variables to the script using `-v file="file1.f
 
 To submit jobs more easily, use `parallel`:
 ```bash
-find . -name "GAGA*" | parallel -I% --max-args 1 qsub -v file="%" batch.dfastjob.sh
+find . -name "GAGA*" | parallel -I% --max-args 1 qsub -v file="%" batch_dfast_job.sh
 
-find . -name "NCBI*" | parallel -I% --max-args 1 qsub -v file="%" batch.dfastjob.sh
+find . -name "NCBI*" | parallel -I% --max-args 1 qsub -v file="%" batch_dfast_job.sh
 
-find . -name "OUT*" | parallel -I% --max-args 1 qsub -v file="%" batch.dfastjob.sh
+find . -name "OUT*" | parallel -I% --max-args 1 qsub -v file="%" batch_dfast_job.sh
 ```
 
 After running the script, not all candidates contain all files from the complete pipeline (Possible bug in GridEngine). Files, which do not contain all resulting dfast files need to be identified and the `dfast`pipeline needs to be re-run for them.
