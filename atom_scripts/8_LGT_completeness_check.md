@@ -43,3 +43,36 @@ Output of the above command:
 ```bash
 GAGA-0020	Scaffold107:144838-147367	uniprot_bacteria-0.9.ref:UniRef90_A0A1Q3WAM0 ANK_REP_REGION domain-containing protein (Fragment) (Candidatus Amoebophilus sp. 36-38) [pid:39.6%25%2C q_cov:99.9%25%2C s_cov:64.6%25%2C Eval:2.6e-153%2C partial hit]
 ```
+
+### 1.1 Extract best uniprot hit for all candidates:
+```bash
+cd /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast
+```
+
+`nano extractUniProt.sh`
+```bash
+#!/usr/bin/bash
+awk -v var=$1  '/##FASTA/ {exit} {if (/^[^##]/) {print var"\t"$0}}' $1/genome.gff | \
+perl -pe 's/(.*?)\t(.*?)\t.*note=(.*?\])\,.*/$1\t$2\t$3/g'
+```
+
+To execute the bash script:
+```bash
+bash extractUniprot.sh  OUT-0002.Scaffold1.173150-173918.fa
+```
+
+Run it in parallel on all LGTs:
+```bash
+ls ./|egrep "^GAGA|^OUT|^NCBI" |parallel "bash extractUniprot.sh {}" > LGTs_uniProt_besthit.tsv
+```
+
+
+
+## 2. Extract start- and stop codons from LGT candidates
+
+The first codon (`start codon`) should usually be ATG (theoretically: GTG or rarely TTG, see https://en.wikipedia.org/wiki/Start_codon).
+The last codon (`stop-codon`) should be TAA , TAG , or TGA.
+
+```bash
+seqkit fx2tab cds.fna |awk -F '\t' '{print $1,substr($2,1,3),substr($2,length($2)-2,length($2))}'
+```
