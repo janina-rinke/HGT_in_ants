@@ -76,3 +76,27 @@ The last codon (`stop-codon`) should be TAA , TAG , or TGA.
 ```bash
 seqkit fx2tab cds.fna |awk -F '\t' '{print $1,substr($2,1,3),substr($2,length($2)-2,length($2))}'
 ```
+
+For all candidates:
+```bash
+for i in * ; do seqkit fx2tab $i/cds.fna |awk -F '\t' '{print $1,substr($2,1,3),substr($2,length($2)-2,length($2))}' > $i.start.stop.codons.tsv ; done
+
+#prints out the file directory names as lines
+printf "%s\n" *.start.stop.codons.tsv | xargs -n1 -d $'\n' bash -c 'xargs -n1 -d $'\''\n'\'' printf "%s,%s\n" "$1" <"$1"' -- > all.start.stop.codons.tsv
+```
+
+## 3. Count number of predicted CDS for every LGT candidate
+
+```bash
+cd /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/
+
+grep -c CDS */genome.gff
+```
+
+Output:
+```bash
+GAGA-0020.Scaffold107.144838-147367.fa/genome.gff:1
+GAGA-0020.Scaffold1.5322877-5323044.fa/genome.gff:1
+GAGA-0020.Scaffold17.156258-159230.fa/genome.gff:2
+GAGA-0020.Scaffold267.55721-56766.fa/genome.gff:1
+```

@@ -1,0 +1,144 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(rtracklayer)
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(hablar)
+library(ggplot2)
+library(cowplot)
+library(reshape2)
+library(ggrepel)
+library(purrr)
+```
+
+# load all GFFs
+
+```{r}
+#find all gffs to load
+#basedir<-"/Users/lukas/sciebo/Projects/LGT/JaninaRinke/data/dfast/" #adjust folder to your settings
+basedir<-"/Users/Janina/sciebo/Master.LGTs/dfast/"
+#get a list of all files named genome.gff in the name in your directory
+dirs<-list.dirs(path=basedir,recursive = F,full.names = F)
+```
+
+```{r}
+# prepare empty lists to store gff info in
+list.of.gffs<-list()
+list.of.besthits<-list()
+# loop over all files and load the gffs
+for (directory in dirs) {
+gff<-NULL
+gff<-readGFF(paste(basedir,directory,"/genome.gff",sep="")) #the readGFF function does a very good job loading the complex data!
+#check if gff is empty
+if(nrow(gff)==0){
+  next
+  }
+
+# define a column containing only the first hit vs uniprot
+tmp.besthit<-gff$note[grepl("uniprot_bacteria-0.9.ref:UniRef90_",gff$note)]
+if(length(tmp.besthit)>0){
+  gff$besthit<-tmp.besthit
+}else{
+  gff$besthit<-NA
+}
+
+# define a column containing the cog hits
+tmp.cog<-gff$note[grepl("COG:",gff$note)]
+if(length(tmp.cog)>0){
+  gff$cog<-tmp.cog
+}else{
+  gff$cog<-NA
+}
+
+# define a column containing the TIGR hits
+tmp.tigr<-gff$note[grepl("TIGR:",gff$note)]
+if(length(tmp.tigr)>0){
+  gff$tigr<-tmp.tigr
+}else{
+  gff$tigr<-NA
+}
+
+
+
+# add the entire gff to a list containing all gffs
+list.of.gffs[[directory]]<-gff
+# store the relevant info in a separate list
+list.of.besthits[[directory]]<-gff[,c("seqid","source","type","start","end","score","strand","phase","ID","product","besthit","cog","tigr")]
+}
+```
+# Check if note is removed in all
+```{r}
+for (i in list.of.besthits){
+    if(sum(grepl("note",colnames(i)))>0){print(head(i))}
+    }
+```
+
+```{r}
+# transform and cleanup the data
+## combine all gffs into one dataframe
+df.bestHits <- plyr::ldply(list.of.besthits, data.frame)
+# extract the info from the best uniprot hit that is contained in the "[...]" section
+df.bestHits$bestHitSummary<-gsub(".*\\[(.*)\\].*","\\1",df.bestHits$besthit)
+# extract pid, s_cov, etc.
+df.bestHits<- df.bestHits %>%
+  separate(bestHitSummary, c("pid", "q_cov","s_cov","Eval","is.partial"), ", ") %>%
+  dplyr::mutate_at(vars(c("pid", "q_cov","s_cov","Eval","is.partial")), ~ str_replace(., ".*\\:", "")) %>%
+  dplyr::mutate_at(vars(c("pid", "q_cov","s_cov")), ~ str_replace(., "\\%", "")) %>%
+  dplyr::mutate_at(vars(".id"), ~ str_replace(., "\\..*", "")) %>%
+  dplyr::mutate_at(vars(c("besthit")), ~ str_replace(., "uniprot_bacteria-0.9.ref:UniRef90_(.*) \\[.*", "\\1")) %>%
+  separate(besthit, c("uniprotID","name"), " ",extra = "merge") %>%
+  hablar::convert(num(pid, q_cov,s_cov,Eval))
+```
+
+# Plot some info
+
+```{r}
+theme_set(theme_cowplot(font_size=8))
+```
+
+```{r}
+#transform data frame to long format
+df.bestHits.simple<-df.bestHits
+df.bestHits.simple$cog<-map_chr(df.bestHits.simple$cog, str_flatten, collapse = ";;")
+df.bestHits.simple$tigr<-map_chr(df.bestHits.simple$tigr, str_flatten, collapse = ";;")
+df2.bestHits<-melt(df.bestHits.simple, id.vars=colnames(df.bestHits.simple)[c(1:15,19,20)])
+```
+
+```{r}
+ggplot(df2.bestHits)+geom_bar(aes(fill=.id,x=value,y=paste(.id,"[",seqid,"]",sep=""),group=ID),stat="identity",position="dodge")+theme(legend.position = "right")+facet_wrap(~variable)+xlab("%")
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Completeness.LGT.candidates.pdf",width=15,height=30) 
+```
+
+```{r}
+ggplot(df.bestHits.simple)+geom_point(aes(x=pid,y=s_cov,size=end-start,fill=gsub("TIGR:(.*?); (.*?): .*","\\2",tigr)),pch=21)+geom_text_repel(aes(x=pid,y=s_cov,label=.id))
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Secondplot.LGT.candidates.pdf") 
+```
+
+#  Merge the q_cov and s_cov data columns with the LGT candidate dataframe
+
+```{r}
+LGTs.all<-GAGA_LGT_162_resulting_good_single_candidates_filtered
+#delete unnecessary columns
+LGTs.all$...32<-NULL
+LGTs.all$...33<-NULL
+LGTs.all$...34<-NULL
+#Rename column in the dataframes to merge later by this column
+names(df.bestHits)[names(df.bestHits) == "seqid"] <- "cand.locus"
+LGTs.all$.id<-gsub("\\..*","",LGTs.all$.id)
+
+#Merge the columns of both dataframes
+LGTs.plus<-merge(LGTs.all, df.bestHits)
+LGTs.plus<-subset(LGTs.plus, select=-c(phase,ID,score,strand,comment,source,predicted_protein_detailed, prokaryote_origin_detailed))
+
+#Save resulting dataframe as a table
+LGTs.plus$cog <- vapply(LGTs.plus$cog, paste, collapse = ", ", character(1L))
+LGTs.plus$tigr <- vapply(LGTs.plus$tigr, paste, collapse = ", ", character(1L))
+write.table(LGTs.plus,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.all.candidates.completeness.tsv", quote=FALSE, sep='\t',row.names=FALSE)
+```
