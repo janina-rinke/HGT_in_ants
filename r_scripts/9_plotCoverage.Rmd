@@ -1,0 +1,119 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyr)
+library(GenomicAlignments)
+library(rtracklayer)
+library(regioneR)
+library(ggplot2)
+library(cowplot)
+```
+
+```{r}
+# define plotting function
+plotCoverage <- function(bamfile, dfast.gff, lgt.bed, outfolder, id, expand) {
+  # load data
+  bam1<-readGAlignments(bamfile)      #load bam file
+  gffCDS<-readGFFAsGRanges(dfast.gff) #load dfast annotation
+  gffLGT<-toGRanges(lgt.bed)          #load lgt candidate bed
+  
+  
+  # transform data for plotting
+  gffLGT$type<-gffLGT$name        #assign LGT as type for the LGT bed file entries
+  gr1<-GRangesList(gffCDS,gffLGT) #combine CDS and LGT info in one object
+  bam1cov <- coverage(bam1)       #extract coverage info from bam file
+  plottingRange <- GRanges(gffLGT@seqnames[1],IRanges(start(gffLGT)-expand,end(gffLGT)+expand)) #expand CDS range
+
+  # extract the coverage info from the bed file  
+  bam1cov.scf<-bam1cov[[plottingRange@seqnames[1]]]
+  bam1covNum <- as.numeric(bam1cov.scf[ranges(plottingRange)]) #Uncompress the coverage
+
+  # prepare a data frame with the coverage relative to the scf coordinates
+  RNAseq<-data.frame(start=start(plottingRange)+seq(0,(length(bam1covNum)-1)),coverage=bam1covNum)
+  
+  #plot the CDS and LGT regions
+  p.annotation <- ggplot(as.data.frame(gr1)) +
+    geom_segment(aes(
+      x = start,
+      xend = end,
+      col = type,
+      y = type,
+      yend = type
+    ), lwd = 5) +
+    theme_cowplot(font_size = 20) +
+    theme(legend.position = "none",
+          panel.spacing  = unit(c(0, 0, 0, 0), "cm")) +
+    coord_cartesian(xlim = c(start(plottingRange), end(plottingRange))) +
+    scale_color_manual(values = c("yellow2", "grey80")) +
+    ylab(NULL) +
+    xlab(paste(id," ",gffLGT@seqnames,":",start(gffLGT),"-",end(gffLGT),sep = "")) +
+    scale_x_continuous(expand = c(0, 0))
+  
+  #plot the coverage
+  p.coverage <-
+    ggplot(RNAseq) + geom_bar(
+      stat = "identity",
+      aes(x = start, y = coverage),
+      fill = "yellow4",
+      col = "yellow4",
+      width = 1.1
+    ) +
+    coord_cartesian(xlim = c(start(plottingRange), end(plottingRange))) +
+    theme_cowplot(font_size = 20) +
+    xlab(NULL) +
+    ylab(NULL) +
+    scale_y_continuous(breaks = max(RNAseq$coverage)) +
+    theme(
+      plot.margin = unit(c(0, 0, -1, 0), "cm"),
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.line.x = element_blank()
+    )
+
+  
+#combine both plots
+  p.full <-
+    plot_grid(
+      p.coverage,
+      p.annotation,
+      nrow = 2,
+      align = "v",
+      rel_heights = c(3 / 5, 2 / 5)
+    )
+
+  #print plot and save
+  p.full
+  ggsave(paste(outfolder,id,"-",gffLGT@seqnames,"-",start(gffLGT),"-",end(gffLGT),".coverage.pdf",sep=""),width=8,height=4)
+}
+```
+
+```{r}
+# prepare vectors for ids, bamfiles, dfasts and beds for all the LGT canidates you want to plot. This can come from a tsv file or an excel file or whatever.
+ids<-c("GAGA-0515","GAGA-0080")
+bamfiles<-c("/Users/lukas/sciebo/Projects/LGT/JaninaRinke/RNAseq/run_final_keepingbam_pergagaid/GAGA-0515/GAGA-0515.Scaffold8.1760778-1761241.fa/GAGA-0515_Cobs_queenAligned.sortedByCoord.out.LGTregion.bam",
+            "/Users/lukas/sciebo/Projects/LGT/JaninaRinke/RNAseq/run_final_keepingbam_pergagaid/GAGA-0080/GAGA-0080.Scaffold7.277737-279231.fa/DP8400010938BL_L01_548_1Aligned.sortedByCoord.out.LGTregion.bam")
+dfasts<-c("/Users/lukas/sciebo/Projects/LGT/JaninaRinke/LGTprimerDesign/GAGA-0515/genome.gff_mod.gff","/Users/lukas/sciebo/Projects/LGT/JaninaRinke/LGTprimerDesign/GAGA-0080/genome.gff_mod.gff")
+beds<-c("/Users/lukas/sciebo/Projects/LGT/JaninaRinke/LGTprimerDesign/GAGA-0515/genome.gff.bed","/Users/lukas/sciebo/Projects/LGT/JaninaRinke/LGTprimerDesign/GAGA-0080/genome.gff.bed")
+```
+
+
+```{r}
+#loop over all entries in id, bamfiles, dfasts, and beds to create one pdf per lgt candidate region
+for (i in 1:length(ids)){
+plotCoverage(
+  id=ids[i],
+  bamfile=bamfiles[i],
+  dfast.gff=dfasts[i],
+  lgt.bed=beds[i],
+  outfolder="/Users/lukas/sciebo/Projects/LGT/JaninaRinke/RNAseq/",
+  expand=100  #how far should the plot expanded around the LGT
+)
+}
+
+
+```
+
