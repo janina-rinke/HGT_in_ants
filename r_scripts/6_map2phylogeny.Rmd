@@ -34,9 +34,18 @@ output:
 --->
 </STYLE>
 
+```{r}
+#install.packages("rmarkdown")
+library(rmarkdown)
+```
+
 
 Load the necessary R libraries
 ```{r}
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+    #install.packages("BiocManager")
+
+#BiocManager::install("treeio")
 #devtools::install_github("GuangchuangYu/ggtree")
 library(treeio)
 library(ggtree)
@@ -53,7 +62,7 @@ Load data from google spreadsheet (Already stored in an R object that you can ju
 #gsheet<-read_sheet(id,sheet="GlobalOverview",skip = 2,na = c(""," ","NA","#DIV/0!"),col_types = "c",trim_ws=T)
 #GlobalOverview<-as.data.frame(gsheet,stringsAsFactors=F)
 #save(GlobalOverview,file="../../misc/data/gsheet.GlobalOverview.21-09-22.Robj")
-load("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/1_code/r_scripts/gsheet.GlobalOverview.21-09-22.Robj")
+load("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/gsheet.GlobalOverview.21-09-22.Robj")
 ```
 
 Create a dataframe where the first row is the GAGA id (e.g. GAGA-0002), which are also used as the tip labels in the phylogeny
@@ -63,7 +72,10 @@ data2add<-data.frame(GAGA.id = GlobalOverview$`GAGA ID`, GlobalOverview)
 
 Gather subfamily info for NCBI IDs as well and manually add the subfamily
 ```{r}
+colnames(data2add)
+
 subset(data2add,is.na(Subfamily))
+
 data2add$Subfamily[data2add$GAGA.id=="NCBI-0001"]<-"Dorylinae"
 data2add$Subfamily[data2add$GAGA.id=="NCBI-0002"]<-"Myrmicinae"
 data2add$Subfamily[data2add$GAGA.id=="NCBI-0003"]<-"Myrmicinae"
@@ -88,6 +100,7 @@ data2add$Subfamily[data2add$GAGA.id=="OUT-0002"]<-"Formicinae"
 Create a column with clean species IDs for all species.
 
 This has to be done, because the database of all the sequenced species is a bit convoluted.
+The function coalesce() finds the first non-missing value at each position. In this case, the columns "Species" and "Species..from.Assembly.Overview" are collapsed. If the column "Species" does not have an entry, the entry from the column "Species..from.Assembly.Overview" will be taken.
 ```{r}
 data2add$cleanSpeciesID<-dplyr::coalesce(data2add$Species,data2add$Species..from.Assembly.Overview.)
 ```
@@ -95,7 +108,7 @@ data2add$cleanSpeciesID<-dplyr::coalesce(data2add$Species,data2add$Species..from
 
 Load the tree file of all the GAGA genomes.
 ```{r}
-tree <- read.iqtree("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/1_code/r_scripts/hymenoptera_psc98_partition_b1000_40threads_msubnucl.treefile")
+tree <- read.iqtree("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/hymenoptera_psc98_partition_b1000_40threads_msubnucl.treefile")
 ```
 
 Create a very quick and dirty plot of the phylogeny
@@ -104,7 +117,7 @@ plot(tree@phylo,show.node.label = T,show.tip.label = T,cex=.5)
 nodelabels(bg=rgb(0,0,0,0),col="red",frame = "none")
 ```
 
-check the plot to see where the root should be. Here we root the tree at node 166 that separates the outgroups, the honeybee "Amel" (Apis mellifera) and the parasitoid wasp Nasonia (Nvit), from ants.
+Check the plot to see where the root should be. Here we root the tree at node 166 that separates the outgroups, the honeybee "Amel" (Apis mellifera) and the parasitoid wasp Nasonia (Nvit), from ants.
 ```{r}
 #tree.rooted<-treeio::root(tree,node=166)
 tree.rooted <- tree
@@ -154,21 +167,36 @@ tp3 #plot the tree
 #Add the raw LGT dataframe
 library(readxl)
 LGTs.raw<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/GAGA.LGT.162.resulting.good.single.candidates.filtered.xlsx")
-LGTs.raw$...28 <- NULL
-LGTs.raw$...29 <- NULL
-LGTs.raw$...30 <- NULL
 LGTs.raw$comment <- NULL
 
 #Clean up the LGT dataframe to remove the database origin (GAGA-0001.euk -> GAGA-0001)
 LGTs<-LGTs.raw
-LGTs$GAGAid<-gsub("\\..*","",LGTs$.id)
+LGTs$.id<-gsub("\\..*","",LGTs$.id)
 ```
+
+# A.1.1) Add the information from the other excel dataframes containing the dfast results and expression and combine everything into one df
+```{r}
+LGTs.dfast<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.dfast.incorporated.xlsx")
+LGTs.expression<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/GAGA.LGT.completeness.expression.xlsx")
+
+#Join the LGTs df and the LGTs.dfast df together. With full_join, both dataframes will be merged and identical columns will be kept, as well as new ones added.
+LGTs.combined <- full_join(LGTs,LGTs.dfast)
+
+#Joining, by = c("cand.locus", "locus", ".id", "cand.start", "cand.end", "cand.length", "bestProHit", #"BitDiffSum", "cand.scaffold", "locus.start", "locus.end", "start_overlap", "end_overlap", #"complete_overlap", "species", "subfamily", "nr_predicted_loci", "prokaryote_origin", #"order_prokaryote_origin", "class_prokaryote_origin", "predicted_protein", "assembly_method", #"Wolbachia_infection", "CPH_avail")
+
+#Clean the LGT.combined df
+LGTs.combined$LGT_quality<-NULL
+write.table(LGTs.combined, file='/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.combined.dfast.tsv', quote=FALSE, sep='\t', col.names = NA)
+write.table(LGTs.expression, file='/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.expression.tsv', quote=FALSE, sep='\t', col.names = NA)
+```
+
+
 
 # A.2) LGT data: Add the LGT candidate numbers per genome to the phylogeny
 Plot the circular phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified LGTs.
-````{r}
+```{r}
 #Create a tally dataframe that counts how many LGT candidates we have per species.
-LGT.tally<-as.data.frame(table(select(LGTs,GAGAid)))
+LGT.tally<-as.data.frame(table(select(LGTs,.id)))
 colnames(LGT.tally)<-c("GAGAid","LGT.count")
 
 #Add the LGT.tally dataframe to the phylogeny object as additional data.
@@ -180,15 +208,15 @@ tp5<-tp4+geom_tippoint(aes(size=LGT.count),col="red", alpha=.5)
 tp5
 #ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.LGTs.pdf",width = 12,height=24) #save the tree in a pdf
 
-write.table(LGT.tally, file="GAGAspecies_with_lgts.tsv", sep=",", col.names = NA)
+#write.table(LGT.tally, file="GAGAspecies_with_lgts.tsv", sep=",", col.names = NA)
 ```
 
 # A.3) LGT data: Add the different LGT categories to the phylogeny as a heatmap
 Create a dataframe that counts the genomes with ankyrin repeats
 ```{r}
 #Only select the ankyrins to show them as a heatmap
-LGT.ankyrins<-subset(LGTs,predicted_protein=="ankyrin repeat protein") %>% group_by(GAGAid) %>% tally()
-colnames(LGT.ankyrins)<-c("GAGAid","protein")
+LGT.ankyrins<-subset(LGTs,predicted_protein=="ankyrin repeat protein") %>% group_by(.id) %>% tally()
+colnames(LGT.ankyrins)<-c(".id","protein")
 
 LGT.ankyrins$type<-"ankyrin repeat protein"
 knitr::kable(head(LGT.ankyrins))
@@ -205,6 +233,7 @@ knitr::kable(head(LGT.anks.lys))
 
 
 ```{r}
+#BiocManager::install("ggstar")
 library(ggtree)
 library(ggtreeExtra)
 library(ggplot2)
@@ -216,8 +245,8 @@ library(ggstar)
 
 # A.4) Plot all predicted proteins onto the phylogeny
 ```{r}
-LGT.proteins<-LGTs[,c(26,31)]
-LGT.proteins <- LGT.proteins %>% count(GAGAid,predicted_protein, sort = T)
+LGT.proteins<-LGTs[,c(26,3)]
+LGT.proteins <- LGT.proteins %>% count(.id,predicted_protein, sort = T)
 colnames(LGT.proteins)<-c("GAGAid","protein","count")
 
 LGT.proteins <- na.omit(LGT.proteins)
@@ -266,8 +295,8 @@ tp5.5
 
 # A.5) Subset the LGT count into Wolbachia and Blochmannia origin
 ```{r}
-LGT.bacteria<-LGTs[,c(22,31)]
-LGT.bacteria <- LGT.bacteria %>% count(GAGAid,prokaryote_origin, sort = T)
+LGT.bacteria<-LGTs[,c(22,3)]
+LGT.bacteria <- LGT.bacteria %>% count(.id,prokaryote_origin, sort = T)
 colnames(LGT.bacteria)<-c("GAGAid","prokaryote_origin","count")
 
 LGT.bacteria <- na.omit(LGT.bacteria)
@@ -328,6 +357,7 @@ leg1 <- get_legend(tp_bacteria)
 tp7 <- tp6 + theme(legend.position="none")
 plot_grid(tp7, leg1, ncol=1, rel_widths=c(0.07, 0.5))
 ```
+
 ```{r}
 tp7 <- tp6 +
       theme(legend.position="bottom", # the position of legend.
@@ -341,4 +371,8 @@ tp7
 #ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacterialorigin.pdf",width=15,height=30) #save the tree in a pdf
 #graph2ppt(file="/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacterialorigin.ppt", width=12, height=12)
 ```
+
+
+
+
 Last updated 2022/01/07
