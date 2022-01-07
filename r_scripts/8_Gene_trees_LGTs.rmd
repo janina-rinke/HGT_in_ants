@@ -35,7 +35,7 @@ output:
 </STYLE>
 
 
-This script serves to create gene trees for all single LGTs. 
+This script serves to create gene trees for all single LGTs.
 
 Load the necessary R libraries
 ```{r}
@@ -114,3 +114,4 @@ tp3 <-tp2 +
 tp3
 
 ```
+Last updated 2022/01/07
