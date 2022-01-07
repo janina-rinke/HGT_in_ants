@@ -13,21 +13,21 @@ output:
 <STYLE TYPE="text/css">
 <!--
   td{
-    font-family: Arial; 
+    font-family: Arial;
     font-size: 8pt;
     padding:0px;
     cellpadding="0";
     cellspacing="0"
   }
   th {
-    font-family: Arial; 
+    font-family: Arial;
     font-size: 8pt;
     height: 20px;
     font-weight: bold;
     text-align: right;
     background-color: #ccccff;
   }
-  table { 
+  table {
     border-spacing: 0px;
     border-collapse: collapse;
   }
@@ -85,7 +85,7 @@ data2add$Subfamily[data2add$GAGA.id=="OUT-0001"]<-"Formicinae"
 data2add$Subfamily[data2add$GAGA.id=="OUT-0002"]<-"Formicinae"
 ```
 
-Create a column with clean species IDs for all species. 
+Create a column with clean species IDs for all species.
 
 This has to be done, because the database of all the sequenced species is a bit convoluted.
 ```{r}
@@ -132,7 +132,7 @@ library("ggnewscale")
 #Make Subfamily as a factor (discrete color scale for factors)
 tp2$data$Subfamily<-as.factor(tp2$data$Subfamily)
 
-tp3<-tp2 + 
+tp3<-tp2 +
   geom_tiplab2(aes(label=paste(label,cleanSpeciesID,sep=" "), color = Subfamily),size=2,align = T,linesize = .1)+    #add the tip labels
   geom_nodepoint(aes(fill=UFboot),stroke=0.5,pch=21,size=2)+       #add the info about bootstrapping success as points of different colors to the nodes
  scale_fill_viridis_c()+  #change the color of the UFboot node points to a viridis color scale
@@ -151,7 +151,7 @@ tp3 #plot the tree
 
 # A.1) LGT data: Include the LGT data in the circular phylogeny
 ```{r}
-#Add the raw LGT dataframe 
+#Add the raw LGT dataframe
 library(readxl)
 LGTs.raw<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/GAGA.LGT.162.resulting.good.single.candidates.filtered.xlsx")
 LGTs.raw$...28 <- NULL
@@ -167,7 +167,7 @@ LGTs$GAGAid<-gsub("\\..*","",LGTs$.id)
 # A.2) LGT data: Add the LGT candidate numbers per genome to the phylogeny
 Plot the circular phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified LGTs.
 ````{r}
-#Create a tally dataframe that counts how many LGT candidates we have per species. 
+#Create a tally dataframe that counts how many LGT candidates we have per species.
 LGT.tally<-as.data.frame(table(select(LGTs,GAGAid)))
 colnames(LGT.tally)<-c("GAGAid","LGT.count")
 
@@ -194,7 +194,7 @@ LGT.ankyrins$type<-"ankyrin repeat protein"
 knitr::kable(head(LGT.ankyrins))
 
 #Only select the ankyrins and lysozymes to show them on the phylogeny
-LGT.anks.lys<-subset(LGTs,predicted_protein %in% c("ankyrin repeat protein", "Lysozyme")) %>% group_by(GAGAid) 
+LGT.anks.lys<-subset(LGTs,predicted_protein %in% c("ankyrin repeat protein", "Lysozyme")) %>% group_by(GAGAid)
 
 LGT.anks.lys<-LGT.anks.lys[,c(26,31)]
 LGT.anks.lys <- LGT.anks.lys %>% count(GAGAid,predicted_protein, sort = T)
@@ -221,7 +221,7 @@ LGT.proteins <- LGT.proteins %>% count(GAGAid,predicted_protein, sort = T)
 colnames(LGT.proteins)<-c("GAGAid","protein","count")
 
 LGT.proteins <- na.omit(LGT.proteins)
-knitr::kable(head(LGT.proteins)) 
+knitr::kable(head(LGT.proteins))
 ```
 
 ```{r}
@@ -243,7 +243,7 @@ tp5.5 <- tp5 +
                          text.angle=0,   # the text size of axis.
                          text.size=1.8,
                          hjust=1,        # adjust the horizontal position of text of axis
-                         nbreak=1,       # number of lines within geom_layer, 
+                         nbreak=1,       # number of lines within geom_layer,
                            ),
          grid.params=list(alpha=.5)      # Parameter to adjust gridlines around the tree
       ) +
@@ -257,7 +257,7 @@ tp5.5 <- tp5 +
           legend.background=element_rect(fill=NA), # the background of legend.
           legend.title=element_text(size=12), # the title size of legend.
           legend.text=element_text(size=10) # the text size of legend.
-          #legend.spacing.y = unit(0.01, "cm") 
+          #legend.spacing.y = unit(0.01, "cm")
       )
 tp5.5
 
@@ -271,8 +271,8 @@ LGT.bacteria <- LGT.bacteria %>% count(GAGAid,prokaryote_origin, sort = T)
 colnames(LGT.bacteria)<-c("GAGAid","prokaryote_origin","count")
 
 LGT.bacteria <- na.omit(LGT.bacteria)
-LGT.bacteria.WB.BM <- subset(LGT.bacteria,prokaryote_origin %in% c("Wolbachia", "Blochmannia")) %>% group_by(GAGAid) 
-knitr::kable(head(LGT.bacteria.WB.BM)) 
+LGT.bacteria.WB.BM <- subset(LGT.bacteria,prokaryote_origin %in% c("Wolbachia", "Blochmannia")) %>% group_by(GAGAid)
+knitr::kable(head(LGT.bacteria.WB.BM))
 ```
 
 # A.6) Add the bacterial origin
@@ -293,7 +293,7 @@ tp6 <- tp5.5 +
                           text.angle=0,   # the text size of axis.
                           text.size=1.5,
                           hjust=1,        # adjust the horizontal position of text of axis
-                          nbreak=1,       # number of lines within geom_layer, 
+                          nbreak=1,       # number of lines within geom_layer,
                           ),
           grid.params=list(alpha=.5)      # Parameter to adjust gridlines around the tree
       ) +
@@ -309,7 +309,7 @@ tp6 <- tp5.5 +
           legend.background=element_rect(fill=NA), # the background of legend.
           legend.title=element_text(size=12), # the title size of legend.
           legend.text=element_text(size=10) # the text size of legend.
-         # legend.spacing.y = unit(0.01, "cm") 
+         # legend.spacing.y = unit(0.01, "cm")
       )
 tp6
 
@@ -334,10 +334,11 @@ tp7 <- tp6 +
           legend.background=element_rect(), # the background of legend.
           legend.title=element_text(size=11), # the title size of legend.
           legend.text=element_text(size=9), # the text size of legend.
-          legend.spacing.y = unit(0.02, "cm") 
+          legend.spacing.y = unit(0.02, "cm")
       )
 tp7
 
 #ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacterialorigin.pdf",width=15,height=30) #save the tree in a pdf
 #graph2ppt(file="/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacterialorigin.ppt", width=12, height=12)
 ```
+Last updated 2022/01/07
