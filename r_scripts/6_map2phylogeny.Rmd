@@ -180,14 +180,23 @@ LGTs.dfast<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/L
 LGTs.expression<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/GAGA.LGT.completeness.expression.xlsx")
 
 #Join the LGTs df and the LGTs.dfast df together. With full_join, both dataframes will be merged and identical columns will be kept, as well as new ones added.
+LGTs.dfast$start_overlap<-as.numeric(LGTs.dfast$start_overlap)
+LGTs.dfast$end_overlap<-as.numeric(LGTs.dfast$end_overlap)
+LGTs.dfast$complete_overlap<-as.numeric(LGTs.dfast$complete_overlap)
+LGTs.dfast$nr_predicted_loci<-as.numeric(LGTs.dfast$nr_predicted_loci)
+LGTs$nr_predicted_loci<-as.numeric(LGTs$nr_predicted_loci)
+
 LGTs.combined <- full_join(LGTs,LGTs.dfast)
 
 #Joining, by = c("cand.locus", "locus", ".id", "cand.start", "cand.end", "cand.length", "bestProHit", #"BitDiffSum", "cand.scaffold", "locus.start", "locus.end", "start_overlap", "end_overlap", #"complete_overlap", "species", "subfamily", "nr_predicted_loci", "prokaryote_origin", #"order_prokaryote_origin", "class_prokaryote_origin", "predicted_protein", "assembly_method", #"Wolbachia_infection", "CPH_avail")
 
 #Clean the LGT.combined df
 LGTs.combined$LGT_quality<-NULL
-write.table(LGTs.combined, file='/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.combined.dfast.tsv', quote=FALSE, sep='\t', col.names = NA)
-write.table(LGTs.expression, file='/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.expression.tsv', quote=FALSE, sep='\t', col.names = NA)
+
+library("writexl")
+write_xlsx(LGTs.combined,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.combined.dfast.xlsx")
+#write.table(LGTs.combined, file='/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.combined.dfast.tsv',sep="\t",quote=F,row.names = F)
+#write.table(LGTs.expression, file='/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.expression.tsv', quote=FALSE, sep='\t', col.names = NA)
 ```
 
 
@@ -222,13 +231,13 @@ LGT.ankyrins$type<-"ankyrin repeat protein"
 knitr::kable(head(LGT.ankyrins))
 
 #Only select the ankyrins and lysozymes to show them on the phylogeny
-LGT.anks.lys<-subset(LGTs,predicted_protein %in% c("ankyrin repeat protein", "Lysozyme")) %>% group_by(GAGAid)
+LGT.anks.lys<-subset(LGTs,predicted_protein %in% c("ankyrin repeat protein", "Lysozyme")) %>% group_by(.id)
 
-LGT.anks.lys<-LGT.anks.lys[,c(26,31)]
-LGT.anks.lys <- LGT.anks.lys %>% count(GAGAid,predicted_protein, sort = T)
-colnames(LGT.anks.lys)<-c("GAGAid","protein","count")
+LGT.anks.lys<-LGT.anks.lys[,c(26,3)]
+#LGT.anks.lys <- LGT.anks.lys %>% count(.id,predicted_protein, sort = T)
+#colnames(LGT.anks.lys)<-c("GAGAid","protein","count")
 
-knitr::kable(head(LGT.anks.lys))
+#knitr::kable(head(LGT.anks.lys))
 ```
 
 

@@ -1,6 +1,8 @@
 ---
-title: "R Notebook: Analyse LGT candidates"
-output: html_notebook
+title: 'R Notebook: Analyse LGT candidates'
+output:
+  html_document:
+    df_print: paged
 ---
 
 
@@ -24,7 +26,7 @@ Load all tsv files for the different GAGA ids in a list of data frames.
 #tsv2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
 #tsv2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
 tsv2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.*.lgt.good.candidates.tsv"
-dataFiles <- lapply(Sys.glob(tsv2load), read.csv,sep="\t")
+dataFiles <- lapply(Sys.glob(tsv2load), read.delim2,sep="\t")
 ```
 
 # add the name

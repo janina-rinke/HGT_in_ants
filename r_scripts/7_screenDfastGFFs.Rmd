@@ -1,6 +1,8 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r}
@@ -111,20 +113,20 @@ df2.bestHits<-melt(df.bestHits.simple, id.vars=colnames(df.bestHits.simple)[c(1:
 ```
 
 ```{r}
-ggplot(df2.bestHits)+geom_bar(aes(fill=.id,x=value,y=paste(.id,"[",seqid,"]",sep=""),group=ID),stat="identity",position="dodge")+theme(legend.position = "right")+facet_wrap(~variable)+xlab("%")
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Completeness.LGT.candidates.pdf",width=15,height=30) 
+#ggplot(df2.bestHits)+geom_bar(aes(fill=.id,x=value,y=paste(.id,"[",seqid,"]",sep=""),group=ID),stat="identity",position="dodge")+theme(legend.position = "right")+facet_wrap(~variable)+xlab("%")
+#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Completeness.LGT.candidates.pdf",width=15,height=30) 
 ```
 
 ```{r}
 ggplot(df.bestHits.simple)+geom_point(aes(x=pid,y=s_cov,size=end-start,fill=gsub("TIGR:(.*?); (.*?): .*","\\2",tigr)),pch=21)+geom_text_repel(aes(x=pid,y=s_cov,label=.id))
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Secondplot.LGT.candidates.pdf") 
+#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Secondplot.LGT.candidates.pdf") 
 ```
 
 #  Merge the q_cov and s_cov data columns with the LGT candidate dataframe
 
 ```{r}
-LGTs.all<-GAGA_LGT_162_resulting_good_single_candidates_filtered
+LGTs.all<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/GAGA.LGT.162.resulting.good.single.candidates.filtered.xlsx")
 #delete unnecessary columns
 LGTs.all$...32<-NULL
 LGTs.all$...33<-NULL
@@ -140,5 +142,5 @@ LGTs.plus<-subset(LGTs.plus, select=-c(phase,ID,score,strand,comment,source,pred
 #Save resulting dataframe as a table
 LGTs.plus$cog <- vapply(LGTs.plus$cog, paste, collapse = ", ", character(1L))
 LGTs.plus$tigr <- vapply(LGTs.plus$tigr, paste, collapse = ", ", character(1L))
-write.table(LGTs.plus,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.all.candidates.completeness.tsv", quote=FALSE, sep='\t',row.names=FALSE)
+#write.table(LGTs.plus,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.all.candidates.completeness.tsv", quote=FALSE, sep='\t',row.names=FALSE)
 ```

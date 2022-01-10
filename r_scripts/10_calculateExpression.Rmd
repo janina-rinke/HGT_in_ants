@@ -1,0 +1,90 @@
+---
+title: "Calculate expression of single CDS of LGT regions"
+author: "Janina Rinke"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+    collapsed: true
+    number_sections: true
+    df_print: paged
+  pdf_document: default
+---
+<STYLE TYPE="text/css">
+<!--
+  td{
+    font-family: Arial;
+    font-size: 8pt;
+    padding:0px;
+    cellpadding="0";
+    cellspacing="0"
+  }
+  th {
+    font-family: Arial;
+    font-size: 8pt;
+    height: 20px;
+    font-weight: bold;
+    text-align: right;
+    background-color: #ccccff;
+  }
+  table {
+    border-spacing: 0px;
+    border-collapse: collapse;
+  }
+--->
+</STYLE>
+---
+
+This script combines the information about all LGT candidates and respective CDS detected by dfast together with the RNAseq mapping expression. The read counts for every single CDS are added to the dataframe and plotted for the candidates.
+
+```{r global-options, include=FALSE}
+# Define the global chunk options
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r libraries}
+library(ggplot2)
+library(data.table)
+library(dplyr)
+```
+
+## Extract expression from RNAseq mapping files
+
+#### Load the RNAseq mapping files for every LGT candidate into R.
+```{r load files}
+txt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+dataFiles <- lapply(Sys.glob(txt2load),read.delim2,sep = "\t")
+```
+
+To check, whether all dataframes have been imported correctly, you can view any element from the list:
+```{r check files}
+summary(dataFiles[1])
+dataFiles[1]
+```
+
+
+```{r load single file, include=FALSE}
+txtfile <- read.delim2("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/GAGA-0515.Scaffold8.1760778-1761241.fa/RNAseq_mapping_count_summary.txt", header = TRUE, sep = "\t", dec = ",")
+```
+
+
+#### Calculate the sum of reads per CDS (sum of all samples e.g. queens, workers, males)
+```{r sum-expression}
+
+```
+
+
+#### List the information in a table.
+```{r make-table}
+
+```
+
+## Merge information for all LGTs together with expression CDS.
+```{r load lgts-combined table}
+library(readxl)
+LGTs.combined<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.combined.dfast.xlsx")
+```
+
+
+`r nrow(LGTs.combined)` CDS were predicted by dfast.

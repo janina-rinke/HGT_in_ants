@@ -38,6 +38,16 @@ output:
 ```{r}
 #rmarkdown::render('analyseLGTs.Rmd', output_file = '../GAGA-0515.analyseLGTs..html')
 
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+    #install.packages("BiocManager")
+
+#BiocManager::install("doParallel")
+
+if (!require(remotes)) {
+    install.packages("remotes")
+}
+remotes::install_github('jorvlan/raincloudplots')
+
 library(doParallel)
 library(ggplot2)
 library(GenomicRanges)
