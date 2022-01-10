@@ -47,15 +47,22 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 library(ggplot2)
 library(data.table)
 library(dplyr)
+library(tidyr)
 ```
 
 ## Extract expression from RNAseq mapping files
 
 #### Load the RNAseq mapping files for every LGT candidate into R.
 ```{r load files}
-txt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
-dataFiles <- lapply(Sys.glob(txt2load),read.delim2,sep = "\t")
+#Mac Computer:
+#txt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+#Linux Computer
+txt2load<-"/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+files.to.load<-Sys.glob(txt2load)
+dataFiles <- lapply(files.to.load,read.delim2,sep = "\t")
+names(dataFiles)<-gsub("/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/(.*?)\\.fa.*","\\1",files.to.load)
 ```
+Here, `r length(dataFiles)` RNAseq mapping files were loaded. Some candidates did not have RNAseq data, therefore some files are missing.
 
 To check, whether all dataframes have been imported correctly, you can view any element from the list:
 ```{r check files}
@@ -65,13 +72,40 @@ dataFiles[1]
 
 
 ```{r load single file, include=FALSE}
-txtfile <- read.delim2("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/GAGA-0515.Scaffold8.1760778-1761241.fa/RNAseq_mapping_count_summary.txt", header = TRUE, sep = "\t", dec = ",")
+#dataFiles[["GAGA-0515.Scaffold8.1760778-1761241"]]
+i<-20
+#txtfile <- read.delim2("/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/GAGA-0515.Scaffold8.1760778-1761241.fa/RNAseq_mapping_count_summary.txt", header = TRUE, sep = "\t", dec = ",")
+txtfile<-dataFiles[[i]]
 ```
 
 
 #### Calculate the sum of reads per CDS (sum of all samples e.g. queens, workers, males)
 ```{r sum-expression}
+df<-txtfile %>%                               # Specify data frame
+  dplyr::group_by(chr,start,end) %>%          # Specify group indicator
+  dplyr::summarise_at(vars(ucount),           # Specify column
+               list(totalcount = sum))        # Specify function
 
+df$locusID<-names(dataFiles)[i]
+df<-df %>% 
+  separate(locusID, sep="\\.", c(".id","locus.scaffold","locus.position")) %>% 
+  dplyr::rename(CDS.start=start, CDS.end=end)
+
+```
+
+```{r}
+df.dfast<-read.csv("/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0025.Scaffold15.4180270-4181120.fa/genome.gff_mod.gff",sep="\t",header=F)
+df.new<-merge(df, df.dfast,by.x=c("chr","CDS.start","CDS.end"),by.y=c("V1","V4","V5"),all.x=T,all.y=T)
+
+df.new$product<-gsub(".*product=(.*?)\\;.*","\\1",df.new$V9)
+
+# relevant only when sumarizing a CDS-level table to LGT-level
+df.final<-df.new %>%  
+  dplyr::group_by(.id, locus.scaffold, locus.position) %>% 
+  dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";")) 
+
+# To extract pid, q_cov_s_cov
+gsub(".*?\\[(.*?)\\].*","\\1",df.dfast$V9)
 ```
 
 
