@@ -48,6 +48,7 @@ library(ggplot2)
 library(data.table)
 library(dplyr)
 library(tidyr)
+library(purrr)
 ```
 
 ## Extract expression from RNAseq mapping files
@@ -55,14 +56,20 @@ library(tidyr)
 #### Load the RNAseq mapping files for every LGT candidate into R.
 ```{r load files}
 #Mac Computer:
-#txt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+txt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
 #Linux Computer
-txt2load<-"/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
-files.to.load<-Sys.glob(txt2load)
-dataFiles <- lapply(files.to.load,read.delim2,sep = "\t")
-names(dataFiles)<-gsub("/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/(.*?)\\.fa.*","\\1",files.to.load)
+#txt2load<-"/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+files.to.load<-Sys.glob(txt2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
+head(files.to.load)
 ```
-Here, `r length(dataFiles)` RNAseq mapping files were loaded. Some candidates did not have RNAseq data, therefore some files are missing.
+
+Here, `r length(files.to.load)` RNAseq mapping files were loaded. Some candidates did not have RNAseq data, therefore some files are missing.
+
+Save all file paths in a list called dataFiles and re-name the list elements
+```{r load files 2}
+dataFiles <- lapply(files.to.load,read.delim2,sep = "\t") #lapply function to read all files and save them as dataframes
+names(dataFiles)<-gsub("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/(.*?)\\.fa.*","\\1",files.to.load) # gsub() selectively replaces multiple occurrences of a text within an R string ("search term", "replacement term",string searched) 
+```
 
 To check, whether all dataframes have been imported correctly, you can view any element from the list:
 ```{r check files}
@@ -71,27 +78,75 @@ dataFiles[1]
 ```
 
 
-```{r load single file, include=FALSE}
+```{r load single file}
 #dataFiles[["GAGA-0515.Scaffold8.1760778-1761241"]]
-i<-20
-#txtfile <- read.delim2("/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/GAGA-0515.Scaffold8.1760778-1761241.fa/RNAseq_mapping_count_summary.txt", header = TRUE, sep = "\t", dec = ",")
-txtfile<-dataFiles[[i]]
+#i<-393
+txtfile<-dataFiles[[393]]
+head(txtfile)
 ```
 
 
-#### Calculate the sum of reads per CDS (sum of all samples e.g. queens, workers, males)
-```{r sum-expression}
+#### Calculate the sum of reads per CDS (sum of all samples e.g. queens, workers, males) using dplyr
+```{r sum-expression single file}
+# For a single file
 df<-txtfile %>%                               # Specify data frame
-  dplyr::group_by(chr,start,end) %>%          # Specify group indicator
-  dplyr::summarise_at(vars(ucount),           # Specify column
-               list(totalcount = sum))        # Specify function
+  dplyr::group_by(chr,start,end) %>%          # Specify indicators to group on 
+  dplyr::summarise_at(vars(ucount),           # Specify column to summarize based on the group indicators
+               list(totalcount = sum))        # Specify function (summarize as a list and save in column "totalcount")
 
-df$locusID<-names(dataFiles)[i]
+df$locusID<-names(dataFiles)[393]             # Add the name of the LGT by adding a column called "locusID" 
 df<-df %>% 
   separate(locusID, sep="\\.", c(".id","locus.scaffold","locus.position")) %>% 
-  dplyr::rename(CDS.start=start, CDS.end=end)
+  dplyr::rename(CDS.start=start, CDS.end=end)# Separate the locusID column into .id, scaffold and CDS position
 
+df$chr<-NULL
+head(df)
 ```
+
+```{r sum-expression all}
+#### For all files: 
+#Define a function and apply function to all files with map()
+summarizeExpression <- function(DF) {
+  DF %>% 
+ dplyr::group_by(chr,start,end) %>%          
+ dplyr::summarise_at(vars(ucount),          
+               list(totalcount = sum))
+}
+
+dataFiles2 <- map(dataFiles,summarizeExpression)
+
+# Add LGT names to all dataframes as a column and separate into single columns with GAGAid, Scaffold and CDS coordinate
+for (i in seq_along(dataFiles2)) {
+  dataFiles2[[i]]$locusID <- names(dataFiles2)[[i]]
+}
+
+separateLOCUSID <- function(DF) {
+  DF %>% 
+  separate(locusID, sep="\\.", c("GAGAid","locus.scaffold","locus.position")) %>% 
+  dplyr::rename(CDS.start=start, CDS.end=end)  
+}
+
+dataFiles3 <- map(dataFiles2,separateLOCUSID)
+
+for (i in seq_along(dataFiles3)) {
+  dataFiles3[[i]]$chr <- NULL
+}
+```
+
+Combine dataframes from all GAGA LGTs in the large list element ("dataFiles3") to one big data frame ("df")
+```{r combine files}
+df_combined<-rbindlist(dataFiles3,idcol = T, fill=TRUE) #the fill=TRUE option fills missing columns
+```
+
+
+
+
+## Merge information for all LGTs together with expression CDS.
+```{r load lgts-combined table}
+library(readxl)
+LGTs.combined<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.combined.dfast.xlsx")
+```
+
 
 ```{r}
 df.dfast<-read.csv("/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0025.Scaffold15.4180270-4181120.fa/genome.gff_mod.gff",sep="\t",header=F)
@@ -109,16 +164,14 @@ gsub(".*?\\[(.*?)\\].*","\\1",df.dfast$V9)
 ```
 
 
-#### List the information in a table.
-```{r make-table}
 
-```
-
-## Merge information for all LGTs together with expression CDS.
-```{r load lgts-combined table}
-library(readxl)
-LGTs.combined<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.combined.dfast.xlsx")
-```
 
 
 `r nrow(LGTs.combined)` CDS were predicted by dfast.
+
+Calculate the expression for the different life stages of GAGA-0515
+```{r expression GAGA-0515}
+#dataFiles[["GAGA-0515.Scaffold8.1760778-1761241"]]
+i<-393
+G515_file<-dataFiles[[i]]
+```
