@@ -136,12 +136,39 @@ for (i in seq_along(dataFiles3)) {
 Combine dataframes from all GAGA LGTs in the large list element ("dataFiles3") to one big data frame ("df")
 ```{r combine files}
 df_combined<-rbindlist(dataFiles3,idcol = T, fill=TRUE) #the fill=TRUE option fills missing columns
+head(df_combined)
+```
+
+## Add information from all dfast files to CDS-level df (df_combined)
+```{r add dfast}
+# For a single file
+df.dfast<-read.csv("/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0025.Scaffold15.4180270-4181120.fa/genome.gff_mod.gff",sep="\t",header=F)
+df.new<-merge(df, df.dfast,by.x=c("chr","CDS.start","CDS.end"),by.y=c("V1","V4","V5"),all.x=T,all.y=T)
+
+df.new$product<-gsub(".*product=(.*?)\\;.*","\\1",df.new$V9)
+
+# For all files
+
+```
+
+## Summarize CDS-level table (df_combined) together to obtain the LGT level.
+```{r summary CDS level}
+# For a single file
+df.final<-df.new %>%  
+  dplyr::group_by(.id, locus.scaffold, locus.position) %>% 
+  dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";")) 
+
+# To extract pid, q_cov_s_cov
+gsub(".*?\\[(.*?)\\].*","\\1",df.dfast$V9)
+
+# For all files
+
+
 ```
 
 
-
-
-## Merge information for all LGTs together with expression CDS.
+## Merge information for all LGTs together with the LGT candidate data table (497 candidates).
+For every LGT candidate region, CDS starts, CDS ends and CDS total counts will be given in summarized columns.
 ```{r load lgts-combined table}
 library(readxl)
 LGTs.combined<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.combined.dfast.xlsx")
