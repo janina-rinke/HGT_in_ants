@@ -49,6 +49,7 @@ library(data.table)
 library(dplyr)
 library(tidyr)
 library(purrr)
+library(ape)
 ```
 
 ## Extract expression from RNAseq mapping files
@@ -56,9 +57,9 @@ library(purrr)
 #### Load the RNAseq mapping files for every LGT candidate into R.
 ```{r load files}
 #Mac Computer:
-txt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+#txt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
 #Linux Computer
-#txt2load<-"/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+txt2load<-"/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
 files.to.load<-Sys.glob(txt2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
 head(files.to.load)
 ```
@@ -68,7 +69,10 @@ Here, `r length(files.to.load)` RNAseq mapping files were loaded. Some candidate
 Save all file paths in a list called dataFiles and re-name the list elements
 ```{r load files 2}
 dataFiles <- lapply(files.to.load,read.delim2,sep = "\t") #lapply function to read all files and save them as dataframes
+#MacComputer
 names(dataFiles)<-gsub("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/(.*?)\\.fa.*","\\1",files.to.load) # gsub() selectively replaces multiple occurrences of a text within an R string ("search term", "replacement term",string searched) 
+#Linux Computer
+names(dataFiles)<-gsub("/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/(.*?)\\.fa.*","\\1",files.to.load)
 ```
 
 To check, whether all dataframes have been imported correctly, you can view any element from the list:
@@ -115,11 +119,16 @@ summarizeExpression <- function(DF) {
 
 dataFiles2 <- map(dataFiles,summarizeExpression)
 
-# Add LGT names to all dataframes as a column and separate into single columns with GAGAid, Scaffold and CDS coordinate
+# Add LGT names to all dataframes as a column and separate into single columns with GAGAid, Scaffold and CDS coordinate.
+#Check if all locusIDs have the structure {GAGA-id}.{Scaffold}.{start}-{stop}
+names(dataFiles2)[grep("\\.1\\.",names(dataFiles2))] #Output: 22 Genomes with different structure e.g. "OUT-0001.WHNR01000088.1.32800-34183"
+
+
 for (i in seq_along(dataFiles2)) {
-  dataFiles2[[i]]$locusID <- names(dataFiles2)[[i]]
+  dataFiles2[[i]]$locusID <- gsub("\\.([0-9])\\.","_\\1.",names(dataFiles2)[i])
 }
 
+# separate the locusIDs in all files
 separateLOCUSID <- function(DF) {
   DF %>% 
   separate(locusID, sep="\\.", c("GAGAid","locus.scaffold","locus.position")) %>% 
@@ -142,21 +151,42 @@ head(df_combined)
 ## Add information from all dfast files to CDS-level df (df_combined)
 ```{r add dfast}
 # For a single file
-df.dfast<-read.csv("/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0025.Scaffold15.4180270-4181120.fa/genome.gff_mod.gff",sep="\t",header=F)
-df.new<-merge(df, df.dfast,by.x=c("chr","CDS.start","CDS.end"),by.y=c("V1","V4","V5"),all.x=T,all.y=T)
+df.dfast<-read.csv("/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/genome.gff_mod.gff",sep="\t",header=F)
+df.new<-merge(df, df.dfast,by.x=c("locus.scaffold","CDS.start","CDS.end"),by.y=c("V1","V4","V5"),all.x=T,all.y=T)
+
+df.new<-df.new %>%
+  dplyr::relocate(".id", .before = "locus.scaffold") %>%
+  dplyr::relocate("locus.position", .before = "CDS.start")
 
 df.new$product<-gsub(".*product=(.*?)\\;.*","\\1",df.new$V9)
+df.new$UniProtID<-gsub(".*UniprotKB:UniRef90_(.*?)\\;.*","\\1",df.new$V9)
+df.new$dfastBacteriapredicted<-gsub(".*\\((.*?)\\).*","\\1",df.new$V9)
 
 # For all files
+gff2load<-"/home/j/j_rink02/sciebo/Master.LGTs/dfast/*/genome.gff_mod.gff"
+gff.files.to.load<-Sys.glob(gff2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
+head(gff.files.to.load)
 
+gffs <- lapply(gff.files.to.load,read.csv,sep="\t",header=F) #lapply function to read all files and save them as dataframes
+names(gffs)<-gsub("/home/j/j_rink02/sciebo/Master.LGTs/dfast/*/(.*?)\\.fa.*","\\1",gff.files.to.load)
+
+new_dfs<-merge(dataFiles3,gffs,by.x=c("locus.scaffold","CDS.start","CDS.end"),by.y=c("seqid","start","end"),all.x=T,all.y=T)
+
+for (i in seq_along(dataFiles3)) {
+  dataFiles4<-merge(dataFiles3[[i]],gffs[[i]],by.x=c("locus.scaffold","CDS.start","CDS.end"),by.y=c("seqid","start","end"),all.x=T,all.y=T)
+}
 ```
+
+
+
+
 
 ## Summarize CDS-level table (df_combined) together to obtain the LGT level.
 ```{r summary CDS level}
 # For a single file
 df.final<-df.new %>%  
   dplyr::group_by(.id, locus.scaffold, locus.position) %>% 
-  dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";")) 
+  dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";"),CDS.UniProtIDs = paste0(UniProtID, collapse = ";"),dfast.donor = paste0(dfastBacteriapredicted, collapse = ";")) 
 
 # To extract pid, q_cov_s_cov
 gsub(".*?\\[(.*?)\\].*","\\1",df.dfast$V9)
@@ -174,31 +204,62 @@ library(readxl)
 LGTs.combined<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.combined.dfast.xlsx")
 ```
 
-
-```{r}
-df.dfast<-read.csv("/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0025.Scaffold15.4180270-4181120.fa/genome.gff_mod.gff",sep="\t",header=F)
-df.new<-merge(df, df.dfast,by.x=c("chr","CDS.start","CDS.end"),by.y=c("V1","V4","V5"),all.x=T,all.y=T)
-
-df.new$product<-gsub(".*product=(.*?)\\;.*","\\1",df.new$V9)
-
-# relevant only when sumarizing a CDS-level table to LGT-level
-df.final<-df.new %>%  
-  dplyr::group_by(.id, locus.scaffold, locus.position) %>% 
-  dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";")) 
-
-# To extract pid, q_cov_s_cov
-gsub(".*?\\[(.*?)\\].*","\\1",df.dfast$V9)
-```
-
-
-
-
-
 `r nrow(LGTs.combined)` CDS were predicted by dfast.
+
+
+
+
+
+## Merge information for all CDS together with the CDS candidate data table (which also includes s_cov and q_cov.
+
 
 Calculate the expression for the different life stages of GAGA-0515
 ```{r expression GAGA-0515}
 #dataFiles[["GAGA-0515.Scaffold8.1760778-1761241"]]
 i<-393
-G515_file<-dataFiles[[i]]
+G515<-dataFiles[[i]]
+
+# Add a column for the different life stages to calculate the reads separately for every life stage
+G515$stage<-gsub(".*Cobs_(.*?)\\_.*","\\1",G515$e_id)
+
+#Calculate the reads for every life stage
+G515_df<-G515 %>%                               
+  dplyr::group_by(chr,start,end,stage) %>%           
+  dplyr::summarise_at(vars(ucount),         
+               list(totalcountPerStage = sum)) 
+  
+# Calculate mean of samples
+G515_mean<-G515 %>%
+  dplyr::group_by(chr,start,end,stage) %>% 
+  dplyr::summarise(avg=round(mean(ucount),1)) # with round() you can specify how many decimal places you want
+
+G515.new<-merge(G515_df, G515_mean,by.x=c("chr","start","end","stage"),by.y=c("chr","start","end","stage"),all.x=T,all.y=T)
+
+# Include the number of samples per stage
+G515_sampleCount<-G515 %>%
+  dplyr::count(stage) 
+
+# Merge all information together into a final G-0515 expression table
+G515.expression<-merge(G515.new, G515_sampleCount,by.x=c("stage"),by.y=c("stage"),all.x=T,all.y=T)
+
+G515.expression$locusID<-names(dataFiles)[393]             # Add the name of the LGT by adding a column called "locusID" 
+G515.expression<-G515.expression %>% 
+  separate(locusID, sep="\\.", c(".id","locus.scaffold","locus.position")) %>% 
+  dplyr::rename(CDS.start=start, CDS.end=end)# Separate the locusID column into .id, scaffold and CDS position
+
+G515.expression<-G515.expression %>%
+  dplyr::select(-chr)%>%
+  dplyr::relocate("CDS.start","CDS.end","stage","totalcountPerStage","n","avg", .after = "locus.position")
+
+G515.expression
+
+# Save output as a table
+write.table(G515.expression,"/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/G515.expression.tsv",sep="\t",quote = F,row.names = F)
 ```
+
+
+
+
+
+
+
