@@ -57,9 +57,9 @@ library(ape)
 #### Load the RNAseq mapping files for every LGT candidate into R.
 ```{r load files}
 #Mac Computer:
-#txt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+txt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
 #Linux Computer
-txt2load<-"/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+#txt2load<-"/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
 files.to.load<-Sys.glob(txt2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
 head(files.to.load)
 ```
@@ -163,18 +163,24 @@ df.new$UniProtID<-gsub(".*UniprotKB:UniRef90_(.*?)\\;.*","\\1",df.new$V9)
 df.new$dfastBacteriapredicted<-gsub(".*\\((.*?)\\).*","\\1",df.new$V9)
 
 # For all files
-gff2load<-"/home/j/j_rink02/sciebo/Master.LGTs/dfast/*/genome.gff_mod.gff"
+#gff2load<-"/home/j/j_rink02/sciebo/Master.LGTs/dfast/*/genome.gff_mod.gff"
+gff2load<-"/Users/Janina/sciebo/Master.LGTs/dfast/*/genome.gff_mod.gff"
 gff.files.to.load<-Sys.glob(gff2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
 head(gff.files.to.load)
 
 gffs <- lapply(gff.files.to.load,read.csv,sep="\t",header=F) #lapply function to read all files and save them as dataframes
 names(gffs)<-gsub("/home/j/j_rink02/sciebo/Master.LGTs/dfast/*/(.*?)\\.fa.*","\\1",gff.files.to.load)
 
-new_dfs<-merge(dataFiles3,gffs,by.x=c("locus.scaffold","CDS.start","CDS.end"),by.y=c("seqid","start","end"),all.x=T,all.y=T)
+dataFiles4<-list()
 
 for (i in seq_along(dataFiles3)) {
-  dataFiles4<-merge(dataFiles3[[i]],gffs[[i]],by.x=c("locus.scaffold","CDS.start","CDS.end"),by.y=c("seqid","start","end"),all.x=T,all.y=T)
+  file<-NULL
+  file<-merge(dataFiles3[[i]],gffs[[i]],by.x=c("locus.scaffold","CDS.start","CDS.end"),by.y=c("V1","V4","V5"),all.x=T,all.y=T)
+  
+dataFiles4[[i]]<-file
 }
+
+names(dataFiles4)<-gsub("/Users/Janina/sciebo/Master.LGTs/dfast/(.*?)\\.fa.*","\\1",gff.files.to.load)
 ```
 
 
