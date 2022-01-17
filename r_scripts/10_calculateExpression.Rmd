@@ -36,7 +36,7 @@ output:
 </STYLE>
 ---
 
-This script combines the information about all LGT candidates and respective CDS detected by dfast together with the RNAseq mapping expression. The read counts for every single CDS are added to the dataframe and plotted for the candidates.
+This script combines the information about all LGT candidates and respective CDS detected by dfast together with the RNAseq mapping expression. The read counts for every single CDS are added to the dataframe and plotted for the candidates. At the end, one CDS-level table and one LGT.locus level table are computed.
 
 ```{r global-options, include=FALSE}
 # Define the global chunk options
@@ -50,6 +50,9 @@ library(dplyr)
 library(tidyr)
 library(purrr)
 library(ape)
+library(tidyverse)
+library(stringr)
+library(writexl)
 ```
 
 ## Extract expression from RNAseq mapping files
@@ -72,7 +75,7 @@ dataFiles <- lapply(files.to.load,read.delim2,sep = "\t") #lapply function to re
 #MacComputer
 names(dataFiles)<-gsub("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/(.*?)\\.fa.*","\\1",files.to.load) # gsub() selectively replaces multiple occurrences of a text within an R string ("search term", "replacement term",string searched) 
 #Linux Computer
-names(dataFiles)<-gsub("/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/(.*?)\\.fa.*","\\1",files.to.load)
+#names(dataFiles)<-gsub("/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/(.*?)\\.fa.*","\\1",files.to.load)
 ```
 
 To check, whether all dataframes have been imported correctly, you can view any element from the list:
@@ -90,9 +93,9 @@ head(txtfile)
 ```
 
 
-#### Calculate the sum of reads per CDS (sum of all samples e.g. queens, workers, males) using dplyr
+#### Calculate the sum of unique reads per CDS (sum of all samples e.g. queens, workers, males) using dplyr
 ```{r sum-expression single file}
-# For a single file
+#### For a single file
 df<-txtfile %>%                               # Specify data frame
   dplyr::group_by(chr,start,end) %>%          # Specify indicators to group on 
   dplyr::summarise_at(vars(ucount),           # Specify column to summarize based on the group indicators
@@ -121,9 +124,10 @@ dataFiles2 <- map(dataFiles,summarizeExpression)
 
 # Add LGT names to all dataframes as a column and separate into single columns with GAGAid, Scaffold and CDS coordinate.
 #Check if all locusIDs have the structure {GAGA-id}.{Scaffold}.{start}-{stop}
-names(dataFiles2)[grep("\\.1\\.",names(dataFiles2))] #Output: 22 Genomes with different structure e.g. "OUT-0001.WHNR01000088.1.32800-34183"
+names(dataFiles2)[grep("\\.1\\.",names(dataFiles2))] 
+#Output: 22 Genomes with different structure e.g. "OUT-0001.WHNR01000088.1.32800-34183"
 
-
+# Re-name these 22 genome names in the new column locusID from XY.1.XY -> XY_1_XY
 for (i in seq_along(dataFiles2)) {
   dataFiles2[[i]]$locusID <- gsub("\\.([0-9])\\.","_\\1.",names(dataFiles2)[i])
 }
@@ -142,52 +146,64 @@ for (i in seq_along(dataFiles3)) {
 }
 ```
 
-Combine dataframes from all GAGA LGTs in the large list element ("dataFiles3") to one big data frame ("df")
-```{r combine files}
-df_combined<-rbindlist(dataFiles3,idcol = T, fill=TRUE) #the fill=TRUE option fills missing columns
-head(df_combined)
-```
-
-## Add information from all dfast files to CDS-level df (df_combined)
-```{r add dfast}
+## Combine information from all dfast genome.gff_mod.gff files with expression + CDS sequences
+```{r add dfast single file}
 # For a single file
-df.dfast<-read.csv("/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/genome.gff_mod.gff",sep="\t",header=F)
+df.dfast<-read.csv("/Users/Janina/sciebo/Master.LGTs/dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/genome.gff_mod.gff",sep="\t",header=F)
 df.new<-merge(df, df.dfast,by.x=c("locus.scaffold","CDS.start","CDS.end"),by.y=c("V1","V4","V5"),all.x=T,all.y=T)
 
 df.new<-df.new %>%
   dplyr::relocate(".id", .before = "locus.scaffold") %>%
   dplyr::relocate("locus.position", .before = "CDS.start")
 
+# Add product from dfast as a column
 df.new$product<-gsub(".*product=(.*?)\\;.*","\\1",df.new$V9)
+# Add UniProtID from dfast as a column
 df.new$UniProtID<-gsub(".*UniprotKB:UniRef90_(.*?)\\;.*","\\1",df.new$V9)
+# Add the predicted bacteria from dfast as a column
 df.new$dfastBacteriapredicted<-gsub(".*\\((.*?)\\).*","\\1",df.new$V9)
+head(df.new)
+```
 
+
+```{r add dfast all}
 # For all files
 #gff2load<-"/home/j/j_rink02/sciebo/Master.LGTs/dfast/*/genome.gff_mod.gff"
 gff2load<-"/Users/Janina/sciebo/Master.LGTs/dfast/*/genome.gff_mod.gff"
 gff.files.to.load<-Sys.glob(gff2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
 head(gff.files.to.load)
 
-gffs <- lapply(gff.files.to.load,read.csv,sep="\t",header=F) #lapply function to read all files and save them as dataframes
-names(gffs)<-gsub("/home/j/j_rink02/sciebo/Master.LGTs/dfast/*/(.*?)\\.fa.*","\\1",gff.files.to.load)
+gffs <- lapply(gff.files.to.load,read_tsv,col_names=F,col_types = cols(.default = "c")) #lapply function to read all files and save them as dataframes
+names(gffs)<-gsub("/Users/Janina/sciebo/Master.LGTs/dfast/*/(.*?)\\.fa.*","\\1",gff.files.to.load)
 
-dataFiles4<-list()
+# Make a large dataframe (dataFiles3.df) from all GAGA LGTs in the large list element ("dataFiles3")
+dataFiles3.df<-bind_rows(dataFiles3,.id="locusID") #The .id option names the first column ("locusID") after the names of the list elements
+#Another possibility: df_combined<-rbindlist(dataFiles3,idcol = T, fill=TRUE)
 
-for (i in seq_along(dataFiles3)) {
-  file<-NULL
-  file<-merge(dataFiles3[[i]],gffs[[i]],by.x=c("locus.scaffold","CDS.start","CDS.end"),by.y=c("V1","V4","V5"),all.x=T,all.y=T)
-  
-dataFiles4[[i]]<-file
-}
+# Make large dataframe (gffs.df) from gff list elements (gffs)
+gffs.df<-bind_rows(gffs,.id="locusID") 
 
-names(dataFiles4)<-gsub("/Users/Janina/sciebo/Master.LGTs/dfast/(.*?)\\.fa.*","\\1",gff.files.to.load)
+# Combine the two large dataframes into one big df (df4) to have all information for the expression + information from dfast
+df4<-merge(dataFiles3.df,gffs.df,by.x=c("locusID","CDS.start","CDS.end"),by.y=c("locusID","X4","X5"),all=T)
+
+df4<-df4 %>%
+  dplyr::relocate("GAGAid","locus.scaffold","locus.position", .before = "CDS.start") 
+
+# Add product from dfast as a column
+df4$product<-gsub(".*product=(.*?)\\;.*","\\1",df4$X9)
+
+# Add UniProtID from dfast as a column
+df4$note<-str_extract(df4$X9,"note=.*") 
+df4$UniProtID<-str_extract(df4$note,"UniRef90_.*? ")
+df4$UniProtID<-gsub(".*UniRef90_","",df4$UniProtID)
+
+# Combine this dataframe later with the LGT.CDS.level dataframe
+head(df4)
 ```
 
 
-
-
-
-## Summarize CDS-level table (df_combined) together to obtain the LGT level.
+## Summarize CDS-level table (df5) together to obtain the LGT locus level.
+For every LGT candidate region, CDS starts, CDS ends and CDS total counts will be given in summarized columns.
 ```{r summary CDS level}
 # For a single file
 df.final<-df.new %>%  
@@ -195,30 +211,81 @@ df.final<-df.new %>%
   dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";"),CDS.UniProtIDs = paste0(UniProtID, collapse = ";"),dfast.donor = paste0(dfastBacteriapredicted, collapse = ";")) 
 
 # To extract pid, q_cov_s_cov
-gsub(".*?\\[(.*?)\\].*","\\1",df.dfast$V9)
+gsub(".*?\\[(.*?)\\].*","\\1",df4$X9)
+
+# Extract some more information for the LGT.locus level dataframe
+df5<-df4
+df5$cog<-str_extract(df4$note,"COG:.*") 
+df5$tigr<-str_extract(df4$note,"TIGR:.*") 
+df5$values<-gsub(".*?\\[(.*?)\\].*","\\1",df4$X9)
+
+df5$pid<-str_extract(df5$values,"pid:.*? ") 
+df5$pid<-gsub(".*pid:","",df5$pid)
+df5$pid<-gsub("%.*","",df5$pid)
+
+df5$q_cov<-str_extract(df5$values,"q_cov:.*?%") 
+df5$q_cov<-gsub(".*q_cov:","",df5$q_cov) 
+df5$q_cov<-gsub("%","",df5$q_cov) 
+
+df5$s_cov<-str_extract(df5$values,"s_cov:.*?%") 
+df5$s_cov<-gsub(".*s_cov:","",df5$s_cov) 
+df5$s_cov<-gsub("%","",df5$s_cov) 
+
+df5$Eval<-str_extract(df5$values,"Eval:.*?%") 
+df5$Eval<-gsub(".*Eval:","",df5$Eval) 
+df5$Eval<-gsub("%","",df5$Eval) 
 
 # For all files
+df6<-df5 %>%  
+  dplyr::group_by(locusID, GAGAid,locus.scaffold, locus.position) %>% 
+  dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";"),CDS.UniprotIDs = paste0(UniProtID, collapse = ";"),CDS.cogs = paste0(cog, collapse = ";"),CDS.tigrs = paste0(tigr, collapse = ";"),CDS.pids = paste0(pid, collapse = ";"),CDS.q_covs = paste0(q_cov, collapse = ";"),CDS.s_covs = paste0(s_cov, collapse = ";"),CDS.Eval = paste0(Eval, collapse = ";")) 
 
+# Some candidates did not have a RNAseq summary file, therefore the GAGAid and locus.position is missing here. Here, the information for GAGAid and locus.position need to be added again.
+df6 <- df6 %>%
+  dplyr::mutate(GAGAid = ifelse(is.na(GAGAid), locusID, GAGAid)) %>%
+  dplyr::mutate(locus.scaffold = ifelse(is.na(locus.scaffold), locusID, locus.scaffold)) %>%
+  dplyr::mutate(locus.position = ifelse(is.na(locus.position), locusID, locus.position))
 
+df6$GAGAid<-gsub("(.*?)\\..*","\\1",df6$GAGAid) 
+df6$locus.scaffold<-gsub(".*\\.(.*?)\\..*","\\1",df6$locus.scaffold) 
+df6$locus.position<-gsub(".*\\.(.*?)\\.*","\\1",df6$locus.position) 
+head(df6)
 ```
 
+`r nrow(df6)` LGT candidates had either a dfast gff annotation or RNAseq data available.
 
-## Merge information for all LGTs together with the LGT candidate data table (497 candidates).
-For every LGT candidate region, CDS starts, CDS ends and CDS total counts will be given in summarized columns.
+## Merge summarized expression table (df6) together with LGT.locus.level table (LGTs)
 ```{r load lgts-combined table}
 library(readxl)
-LGTs.combined<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.combined.dfast.xlsx")
+# Load the LGT table without expression into R
+LGTs<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/GAGA.LGT.LocusLevel.withoutExpression.xlsx")
+head(LGTs)
+
+# Add new column locus.position to LGTs df to group based on the locus
+LGTs$locus.position<-str_extract(LGTs$cand.locus,":.*") 
+LGTs$locus.position<-gsub(":","",LGTs$locus.position)
+
+# Change scaffold in 22 genomes with XY.1.XY to XY_1_XY to group based on scaffold
+
+LGTs.locuslevel.df<-merge(LGTs,df6,by.x=c(".id","locus.position"),by.y=c("GAGAid","locus.position"),all=T)
+
+LGTs.final.df<-LGTs.locuslevel.df %>%
+  dplyr::relocate("locusID",.before=".id") %>%
+  dplyr::relocate("locus.scaffold",.before="locus.position") %>%
+  dplyr::select(-cand.scaffold,-Expression,-Status,-Complete_CDS)
+
+# Save the LGT locus level table including expression and dfast results 
+#write_xlsx(LGTs.final.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.xlsx")
+
+### To extract the CDS-level dataframe
+CDS.final.df<-separate_rows(LGTs.final.df, "CDS.starts", "CDS.ends", "CDS.totalcounts", "CDS.products", "CDS.UniprotIDs", "CDS.cogs", "CDS.tigrs", "CDS.pids", "CDS.q_covs", "CDS.s_covs", "CDS.Eval", sep= ";")
+
+# Save the CDS level table including expression and dfast results 
+#write_xlsx(CDS.final.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.xlsx")
 ```
+`r nrow(CDS.final.df)` CDS sequences were predicted for the 497 candidates in total.
 
-`r nrow(LGTs.combined)` CDS were predicted by dfast.
-
-
-
-
-
-## Merge information for all CDS together with the CDS candidate data table (which also includes s_cov and q_cov.
-
-
+## GAGA-0515
 Calculate the expression for the different life stages of GAGA-0515
 ```{r expression GAGA-0515}
 #dataFiles[["GAGA-0515.Scaffold8.1760778-1761241"]]
@@ -260,12 +327,5 @@ G515.expression<-G515.expression %>%
 G515.expression
 
 # Save output as a table
-write.table(G515.expression,"/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/G515.expression.tsv",sep="\t",quote = F,row.names = F)
+#write.table(G515.expression,"/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/G515.expression.tsv",sep="\t",quote = F,row.names = F)
 ```
-
-
-
-
-
-
-
