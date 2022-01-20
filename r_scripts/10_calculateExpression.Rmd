@@ -211,7 +211,7 @@ df.final<-df.new %>%
   dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";"),CDS.UniProtIDs = paste0(UniProtID, collapse = ";"),dfast.donor = paste0(dfastBacteriapredicted, collapse = ";")) 
 
 # To extract pid, q_cov_s_cov
-gsub(".*?\\[(.*?)\\].*","\\1",df4$X9)
+#gsub(".*?\\[(.*?)\\].*","\\1",df4$X9)
 
 # Extract some more information for the LGT.locus level dataframe
 df5<-df4

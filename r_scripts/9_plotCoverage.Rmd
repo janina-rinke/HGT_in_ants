@@ -93,23 +93,33 @@ plotCoverage <- function(bamfile, dfast.gff, lgt.bed, outfolder, id, expand) {
 
 ```{r}
 # prepare vectors for ids, bamfiles, dfasts and beds for all the LGT canidates you want to plot. This can come from a tsv file or an excel file or whatever.
-ids<-c("GAGA-0515","GAGA-0080")
-bamfiles<-c("/Users/lukas/sciebo/Projects/LGT/JaninaRinke/RNAseq/run_final_keepingbam_pergagaid/GAGA-0515/GAGA-0515.Scaffold8.1760778-1761241.fa/GAGA-0515_Cobs_queenAligned.sortedByCoord.out.LGTregion.bam",
-            "/Users/lukas/sciebo/Projects/LGT/JaninaRinke/RNAseq/run_final_keepingbam_pergagaid/GAGA-0080/GAGA-0080.Scaffold7.277737-279231.fa/DP8400010938BL_L01_548_1Aligned.sortedByCoord.out.LGTregion.bam")
-dfasts<-c("/Users/lukas/sciebo/Projects/LGT/JaninaRinke/LGTprimerDesign/GAGA-0515/genome.gff_mod.gff","/Users/lukas/sciebo/Projects/LGT/JaninaRinke/LGTprimerDesign/GAGA-0080/genome.gff_mod.gff")
-beds<-c("/Users/lukas/sciebo/Projects/LGT/JaninaRinke/LGTprimerDesign/GAGA-0515/genome.gff.bed","/Users/lukas/sciebo/Projects/LGT/JaninaRinke/LGTprimerDesign/GAGA-0080/genome.gff.bed")
+
+# Upload a file with the file names
+LGT_df<-read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/Tables/LGT_filenames.csv")
+
+# Vector for the ids
+ids<-c(LGT_df$id)
+
+# Vector for the bam files
+bamfiles<-c(LGT_df$bam)
+
+# Vector for the dfast gff files
+dfasts<-c(LGT_df$gff)
+
+# Vector for the bed files
+beds<-c(LGT_df$bed)
 ```
 
 
 ```{r}
 #loop over all entries in id, bamfiles, dfasts, and beds to create one pdf per lgt candidate region
-for (i in 1:length(ids)){
+for (i in 1:length(LGT_df$id)){
 plotCoverage(
-  id=ids[i],
-  bamfile=bamfiles[i],
-  dfast.gff=dfasts[i],
-  lgt.bed=beds[i],
-  outfolder="/Users/lukas/sciebo/Projects/LGT/JaninaRinke/RNAseq/",
+  id=LGT_df$id[i],
+  bamfile=LGT_df$bam[i],
+  dfast.gff=LGT_df$gff[i],
+  lgt.bed=LGT_df$bed[i],
+  outfolder="/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/RNAseq_plots/UniqueReads",
   expand=100  #how far should the plot expanded around the LGT
 )
 }
