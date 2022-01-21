@@ -53,6 +53,7 @@ library(ape)
 library(tidyverse)
 library(stringr)
 library(writexl)
+library(readxl)
 ```
 
 ## Extract expression from RNAseq mapping files
@@ -363,8 +364,8 @@ df.prot<-df.prot %>%
   dplyr::filter(proteins !="hypothetical protein")
 
  
-#write.table(df.prot,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.proteins.tsv", sep="\t", quote=F)
-write.table(df.Complete.LGTs,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.complete.before.reAnnotation.tsv", sep="\t", quote=F)
+write.table(df.prot,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.proteins.tsv", sep="\t", quote=F)
+write_xlsx(df.Complete.LGTs,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.complete.before.reAnnotation.tsv")
 head(df.Complete.LGTs)
 ```
 
