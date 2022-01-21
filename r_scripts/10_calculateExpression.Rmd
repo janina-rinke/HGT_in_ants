@@ -146,7 +146,7 @@ for (i in seq_along(dataFiles3)) {
 }
 ```
 
-## Combine information from all dfast genome.gff_mod.gff files with expression + CDS sequences
+## Combine information from dfast with RNAseq mapping data
 ```{r add dfast single file}
 # For a single file
 df.dfast<-read.csv("/Users/Janina/sciebo/Master.LGTs/dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/genome.gff_mod.gff",sep="\t",header=F)
@@ -201,7 +201,8 @@ df4$UniProtID<-gsub(".*UniRef90_","",df4$UniProtID)
 head(df4)
 ```
 
-## Add the start and stop codons for every CDS to check for completeness of candidates.
+## Add start and stop codons for every CDS.
+This can be used to filter for candidates which contain a correct Start and a correct Stop Codon.
 ```{r add start and stop codons}
 # Use df4 to extract the ids matching ids in the start.stop.codons.table (MGA1; MGA2)
 df4$CDSid<-gsub("ID=(.*?)\\;.*","\\1",df4$X9)
@@ -217,7 +218,7 @@ CodonsDF$stopCodon<-word(CodonsDF$V2,5)
 df4<-merge(df4,CodonsDF,by.x=c("locusID","CDSid"),by.y=c("locusID","CDSid"),all=T)
 ```
 
-## Summarize CDS-level table (df5) together to obtain the LGT locus level.
+## Summarize CDS-level table to obtain the LGT locus level.
 For every LGT candidate region, CDS starts, CDS ends and CDS total counts will be given in summarized columns.
 ```{r summary CDS level}
 # For a single file
@@ -250,6 +251,8 @@ df5$Eval<-str_extract(df5$values,"Eval:.*?%")
 df5$Eval<-gsub(".*Eval:","",df5$Eval) 
 df5$Eval<-gsub("%","",df5$Eval) 
 
+df5$totalcount<-as.numeric(df5$totalcount)
+
 # For all files
 df6<-df5 %>%  
   dplyr::group_by(locusID, GAGAid,locus.scaffold, locus.position) %>% 
@@ -269,7 +272,7 @@ head(df6)
 
 `r nrow(df6)` LGT candidates had either a dfast gff annotation or RNAseq data available.
 
-## Merge summarized expression table (df6) together with LGT.locus.level table (LGTs)
+## Merge Locus-level expression table with previous information for LGT candidates
 ```{r load lgts-combined table}
 library(readxl)
 # Load the LGT table without expression into R
@@ -303,14 +306,77 @@ CDS.final.df<-separate_rows(LGTs.final.df, "CDS.starts", "CDS.ends", "CDS.totalc
 
 ## Completeness check: Summary and analysis of candidates
 ```{r summary}
-# Filter candidates which have "ATG" as start codon and either "TGA", "TAA" or "TGT" as stop codon
 
-# Filter candidates which have s_cov < 0.75
+# Filter LGT candidates where all CDS are expressed (read cut-off: < 10)
+dfExpression<-LGTs.final.df %>%
+  dplyr::filter(CDS.totalcounts > 10 & CDS.totalcounts != "NA")
 
+# Filter CDS sequences which are expressed
+CDS.final.df$CDS.totalcounts<-as.numeric(CDS.final.df$CDS.totalcounts)
+
+dfCDSexpression<-CDS.final.df %>%
+  dplyr::filter(CDS.totalcounts > 10 & CDS.totalcounts != "NA")
+
+# Filter CDS sequences which have "ATG" as start codon and either "TGA", "TAA" or "TGT" as stop codon
+dfA<- CDS.final.df %>%
+  dplyr::filter(CDS.startCodons == "ATG") %>%
+  dplyr::filter(CDS.stopCodons == "TGA" | CDS.stopCodons =="TAA" | CDS.stopCodons == "TGT")
+
+# Filter candidates which have complete Start/Stop Codons (dfA) and s_cov > 70 %
+dfA$CDS.s_covs<- as.numeric(dfA$CDS.s_covs)
+df.Complete.LGTs <- dfA %>%
+  dplyr::filter(CDS.s_covs > 70 & CDS.s_covs != "NA")
+
+# Filter all candidates with protein coding hits
+df.proteins<-CDS.final.df %>%
+  dplyr::select(locusID, CDS.starts, CDS.ends, CDS.products, CDS.cogs, CDS.tigrs) %>% #create subset df for all proteins
+  dplyr::filter(CDS.products != "NA") %>%                 # remove sequences which do not have a predicted protein
+  dplyr::filter(CDS.products != "hypothetical protein" | CDS.cogs != "NA" | CDS.tigrs != "NA")
+
+df.proteins$CDS.cogs<-gsub(".*:(.*?)\\[.*","\\1",df.proteins$CDS.cogs)
+df.proteins$CDS.tigrs<-gsub(".*:(.*?)\\[.*","\\1",df.proteins$CDS.tigrs)
+
+df.proteins.factor<-df.proteins %>%
+  mutate_if(sapply(df.proteins, is.character), as.factor)
+
+
+sapply(df.proteins.factor, class)
+  
+# Extract the proteins as single levels and merge the three protein predictions into one df
+dfX<-levels(df.proteins.factor$CDS.products)
+dfY<-levels(df.proteins.factor$CDS.cogs)
+dfZ<-levels(df.proteins.factor$CDS.tigrs)
+
+dfX<-as.data.frame(dfX)
+dfY<-as.data.frame(dfY)
+dfZ<-as.data.frame(dfZ)
+
+df.prot<-merge(dfX,dfY, by.x="dfX",by.y="dfY", all = TRUE)
+df.prot<-merge(df.prot,dfZ,by.x="dfX",by.y="dfZ",all=TRUE)
+
+
+# Remove NAs and uncharacterized proteins
+df.prot<-df.prot %>%
+  rename(proteins=dfX) %>%
+  dplyr::filter(proteins != "NA") %>%
+  dplyr::filter(proteins !="Uncharacterized protein") %>%
+  dplyr::filter(proteins !="hypothetical protein")
+
+ 
+#write.table(df.prot,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.proteins.tsv", sep="\t", quote=F)
+write.table(df.Complete.LGTs,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.complete.before.reAnnotation.tsv", sep="\t", quote=F)
+head(df.Complete.LGTs)
 ```
 
-## GAGA-0515
+
+In summary, `r nrow(df.prot)` proteins were annotated by dfast (UniRef, COG, TIGR summarized) within `r nrow(CDS.final.df)` CDS sequences. From `r nrow(CDS.final.df)` CDS sequences, `r nrow(dfCDSexpression)` CDS were expressed with at least 10 read counts.
+
+`r nrow(dfA)` CDS have a Start Codon at the beginning of their sequence ("ATG") and a Stop Codon ("TGA", "TGT" or "TAA").
+Without re-annotation, `r nrow(df.Complete.LGTs)` CDS sequences are complete. All other CDS sequences/LGT need a re-annotation and possible expansion of the LGT region to check whether candidates will obtain completeness after.
+
+## GAGA-0515 expression
 Calculate the expression for the different life stages of GAGA-0515
+
 ```{r expression GAGA-0515}
 #dataFiles[["GAGA-0515.Scaffold8.1760778-1761241"]]
 i<-393
@@ -353,3 +419,4 @@ G515.expression
 # Save output as a table
 #write.table(G515.expression,"/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/G515.expression.tsv",sep="\t",quote = F,row.names = F)
 ```
+
