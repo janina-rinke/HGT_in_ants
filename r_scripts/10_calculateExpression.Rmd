@@ -201,6 +201,21 @@ df4$UniProtID<-gsub(".*UniRef90_","",df4$UniProtID)
 head(df4)
 ```
 
+## Add the start and stop codons for every CDS to check for completeness of candidates.
+```{r add start and stop codons}
+# Use df4 to extract the ids matching ids in the start.stop.codons.table (MGA1; MGA2)
+df4$CDSid<-gsub("ID=(.*?)\\;.*","\\1",df4$X9)
+
+# Upload the file including the codons and change it to merge it accordingly
+CodonsDF<-read.csv("/Users/Janina/sciebo/Master.LGTs/all.start.stop.codons2.tsv", sep="\t", header=F)
+CodonsDF$locusID<-gsub("(.*?)\\.fa","\\1",CodonsDF$V1) #make column locusID to group on
+CodonsDF$CDSid<-gsub("(.*?) .*","\\1",CodonsDF$V2) #make column CDSid to group on
+
+CodonsDF$startCodon<-word(CodonsDF$V2,4)
+CodonsDF$stopCodon<-word(CodonsDF$V2,5)
+
+df4<-merge(df4,CodonsDF,by.x=c("locusID","CDSid"),by.y=c("locusID","CDSid"),all=T)
+```
 
 ## Summarize CDS-level table (df5) together to obtain the LGT locus level.
 For every LGT candidate region, CDS starts, CDS ends and CDS total counts will be given in summarized columns.
@@ -238,7 +253,7 @@ df5$Eval<-gsub("%","",df5$Eval)
 # For all files
 df6<-df5 %>%  
   dplyr::group_by(locusID, GAGAid,locus.scaffold, locus.position) %>% 
-  dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";"),CDS.UniprotIDs = paste0(UniProtID, collapse = ";"),CDS.cogs = paste0(cog, collapse = ";"),CDS.tigrs = paste0(tigr, collapse = ";"),CDS.pids = paste0(pid, collapse = ";"),CDS.q_covs = paste0(q_cov, collapse = ";"),CDS.s_covs = paste0(s_cov, collapse = ";"),CDS.Eval = paste0(Eval, collapse = ";")) 
+  dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";"),CDS.UniprotIDs = paste0(UniProtID, collapse = ";"),CDS.cogs = paste0(cog, collapse = ";"),CDS.tigrs = paste0(tigr, collapse = ";"),CDS.pids = paste0(pid, collapse = ";"),CDS.q_covs = paste0(q_cov, collapse = ";"),CDS.s_covs = paste0(s_cov, collapse = ";"),CDS.Eval = paste0(Eval, collapse = ";"),CDS.startCodons = paste0(startCodon, collapse = ";"),CDS.stopCodons = paste0(stopCodon, collapse = ";")) 
 
 # Some candidates did not have a RNAseq summary file, therefore the GAGAid and locus.position is missing here. Here, the information for GAGAid and locus.position need to be added again.
 df6 <- df6 %>%
@@ -278,12 +293,21 @@ LGTs.final.df<-LGTs.locuslevel.df %>%
 #write_xlsx(LGTs.final.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.xlsx")
 
 ### To extract the CDS-level dataframe
-CDS.final.df<-separate_rows(LGTs.final.df, "CDS.starts", "CDS.ends", "CDS.totalcounts", "CDS.products", "CDS.UniprotIDs", "CDS.cogs", "CDS.tigrs", "CDS.pids", "CDS.q_covs", "CDS.s_covs", "CDS.Eval", sep= ";")
+CDS.final.df<-separate_rows(LGTs.final.df, "CDS.starts", "CDS.ends", "CDS.totalcounts", "CDS.products", "CDS.UniprotIDs", "CDS.cogs", "CDS.tigrs", "CDS.pids", "CDS.q_covs", "CDS.s_covs", "CDS.Eval", "CDS.startCodons","CDS.stopCodons",sep= ";")
 
 # Save the CDS level table including expression and dfast results 
 #write_xlsx(CDS.final.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.xlsx")
 ```
 `r nrow(CDS.final.df)` CDS sequences were predicted for the 497 candidates in total.
+
+
+## Completeness check: Summary and analysis of candidates
+```{r summary}
+# Filter candidates which have "ATG" as start codon and either "TGA", "TAA" or "TGT" as stop codon
+
+# Filter candidates which have s_cov < 0.75
+
+```
 
 ## GAGA-0515
 Calculate the expression for the different life stages of GAGA-0515
