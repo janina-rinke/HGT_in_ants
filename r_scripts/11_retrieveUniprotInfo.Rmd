@@ -1,0 +1,90 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+```{r global-options, include=FALSE}
+# Define the global chunk options
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r libraries}
+library(vroom)
+#BiocManager::install("GenomicAlignments")
+#install.packages("UniprotR")
+library(UniprotR)
+library(ggplot2)
+```
+
+## Load your data
+```{r load data}
+library(readxl)
+df<-read_xlsx("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.xlsx")
+```
+
+
+```{r}
+# query uniprot with the representative IDs.
+df$CDS.UniprotIDs[df$CDS.UniprotIDs=="NA"]<-NA # replace the "NA" string with real NA's
+
+# Get taxonomy information for all UniProtIds
+a<-GetNamesTaxa(df$CDS.UniprotIDs[!is.na(df$CDS.UniprotIDs)]) # exclude all cases which do not have a UniProtID ("NA")
+
+# Get gene ontology information
+go<-GetProteinGOInfo(df$CDS.UniprotIDs[!is.na(df$CDS.UniprotIDs)])
+```
+
+```{r}
+# Merge the CDS level dataframe with the new information from UniProtR
+df2<-merge(df,a,by.x="CDS.UniprotIDs",by.y="row.names",all.x=T)
+
+df3<-merge(df2,go,by.x="CDS.UniprotIDs",by.y="row.names",all.x=T)
+```
+
+
+
+```{r clean dataframe}
+colnames(df3)
+
+df.final<-df3 %>%
+  dplyr::select(-nr_predicted_loci,-CPH_avail,-Virus.hosts,-CDS.products,-Entry.name,
+                -Gene.names...ordered.locus..,-Gene.names...synonym..,
+                -Gene.names...primary..,-Proteomes) %>%
+  dplyr::relocate("CDS.UniprotIDs", .after = "CDS.totalcounts") %>%
+  dplyr::relocate("Protein.names", .after = "CDS.UniprotIDs")
+
+
+df.final$Uniprot_organism<-
+  gsub(".*?, .*?, .*?,.*?,.*?,.*?,.*?, (.*?), .*","\\1",df.final$Taxonomic.lineage..ALL)
+df.final$Uniprot_tax_order<-
+  gsub(".*?, .*?, .*?,.*?, (.*?), .*","\\1",df.final$Taxonomic.lineage..ALL)
+df.final$Uniprot_tax_class<-gsub(".*?, .*?, .*?, (.*?), .*","\\1",df.final$Taxonomic.lineage..ALL)
+
+write.table(df.final,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.tsv",sep='\t',quote=F,row.names=F)
+```
+
+```{r}
+#Visualize Chromosomes localization
+PlotChromosomeInfo(a)
+
+#Visualize protein's gene name as Network 
+PlotGenesNetwork(a)
+
+#Plot Biological process information top 10 go terms  
+PlotGOBiological(go, Top = 10) 
+#Plot molecular function information top 20 go terms
+Plot.GOMolecular(go, Top = 20)
+#Plot subcellualr localization information 
+Plot.GOSubCellular(go) 
+#Combine Gene ontology plots into one plot 
+p_combined<-PlotGoInfo(go)
+#Handy visualization for publications 
+p2_combined<-PlotGOAll(GOObj = go, Top = 10, directorypath = getwd(), width = 8, height = 5)
+
+ggplot(df.final)+
+  geom_point(aes(x=CDS.pids,y=CDS.s_covs,fill=Uniprot_tax_class),pch=21)
+```
+

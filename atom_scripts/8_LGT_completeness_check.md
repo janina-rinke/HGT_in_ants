@@ -103,4 +103,24 @@ GAGA-0020.Scaffold267.55721-56766.fa/genome.gff:1
 
 A column with the number of CDS sequences was added to the file `GAGA.LGT.filtered.completeness.xlsx`. Additionally, the percentage of complete CDS for every LGT candidate (column: `Complete_CDS`) was calculated, based on `q_cov` and `s_cov`in the dfast gff files for every candidate. A candidate CDS was considered as complete, if both q_cov and s_cov were above 75 %. For example, if an LGT candidate had two predicted CDS sequences and one of them was complete, a value of 50% was calculated in the column `Complete_CDS`.
 
-Moreover, the expression of every CDS from every LGT candidate was calculated and visualized with the script `9_calculateCoverage.Rmd` in R. Here, the percentage of expressed CDS per LGT region was again calculated as described for the column `Complete_CDS`. 
+Moreover, the expression of every CDS from every LGT candidate was calculated and visualized with the script `9_calculateCoverage.Rmd` in R. Here, the percentage of expressed CDS per LGT region was again calculated as described for the column `Complete_CDS`.
+
+## 4. Extract only the unique reads from every bam file
+
+Path where all `mergedRNAseqbamfiles`can be found:
+```bash
+/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/run_final_keepingbam_pergagaid/GAGA-genome/LGT_locus
+```
+Before you extract any reads from bam files, make sure that you do not have any other bam files.
+
+To extract only unique read counts:
+```bash
+# For one candidate only:
+sambamba view -h -F [NH]==1 mergedRNAseq.LGTregion.bam > uniquely_mapped.LGTregion.bam
+
+# For all candidates:
+cd /home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/run_final_keepingbam_pergagaid
+
+for i in */*; do sambamba view -h -F [NH]==1 $i/mergedRNAseq.LGTregion.bam > $i/uniquely_mapped.LGTregion.bam; done
+
+```

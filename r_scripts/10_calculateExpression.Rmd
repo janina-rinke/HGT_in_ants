@@ -365,12 +365,12 @@ df.prot<-df.prot %>%
 
  
 write.table(df.prot,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.proteins.tsv", sep="\t", quote=F)
-write_xlsx(df.Complete.LGTs,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.complete.before.reAnnotation.tsv")
+write_xlsx(df.Complete.LGTs,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.complete.before.reAnnotation.xlsx")
 head(df.Complete.LGTs)
 ```
 
 
-In summary, `r nrow(df.prot)` proteins were annotated by dfast (UniRef, COG, TIGR summarized) within `r nrow(CDS.final.df)` CDS sequences. From `r nrow(CDS.final.df)` CDS sequences, `r nrow(dfCDSexpression)` CDS were expressed with at least 10 read counts.
+In summary, `r nrow(df.prot)` proteins were annotated by dfast (UniRef, COG, TIGR summarized) within 1037 CDS sequences. From 1037 CDS sequences, `r nrow(dfCDSexpression)` CDS were expressed with at least 10 read counts.
 
 `r nrow(dfA)` CDS have a Start Codon at the beginning of their sequence ("ATG") and a Stop Codon ("TGA", "TGT" or "TAA").
 Without re-annotation, `r nrow(df.Complete.LGTs)` CDS sequences are complete. All other CDS sequences/LGT need a re-annotation and possible expansion of the LGT region to check whether candidates will obtain completeness after.
