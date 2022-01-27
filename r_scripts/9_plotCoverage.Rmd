@@ -119,11 +119,9 @@ plotCoverage(
   bamfile=LGT_df$bam[i],
   dfast.gff=LGT_df$gff[i],
   lgt.bed=LGT_df$bed[i],
-  outfolder="/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/RNAseq_plots/UniqueReads",
+  outfolder="/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/RNAseq_plots/UniqueReads/",
   expand=100  #how far should the plot expanded around the LGT
 )
 }
-
-
 ```
 

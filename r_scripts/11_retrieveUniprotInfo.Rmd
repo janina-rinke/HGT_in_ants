@@ -1,11 +1,41 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Retrieve information for all LGTs from UniProt"
+author: "Janina Rinke"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+    collapsed: true
+    number_sections: true
+    df_print: paged
+  pdf_document: default
+---
+<STYLE TYPE="text/css">
+<!--
+  td{
+    font-family: Arial;
+    font-size: 8pt;
+    padding:0px;
+    cellpadding="0";
+    cellspacing="0"
+  }
+  th {
+    font-family: Arial;
+    font-size: 8pt;
+    height: 20px;
+    font-weight: bold;
+    text-align: right;
+    background-color: #ccccff;
+  }
+  table {
+    border-spacing: 0px;
+    border-collapse: collapse;
+  }
+--->
+</STYLE>
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
 ```{r global-options, include=FALSE}
 # Define the global chunk options
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
@@ -17,6 +47,11 @@ library(vroom)
 #install.packages("UniprotR")
 library(UniprotR)
 library(ggplot2)
+library(dplyr)
+library(stringr)
+library(utils)
+library(tidyr)
+library(viridis)
 ```
 
 ## Load your data
@@ -63,7 +98,7 @@ df.final$Uniprot_tax_order<-
   gsub(".*?, .*?, .*?,.*?, (.*?), .*","\\1",df.final$Taxonomic.lineage..ALL)
 df.final$Uniprot_tax_class<-gsub(".*?, .*?, .*?, (.*?), .*","\\1",df.final$Taxonomic.lineage..ALL)
 
-write.table(df.final,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.tsv",sep='\t',quote=F,row.names=F)
+#write.table(df.final,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.tsv",sep='\t',quote=F,row.names=F)
 ```
 
 ```{r}
@@ -88,3 +123,176 @@ ggplot(df.final)+
   geom_point(aes(x=CDS.pids,y=CDS.s_covs,fill=Uniprot_tax_class),pch=21)
 ```
 
+```{r flag proteins}
+# Create a new column where you separate ankyrins, uncharacterized proteins and TEs from all other proteins
+df.final.flag<- df.final %>%
+  dplyr::mutate(prot_category = case_when(
+   grepl("[A|a]nkyrin",Protein.names)|grepl("repeat",Protein.names) ~ "anykrin",   
+   grepl("[U|u]ncharacterized",Protein.names)|grepl("Deleted",Protein.names) ~ "uncharacterized", 
+   is.na(Protein.names) ~ "uncharacterized",        
+   grepl("[T|t]ransposase",Protein.names)|grepl("Helix-turn-helix transcriptional regulator",Protein.names)|grepl("reverse transcriptase",Protein.names) ~ "TE",  
+   grepl("[M|m]itochondrial",Protein.names) ~ "mitochondrial",
+    TRUE ~ "other")               
+    )
+
+# Remove anything that is not flagged with "other"
+protein.table<- df.final.flag %>%
+  dplyr::filter(prot_category=="other")
+
+```
+
+
+
+```{r clean protein dataframe}
+# Reduce the table to obtain a clean protein dataframe including the ant and the bacterial donor
+colnames(protein.table)
+
+protein.table$Protein.names<-gsub("(.*?)\\(EC.*","\\1",protein.table$Protein.names)
+protein.table$Protein.names<-gsub("Cyclopropane.*",
+                                  "Cyclopropane fatty acyl phospholipid synthase",protein.table$Protein.names) 
+                               
+protein.table$Protein.names<-gsub("50S ribosomal protein.*",
+                                  "50S ribosomal protein",protein.table$Protein.names) 
+protein.table$Protein.names<-gsub("Chaperone protein.*",
+                                  "Chaperone protein",protein.table$Protein.names) 
+protein.table$Protein.names<-gsub("DNA mismatch repair protein.*",
+                                  "DNA mismatch repair protein",protein.table$Protein.names) 
+
+protein.table$Protein.names<-gsub("NADH-quinone oxidoreductase.*",
+                                  "NADH-quinone oxidoreductase",protein.table$Protein.names)
+protein.table$Protein.names<-gsub("Protein translocase.*",
+                                  "Protein translocase",protein.table$Protein.names)
+protein.table$Protein.names<-gsub("Sodium.*",
+                                  "Sodium/alanine symporter family protein",protein.table$Protein.names)
+protein.table$Protein.names<-gsub("Transcription.*",
+                                  "Transcription factor",protein.table$Protein.names)
+protein.table$Protein.names<-gsub(".*Phage.*",
+                                  "Phage protein",protein.table$Protein.names)
+protein.table$Protein.names<-gsub(".*haperon.*",
+                                  "Chaperone",protein.table$Protein.names)
+protein.table$Protein.names<-gsub("Inactivated homolog of predicted Zn-dependent protease.*",
+                                  "Inactivated homolog of predicted Zn-dependent protease",protein.table$Protein.names)
+protein.table$Protein.names<-gsub(".*repair protein.*",
+                                  "DNA repair protein",protein.table$Protein.names)
+protein.table$Protein.names<-gsub(".*Minor capsid protein.*",
+                                  "Minor capsid protein",protein.table$Protein.names)
+protein.table$Protein.names<-gsub("Lyzozyme M1",
+                                  "Lysozyme",protein.table$Protein.names)
+
+protein.table$Uniprot_organism<-gsub(".*?,.*?,.*?,.*?,.*?,.*?, (.*?), .*","\\1", protein.table$Uniprot_organism)
+protein.table$Uniprot_organism<-gsub(".*unclassified(.*)","\\1", protein.table$Uniprot_organism)
+protein.table$Uniprot_organism<-gsub(".*Sodalis.*","Sodalis", protein.table$Uniprot_organism)
+protein.table$Uniprot_organism<-gsub(".*Candidatus Baumannia.*","Candidatus Baumannia", protein.table$Uniprot_organism)
+protein.table$Uniprot_organism<-gsub(".*,(.*)","\\1", protein.table$Uniprot_organism)
+
+protein.table$Uniprot_tax_order<-gsub(".*?,.*?, (.*?), .*","\\1", protein.table$Uniprot_tax_order)
+protein.table$Uniprot_tax_order<-gsub("Viruses,(.*?),","\\1", protein.table$Uniprot_tax_order)
+
+protein.table$Uniprot_tax_class<-gsub("(.*?)\\,.*","\\1", protein.table$Uniprot_tax_class)
+
+protein.table<-protein.table %>%
+  dplyr::select(.id,species,subfamily,Protein.names,Uniprot_organism,Uniprot_tax_order,Uniprot_tax_class,CDS.totalcounts,CDS.cogs,CDS.tigrs,Gene.ontology..biological.process.,Gene.ontology..molecular.function.,Gene.ontology..cellular.component.)
+
+# Group by protein
+protein.table2<-protein.table %>%
+   dplyr::group_by(Protein.names) %>% 
+   dplyr::summarize(GAGA.ids = paste0(.id, collapse = ";"),
+                    species = paste0(species, collapse = ";"),
+                    subfamilies   =paste0(subfamily, collapse = ";"),
+                    Donor_organism =paste0(Uniprot_organism, collapse = ";"),
+                    Donor_order =paste0(Uniprot_tax_order, collapse = ";"),
+                    Donor_class =paste0(Uniprot_tax_class, collapse = ";"),
+                    expression =paste0(CDS.totalcounts,collapse = ";"),
+                    COGS =paste0(CDS.cogs,collapse = ";"),
+                    TIGR =paste0(CDS.tigrs,collapse =";"),
+                    GO_BiologicalProcess =paste0(Gene.ontology..biological.process.,collapse=";"),
+                    GO_MolecularFunction =paste0(Gene.ontology..molecular.function.,collapse=";"),
+                    GO_CellularComponent =paste0(Gene.ontology..cellular.component.,collapse=";")) 
+
+# Some columns still contain duplicated values after collapsing, now we keep only the unique values 
+# e.g. GAGA-0229;GAGA-0229;GAGA;0229 -> GAGA-0229
+
+protein.table2$GAGA.ids<-
+  sapply(strsplit(protein.table2$GAGA.ids, ";"), function(x) paste(unique(x), collapse = ";"))
+protein.table2$species<-
+  sapply(strsplit(protein.table2$species, ";"), function(x) paste(unique(x), collapse = ";"))
+protein.table2$subfamilies<-
+  sapply(strsplit(protein.table2$subfamilies, ";"), function(x) paste(unique(x), collapse = ";"))
+protein.table2$Donor_organism<-
+  sapply(strsplit(protein.table2$Donor_organism, ";"), function(x) paste(unique(x), collapse = ";"))
+protein.table2$Donor_order<-
+  sapply(strsplit(protein.table2$Donor_order, ";"), function(x) paste(unique(x), collapse = ";"))
+protein.table2$Donor_class<-
+  sapply(strsplit(protein.table2$Donor_class, ";"), function(x) paste(unique(x), collapse = ";"))
+protein.table2$COGS<-
+  sapply(strsplit(protein.table2$COGS, ";"), function(x) paste(unique(x), collapse = ";"))
+protein.table2$TIGR<-
+  sapply(strsplit(protein.table2$TIGR, ";"), function(x) paste(unique(x), collapse = ";"))
+protein.table2$GO_BiologicalProcess<-
+  sapply(strsplit(protein.table2$GO_BiologicalProcess, ";"), function(x) paste(unique(x), collapse = ";"))
+protein.table2$GO_MolecularFunction<-
+  sapply(strsplit(protein.table2$GO_MolecularFunction, ";"), function(x) paste(unique(x), collapse = ";"))
+protein.table2$GO_CellularComponent<-
+  sapply(strsplit(protein.table2$GO_CellularComponent, ";"), function(x) paste(unique(x), collapse = ";"))
+
+protein.table2$TIGR<-gsub("(.*?)COG.*","\\1", protein.table2$TIGR)
+protein.table2$TIGR<-gsub(".*:(.*?)\\[.*","\\1", protein.table2$TIGR)
+protein.table2$COGS<-gsub(".*COG:(.*)","\\1", protein.table2$COGS)
+protein.table2$COGS<-gsub("(.*?)\\[.*","\\1", protein.table2$COGS)
+
+head(protein.table2)
+
+#write.table(protein.table2,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.Proteins_Species_Expression.tsv",sep='\t',quote=F,row.names=F)
+```
+
+
+## Plot the resulting protein table
+
+```{r create plots}
+# Count how many GAGA species we have per protein
+protein.table2$Nr_GAGA_species<-strsplit(protein.table2$GAGA.ids, ";") # Split collapsed column
+protein.table2$Nr_GAGA_species<-lengths(protein.table2$Nr_GAGA_species) # Count elements in list
+
+protein.table2$Protein.names<-gsub(".*Membrane protein insertase.*",
+                                  "Membrane protein insertase",protein.table2$Protein.names)
+
+# Plot the proteins and how many species have this protein
+p1<-ggplot(protein.table2, aes(fill=subfamilies, y=Protein.names, x=Nr_GAGA_species, width = .8)) +
+  geom_bar(position="stack", stat="identity") +
+  scale_fill_viridis(discrete=T) +
+  ggtitle("LGT proteins in GAGA species") +
+  theme_classic() +
+  xlab("Nr of GAGA species") +
+  ylab("Bacterial protein") +
+  theme(axis.text.y= element_text(size=8))
+p1
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/LGTs.Number.Species.per.Protein.pdf", p1, width=10, height=15)
+
+###############################################################################
+# Plot the number of LGTs per species and all prokaryote donors
+protein.table3<-protein.table %>%
+  dplyr::group_by(.id,species,subfamily,Protein.names,
+                  Uniprot_organism,Uniprot_tax_order,Uniprot_tax_class) %>% 
+  dplyr::summarize(expression =paste0(CDS.totalcounts,collapse = ";"),
+                    COGS =paste0(CDS.cogs,collapse = ";"),
+                    TIGR =paste0(CDS.tigrs,collapse =";"))
+pt5<-protein.table3 %>%
+  dplyr::group_by(.id,species,Uniprot_organism) %>% tally()
+pt5$Nr_of_LGTs<-pt5$n
+pt5$n<-NULL
+
+pt6<-protein.table3 %>%
+  dplyr::group_by(.id,species,Uniprot_tax_order) %>% tally()
+pt6$Nr_of_LGTs<-pt6$n
+pt6$n<-NULL
+
+p2<-ggplot(pt5, aes(fill=Uniprot_organism, y=Nr_of_LGTs, x=.id)) +
+  geom_bar(position="stack", stat="identity")
+p2
+
+p3<-ggplot(pt6, aes(fill=Uniprot_tax_order, y=Nr_of_LGTs, x=.id)) +
+  geom_bar(position="stack", stat="identity") +
+  theme_classic()
+p3
+```

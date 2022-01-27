@@ -332,7 +332,7 @@ df.Complete.LGTs <- dfA %>%
 df.proteins<-CDS.final.df %>%
   dplyr::select(locusID, CDS.starts, CDS.ends, CDS.products, CDS.cogs, CDS.tigrs) %>% #create subset df for all proteins
   dplyr::filter(CDS.products != "NA") %>%                 # remove sequences which do not have a predicted protein
-  dplyr::filter(CDS.products != "hypothetical protein" | CDS.cogs != "NA" | CDS.tigrs != "NA")
+  dplyr::filter(CDS.products != "hypothetical protein" | CDS.cogs != "NA" | CDS.tigrs != "NA") # remove all sequences which have a hypothetical protein in CDS.products if they also do not contain anything in CDS.cogs and CDS.tigrs
 
 df.proteins$CDS.cogs<-gsub(".*:(.*?)\\[.*","\\1",df.proteins$CDS.cogs)
 df.proteins$CDS.tigrs<-gsub(".*:(.*?)\\[.*","\\1",df.proteins$CDS.tigrs)
