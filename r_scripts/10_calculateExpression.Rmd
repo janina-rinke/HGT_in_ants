@@ -36,7 +36,8 @@ output:
 </STYLE>
 ---
 
-This script combines the information about all LGT candidates and respective CDS detected by dfast together with the RNAseq mapping expression. The read counts for every single CDS are added to the dataframe and plotted for the candidates. At the end, one CDS-level table and one LGT.locus level table are computed.
+This script combines the information about all LGT candidates and respective CDS detected by dfast together with the RNAseq mapping expression. The read counts for every single CDS are added to the dataframe. At the end, one CDS-level table and one LGT.locus level table are computed. 
+The prokaryotic gene annotation dfast was used again to re-annotate the candidates, so additional columns with the re-annotated values are added to the summary tables.
 
 ```{r global-options, include=FALSE}
 # Define the global chunk options
@@ -61,7 +62,7 @@ library(readxl)
 #### Load the RNAseq mapping files for every LGT candidate into R.
 ```{r load files}
 #Mac Computer:
-txt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+txt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/dfast_RNAseq_mapping/*/*/RNAseq_mapping_count_summary.txt"
 #Linux Computer
 #txt2load<-"/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
 files.to.load<-Sys.glob(txt2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
@@ -74,7 +75,7 @@ Save all file paths in a list called dataFiles and re-name the list elements
 ```{r load files 2}
 dataFiles <- lapply(files.to.load,read.delim2,sep = "\t") #lapply function to read all files and save them as dataframes
 #MacComputer
-names(dataFiles)<-gsub("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/(.*?)\\.fa.*","\\1",files.to.load) # gsub() selectively replaces multiple occurrences of a text within an R string ("search term", "replacement term",string searched) 
+names(dataFiles)<-gsub("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/dfast_RNAseq_mapping/*/.*/(.*?)\\.fa.*","\\1",files.to.load) # gsub() selectively replaces multiple occurrences of a text within an R string ("search term", "replacement term",string searched) 
 #Linux Computer
 #names(dataFiles)<-gsub("/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/(.*?)\\.fa.*","\\1",files.to.load)
 ```
@@ -105,7 +106,8 @@ df<-txtfile %>%                               # Specify data frame
 df$locusID<-names(dataFiles)[393]             # Add the name of the LGT by adding a column called "locusID" 
 df<-df %>% 
   separate(locusID, sep="\\.", c(".id","locus.scaffold","locus.position")) %>% 
-  dplyr::rename(CDS.start=start, CDS.end=end)# Separate the locusID column into .id, scaffold and CDS position
+  dplyr::rename(CDS.start=start, CDS.end=end) %>% # Separate the locusID column into .id, scaffold and CDS position
+  dplyr::mutate(CDS.length=CDS.end - CDS.start)
 
 df$chr<-NULL
 head(df)
@@ -137,7 +139,8 @@ for (i in seq_along(dataFiles2)) {
 separateLOCUSID <- function(DF) {
   DF %>% 
   separate(locusID, sep="\\.", c("GAGAid","locus.scaffold","locus.position")) %>% 
-  dplyr::rename(CDS.start=start, CDS.end=end)  
+  dplyr::rename(CDS.start=start, CDS.end=end) %>%  
+  dplyr::mutate(CDS.length=CDS.end - CDS.start)
 }
 
 dataFiles3 <- map(dataFiles2,separateLOCUSID)
@@ -155,7 +158,8 @@ df.new<-merge(df, df.dfast,by.x=c("locus.scaffold","CDS.start","CDS.end"),by.y=c
 
 df.new<-df.new %>%
   dplyr::relocate(".id", .before = "locus.scaffold") %>%
-  dplyr::relocate("locus.position", .before = "CDS.start")
+  dplyr::relocate("locus.position", .before = "CDS.start") %>%
+  dplyr::relocate("CDS.length", .before = "totalcount")
 
 # Add product from dfast as a column
 df.new$product<-gsub(".*product=(.*?)\\;.*","\\1",df.new$V9)
@@ -177,7 +181,7 @@ head(gff.files.to.load)
 gffs <- lapply(gff.files.to.load,read_tsv,col_names=F,col_types = cols(.default = "c")) #lapply function to read all files and save them as dataframes
 names(gffs)<-gsub("/Users/Janina/sciebo/Master.LGTs/dfast/*/(.*?)\\.fa.*","\\1",gff.files.to.load)
 
-# Make a large dataframe (dataFiles3.df) from all GAGA LGTs in the large list element ("dataFiles3")
+# Make a large dataframe (dataFiles3.df) from all GAGA LGTs and their respective CDS in the large list element ("dataFiles3")
 dataFiles3.df<-bind_rows(dataFiles3,.id="locusID") #The .id option names the first column ("locusID") after the names of the list elements
 #Another possibility: df_combined<-rbindlist(dataFiles3,idcol = T, fill=TRUE)
 
@@ -188,7 +192,8 @@ gffs.df<-bind_rows(gffs,.id="locusID")
 df4<-merge(dataFiles3.df,gffs.df,by.x=c("locusID","CDS.start","CDS.end"),by.y=c("locusID","X4","X5"),all=T)
 
 df4<-df4 %>%
-  dplyr::relocate("GAGAid","locus.scaffold","locus.position", .before = "CDS.start") 
+  dplyr::relocate("GAGAid","locus.scaffold","locus.position", .before = "CDS.start") %>%
+  dplyr::relocate("CDS.length", .before = "totalcount")
 
 # Add product from dfast as a column
 df4$product<-gsub(".*product=(.*?)\\;.*","\\1",df4$X9)
@@ -201,6 +206,8 @@ df4$UniProtID<-gsub(".*UniRef90_","",df4$UniProtID)
 # Combine this dataframe later with the LGT.CDS.level dataframe
 head(df4)
 ```
+From dfast, `r length(gffs)` gff files were loaded. In total, `r length(df4)` CDS sequences were predicted in all LGT candidates. 
+
 
 ## Add start and stop codons for every CDS.
 This can be used to filter for candidates which contain a correct Start and a correct Stop Codon.
@@ -377,7 +384,6 @@ Without re-annotation, `r nrow(df.Complete.LGTs)` CDS sequences are complete. Al
 
 ## GAGA-0515 expression
 Calculate the expression for the different life stages of GAGA-0515
-
 ```{r expression GAGA-0515}
 #dataFiles[["GAGA-0515.Scaffold8.1760778-1761241"]]
 i<-393
@@ -421,3 +427,164 @@ G515.expression
 #write.table(G515.expression,"/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/G515.expression.tsv",sep="\t",quote = F,row.names = F)
 ```
 
+
+## Add the information from the dfast reannotation to the table
+```{r add reannotation columns}
+# Add reannotated start and stop codons
+# Use df4 to extract the ids matching ids in the start.stop.codons.table (MGA1; MGA2)
+df4$CDSid<-gsub("ID=(.*?)\\;.*","\\1",df4$X9)
+
+# Upload the file including the codons and change it to merge it accordingly
+CodonsDF<-read.csv("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/all.reannotated.start.stop.codons.tsv", sep=";", header=F)
+CodonsDF$locusID<-gsub("(.*?)\\.1000.out.start.stop.codons.tsv","\\1",CodonsDF$V1) #make column locusID to group on
+CodonsDF$CDSid<-gsub("(.*?) .*","\\1",CodonsDF$V2) #make column CDSid to group on
+
+CodonsDF$reannotatedstartCodon<-word(CodonsDF$V2,4)
+CodonsDF$reannotatedstopCodon<-word(CodonsDF$V2,5)
+
+df4<-merge(df4,CodonsDF,by.x=c("locusID","CDSid"),by.y=c("locusID","CDSid"),all=T)
+```
+
+# Add reannotation data 
+## Extract expression from reannotated RNAseq mapping files
+
+#### Load the RNAseq mapping files for every LGT candidate into R.
+```{r load reannotated files}
+#Mac Computer:
+reannotatedtxt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping/*/*/RNAseq_mapping_count_summary.txt"
+#Linux Computer
+#txt2load<-"/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+reannotated.files.to.load<-Sys.glob(reannotatedtxt2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
+head(reannotated.files.to.load)
+
+reannotated.dataFiles <- lapply(reannotated.files.to.load,read.delim2,sep = "\t") #lapply function to read all files and save them as dataframes
+#MacComputer
+names(reannotated.dataFiles)<-gsub("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping/*/.*/(.*?)\\.1000.out.*","\\1",reannotated.files.to.load) # gsub() selectively replaces multiple occurrences of a text within an R string ("search term", "replacement term",string searched) 
+```
+For the reannotated candidates, `r length(reannotated.files.to.load)` RNAseq mapping files were loaded. Some candidates did not have RNAseq data, therefore some files are missing. Additionally, all candidates which did not have a gff file after the dfast reannotation, were not used for the second RNAseq mapping. Thus, less candidates had an RNAseq mapping file than for the first annotation.
+
+#### Calculate the sum of reannotated, unique reads per CDS (sum of all samples e.g. queens, workers, males) using dplyr
+
+```{r load reannotated single file}
+#dataFiles[["GAGA-0515.Scaffold8.1760778-1761241"]]
+#i<-393
+txtfile2<-reannotated.dataFiles[["GAGA-0515.Scaffold8.1760778-1761241"]]
+head(txtfile2)
+```
+
+```{r sum-expression reannotated single file}
+#### For a single file
+re.df<-txtfile2 %>%                               # Specify data frame
+  dplyr::group_by(chr,start,end) %>%          # Specify indicators to group on 
+  dplyr::summarise_at(vars(ucount),           # Specify column to summarize based on the group indicators
+               list(reannotated.totalcount = sum))        # Specify function (summarize as a list and save in column "totalcount")
+
+re.df$locusID<-names(reannotated.dataFiles)[372]  # Add the name of the LGT by adding a column called "locusID" 
+re.df<-re.df %>% 
+  separate(locusID, sep="\\.", c(".id","locus.scaffold","locus.position")) %>% 
+  dplyr::rename(reannotated.CDS.start=start, reannotated.CDS.end=end) %>% # Separate the locusID column into .id, scaffold and CDS position
+  dplyr::mutate(reannotated.CDS.length=reannotated.CDS.end - reannotated.CDS.start)   # Add a column with the CDS length
+
+re.df$chr<-NULL
+head(re.df)
+```
+
+```{r sum-expression all reannotated}
+#### For all files: 
+#Define a function and apply function to all files with map()
+summarizeReannotatedExpression <- function(DF) {
+  DF %>% 
+ dplyr::group_by(chr,start,end) %>%          
+ dplyr::summarise_at(vars(ucount),          
+               list(reannotatedtotalcount = sum))
+}
+
+reannotated.dataFiles2 <- map(reannotated.dataFiles,summarizeReannotatedExpression)
+
+# Add LGT names to all dataframes as a column and separate into single columns with GAGAid, Scaffold and CDS coordinate.
+#Check if all locusIDs have the structure {GAGA-id}.{Scaffold}.{start}-{stop}
+names(reannotated.dataFiles2)[grep("\\.1\\.",names(reannotated.dataFiles2))] 
+#Output: 22 Genomes with different structure e.g. "OUT-0001.WHNR01000088.1.32800-34183"
+
+# Re-name these 22 genome names in the new column locusID from XY.1.XY -> XY_1_XY
+for (i in seq_along(reannotated.dataFiles2)) {
+  reannotated.dataFiles2[[i]]$locusID <- gsub("\\.([0-9])\\.","_\\1.",names(reannotated.dataFiles2)[i])
+}
+
+# separate the locusIDs in all files
+separateLOCUSID <- function(DF) {
+  DF %>% 
+  separate(locusID, sep="\\.", c("GAGAid","locus.scaffold","locus.position")) %>% 
+  dplyr::rename(reannotated.CDS.start=start, reannotated.CDS.end=end) %>%  
+  dplyr::mutate(reannotated.CDS.length=reannotated.CDS.end - reannotated.CDS.start)
+}
+
+reannotated.dataFiles3 <- map(reannotated.dataFiles2,separateLOCUSID)
+
+for (i in seq_along(reannotated.dataFiles3)) {
+  reannotated.dataFiles3[[i]]$chr <- NULL
+}
+```
+
+## Combine information from the dfast reannotation with reannotated RNAseq mapping data
+```{r add reannotated dfast single file}
+# For a single file
+df.dfast.reannotated<-read.csv("/Users/Janina/sciebo/Master.LGTs/reannotation.dfast/GAGA-0515.Scaffold8.1760778-1761241.1000.out/genome_reannotate_mod_intersect.gff",sep="\t",header=F)
+df.new.reannotated<-merge(re.df, df.dfast.reannotated,
+                          by.x=c("locus.scaffold","reannotated.CDS.start","reannotated.CDS.end"),
+                          by.y=c("V1","V4","V5"),all.x=T,all.y=T)
+
+df.new.reannotated<-df.new.reannotated %>%
+  dplyr::relocate(".id", .before = "locus.scaffold") %>%
+  dplyr::relocate("locus.position", .before = "reannotated.CDS.start") %>%
+  dplyr::relocate("reannotated.CDS.length", .before = "reannotated.totalcount")
+
+# Add product from dfast as a column
+df.new.reannotated$product<-gsub(".*product=(.*?)\\;.*","\\1",df.new.reannotated$V9)
+# Add UniProtID from dfast as a column
+df.new.reannotated$UniProtID<-gsub(".*UniprotKB:UniRef90_(.*?)\\;.*","\\1",df.new.reannotated$V9)
+# Add the predicted bacteria from dfast as a column
+df.new.reannotated$dfastBacteriapredicted<-gsub(".*\\((.*?)\\).*","\\1",df.new.reannotated$V9)
+head(df.new.reannotated)
+```
+
+```{r add reannotated dfast all}
+# For all files
+reannotated.gff2load<-"/Users/Janina/sciebo/Master.LGTs/reannotation.dfast/*/genome_reannotate_mod_intersect.gff"
+reannotated.gff.files.to.load<-Sys.glob(reannotated.gff2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
+head(reannotated.gff.files.to.load)
+
+reannotated.gffs <- lapply(reannotated.gff.files.to.load,read_tsv,col_names=F,col_types = cols(.default = "c")) #lapply function to read all files and save them as dataframes
+names(reannotated.gffs)<-gsub("/Users/Janina/sciebo/Master.LGTs/reannotation.dfast/*/(.*?)\\.1000.out.*","\\1",reannotated.gff.files.to.load)
+
+# Make a large dataframe (dataFiles3.df) from all GAGA LGTs and their respective CDS in the large list element ("dataFiles3")
+reannotated.dataFiles3.df<-bind_rows(reannotated.dataFiles3,.id="locusID") #The .id option names the first column ("locusID") after the names of the list elements
+#Another possibility: df_combined<-rbindlist(dataFiles3,idcol = T, fill=TRUE)
+
+# Make large dataframe (reannotated.gffs.df) from gff list elements (reannotated.gffs)
+reannotated.gffs.df<-bind_rows(reannotated.gffs,.id="locusID") 
+
+# Combine the two large dataframes into one big df (df4) to have all information for the expression + information from dfast
+df.Reannotation<-merge(reannotated.dataFiles3.df,reannotated.gffs.df,
+                       by.x=c("locusID","reannotated.CDS.start","reannotated.CDS.end"),
+                       by.y=c("locusID","X4","X5"),all=T)
+
+df.Reannotation<-df.Reannotation %>%
+  dplyr::relocate("GAGAid","locus.scaffold","locus.position", .before = "reannotated.CDS.start") %>%
+  dplyr::relocate("reannotated.CDS.length", .before = "reannotatedtotalcount")
+
+# Add product from dfast as a column
+df.Reannotation$product<-gsub(".*product=(.*?)\\;.*","\\1",df.Reannotation$X9)
+
+# Add UniProtID from dfast as a column
+df.Reannotation$note<-str_extract(df.Reannotation$X9,"note=.*") 
+df.Reannotation$UniProtID<-str_extract(df.Reannotation$note,"UniRef90_.*? ")
+df.Reannotation$UniProtID<-gsub(".*UniRef90_","",df.Reannotation$UniProtID)
+
+# Combine this dataframe later with the LGT.CDS.level dataframe
+head(df.Reannotation)
+```
+From dfast, `r length(reannotated.gffs)` gff files were loaded. In total, `r length(df.Reannotation)` CDS sequences were predicted in all LGT candidates.
+
+## Add start and stop codons for every CDS.
+This can be used to filter for candidates which contain a correct Start and a correct Stop Codon.

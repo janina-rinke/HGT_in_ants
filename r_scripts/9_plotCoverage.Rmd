@@ -47,7 +47,7 @@ plotCoverage <- function(bamfile, dfast.gff, lgt.bed, outfolder, id, expand) {
     theme(legend.position = "none",
           panel.spacing  = unit(c(0, 0, 0, 0), "cm")) +
     coord_cartesian(xlim = c(start(plottingRange), end(plottingRange))) +
-    scale_color_manual(values = c("yellow2", "grey80")) +
+    scale_color_manual(values = c("turquoise4", "grey80")) +
     ylab(NULL) +
     xlab(paste(id," ",gffLGT@seqnames,":",start(gffLGT),"-",end(gffLGT),sep = "")) +
     scale_x_continuous(expand = c(0, 0))
@@ -57,8 +57,8 @@ plotCoverage <- function(bamfile, dfast.gff, lgt.bed, outfolder, id, expand) {
     ggplot(RNAseq) + geom_bar(
       stat = "identity",
       aes(x = start, y = coverage),
-      fill = "yellow4",
-      col = "yellow4",
+      fill = "skyblue4",
+      col = "skyblue4",
       width = 1.1
     ) +
     coord_cartesian(xlim = c(start(plottingRange), end(plottingRange))) +
@@ -87,7 +87,7 @@ plotCoverage <- function(bamfile, dfast.gff, lgt.bed, outfolder, id, expand) {
 
   #print plot and save
   p.full
-  ggsave(paste(outfolder,id,"-",gffLGT@seqnames,"-",start(gffLGT),"-",end(gffLGT),".coverage.pdf",sep=""),width=8,height=4)
+  ggsave(paste(outfolder,id,"-",gffLGT@seqnames,"-",start(gffLGT),"-",end(gffLGT),".uniqueReads.coverage.pdf",sep=""),width=8,height=4)
 }
 ```
 
@@ -110,7 +110,6 @@ dfasts<-c(LGT_df$gff)
 beds<-c(LGT_df$bed)
 ```
 
-
 ```{r}
 #loop over all entries in id, bamfiles, dfasts, and beds to create one pdf per lgt candidate region
 for (i in 1:length(LGT_df$id)){
@@ -124,4 +123,54 @@ plotCoverage(
 )
 }
 ```
+
+## Plot the unique read counts of the reannotated LGT candidates
+```{r}
+Unique_reannotated_LGTs<-read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/Tables/LGT_filenames_reannotated.csv")
+
+# Vector for the ids
+ids<-c(Unique_reannotated_LGTs$id)
+# Vector for the bam files
+bamfiles<-c(Unique_reannotated_LGTs$bam)
+# Vector for the dfast gff files
+dfasts<-c(Unique_reannotated_LGTs$gff)
+# Vector for the bed files
+beds<-c(Unique_reannotated_LGTs$bed)
+
+for (i in 1:length(Unique_reannotated_LGTs$id)){
+plotCoverage(
+  id=Unique_reannotated_LGTs$id[i],
+  bamfile=Unique_reannotated_LGTs$bam[i],
+  dfast.gff=Unique_reannotated_LGTs$gff[i],
+  lgt.bed=Unique_reannotated_LGTs$bed[i],
+  outfolder="/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/RNAseq_plots/UniqueReads_reannotated/",
+  expand=200  #how far should the plot expanded around the LGT
+)
+}
+```
+
+```{r debugging}
+ids<-c("GAGA-0099")
+bamfiles<-c("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping/GAGA-0099/GAGA-0099.Scaffold15.2285014-2297549.1000.out/uniquely_mapped.LGTregion.sorted.bam")
+dfasts<-c("/Users/Janina/sciebo/Master.LGTs/reannotation.dfast/GAGA-0099.Scaffold15.2285014-2297549.1000.out/genome_reannotate_mod_intersect_modified.gff")
+beds<-c("/Users/Janina/sciebo/Master.LGTs/dfast/GAGA-0099.Scaffold15.2285014-2297549.fa/genome.gff.bed")
+
+# Debug code from function
+bam1<-readGAlignments("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping/GAGA-0099/GAGA-0099.Scaffold15.2285014-2297549.1000.out/uniquely_mapped.LGTregion.sorted.bam")      #load bam file
+gffCDS<-readGFFAsGRanges("/Users/Janina/sciebo/Master.LGTs/reannotation.dfast/GAGA-0099.Scaffold15.2285014-2297549.1000.out/genome_reannotate_mod_intersect.gff") #load dfast annotation
+gffLGT<-toGRanges("/Users/Janina/sciebo/Master.LGTs/dfast/GAGA-0099.Scaffold15.2285014-2297549.fa/genome.gff.bed")  
+
+for (i in 1:length(ids)){
+plotCoverage(
+  id=ids[i],
+  bamfile=bamfiles[i],
+  dfast.gff=dfasts[i],
+  lgt.bed=beds[i],
+  outfolder="/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/RNAseq_plots/UniqueReads_reannotated/",
+  expand=100  #how far should the plot expanded around the LGT
+)
+}
+```
+
+
 

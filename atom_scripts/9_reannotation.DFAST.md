@@ -150,3 +150,87 @@ GAGA-0579.Scaffold13.389277-389689.1000.out/genome_reannotate_mod_intersect.gff
 OUT-0001.CM020815.1.6441834-6442103.1000.out/genome_reannotate_mod_intersect.gff
 OUT-0002.Scaffold14.831336-831605.1000.out/genome_reannotate_mod_intersect.gff
 ```
+The whole folder `reannotate.dfast` was used to run the RNAseq mapping again. The reannotated RNAseqmapping folder is called  `run_final_keepingbam_pergagaid_latest` and can be found here:
+```bash
+/Users/Janina/sciebo/Master.LGTs/reannotation.dfast/run_final_keepingbam_pergagaid_latest
+```
+
+# Re-Run commands to update summary table
+
+## 1) Re-calculate start and stop codons from the dfast reannotation.
+
+The first codon (`start codon`) should usually be ATG (theoretically: GTG or rarely TTG, see https://en.wikipedia.org/wiki/Start_codon).
+The last codon (`stop-codon`) should be TAA , TAG , or TGA.
+
+Filepath:
+```bash
+/Users/Janina/sciebo/Master.LGTs/reannotation.dfast
+```
+
+```bash
+seqkit fx2tab cds.fna |awk -F '\t' '{print $1,substr($2,1,3),substr($2,length($2)-2,length($2))}'
+```
+
+For all candidates:
+```bash
+for i in * ; do seqkit fx2tab $i/cds.fna |awk -F '\t' '{print $1,substr($2,1,3),substr($2,length($2)-2,length($2))}' > $i.start.stop.codons.tsv ; done
+
+#prints out the file directory names as lines, does not work with MacOS
+printf "%s\n" *.start.stop.codons.tsv | xargs -n1 -d $'\n' bash -c 'xargs -n1 -d $'\''\n'\'' printf "%s,%s\n" "$1" <"$1"' -- > all.reannotated.start.stop.codons.tsv
+
+#printf: used for format and print data, %s presents a string place holder for the space separated string that follows and \n represents a line feed. In this case, "%s" will then be substituted for the input of *.start.stop.codons.tsv followed by a line feed.
+```
+
+Output of the file `all.reannotated.start.stop.codons.tsv`:
+```bash
+GAGA-0020.Scaffold17.156258-159230.fa	MGA_1 LOCUS_10 Ankyrin_repeat_protein ATG TAA
+GAGA-0020.Scaffold17.156258-159230.fa	MGA_2 LOCUS_20 hypothetical_protein ATG TGT
+GAGA-0020.Scaffold267.55721-56766.fa	MGA_1 LOCUS_10 hypothetical_protein ATG TAA
+GAGA-0020.Scaffold31.542876-547130.fa	MGA_1 LOCUS_10 hypothetical_protein ATG GTG
+GAGA-0020.Scaffold31.613867-616833.fa	MGA_1 LOCUS_10 Ankyrin_repeat_protein GAA CCT
+GAGA-0020.Scaffold31.648280-651311.fa	MGA_1 LOCUS_10 hypothetical_protein ATG TGA
+GAGA-0020.Scaffold31.648280-651311.fa	MGA_2 LOCUS_20 hypothetical_protein ATG TAA
+```
+
+## 2) Merge all reannotated bam files and extract unique read counts
+Path where all reannotatedRNAseqbamfiles can be found:
+```bash
+/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping/GAGA_genome/locus
+```
+
+Merge all reannotatedRNAseqbamfiles:
+```bash
+cd /Users/Janina/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping
+for i in */*.1000.out; do samtools merge  $i/mergedRNAseq.bam $i/*LGTregion.bam; done
+```
+
+Check if any files are empty:
+```bash
+find */*/mergedRNAseq.bam -empty
+```
+No file appears here, so all candidates do have a `mergedRNAseq.bam` file.
+
+Extract only the unique read counts out of every `mergedRNAseq.bam` file. `Sambamba` works on Linux Computers only.
+```bash
+# For one candidate only:
+sambamba view -h -F [NH]==1 mergedRNAseq.bam > uniquely_mapped.LGTregion.bam
+
+# For all candidates:
+cd /home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping
+
+for i in */*; do sambamba view -h -F [NH]==1 $i/mergedRNAseq.bam > $i/uniquely_mapped.LGTregion.bam; done
+# -F: filter
+# -h: header
+```
+
+To check if all read counts have been extracted correctly, go to any directory of your choice and compare the `mergedRNAseq.bam` file and `uniquely_mapped.LGTregion.bam`:
+```bash
+samtools view mergedRNAseq.bam | awk '{print $1}' | sort | uniq | wc -l
+
+samtools view uniquely_mapped.LGTregion.bam | awk '{print $1}' | sort | uniq | wc -l
+```
+
+The `uniquely_mapped.LGTregion.bam` file still needs to be sorted, otherwise the file cannot be read in R and it cannot be indexed.
+```bash
+for i in */*; do samtools sort -o $i/uniquely_mapped.LGTregion.sorted.bam $i/uniquely_mapped.LGTregion.bam; done
+```

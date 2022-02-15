@@ -1,32 +1,62 @@
 ---
-title: 'R Notebook: Analyse LGT candidates'
-output:
+title: "LGT filtering of predicted candidates"
+author: "Janina Rinke"
+output: 
   html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+    collapsed: true
+    number_sections: true
     df_print: paged
+  pdf_document: default
+---
+<STYLE TYPE="text/css">
+<!--
+  td{
+    font-family: Arial;
+    font-size: 8pt;
+    padding:0px;
+    cellpadding="0";
+    cellspacing="0"
+  }
+  th {
+    font-family: Arial;
+    font-size: 8pt;
+    height: 20px;
+    font-weight: bold;
+    text-align: right;
+    background-color: #ccccff;
+  }
+  table {
+    border-spacing: 0px;
+    border-collapse: collapse;
+  }
+--->
+</STYLE>
 ---
 
+```{r global-options, include=FALSE}
+# Define the global chunk options
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
 
-## TODO
-- group by start/end - done -
-- plot by large candidate -done -
-- include noAnt - done -
-- set thresholds for evaluation of candidates - done -
-- Include read counts for stLFR assembled genomes
 
 ```{r}
 library(ggplot2)
 library(data.table)
 library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(stringr)
 ```
 
 # Load all good candidates for all GAGA species (1st filter: Take only good candidates from both databases)
 
 Load all tsv files for the different GAGA ids in a list of data frames.
 ```{r}
-#tsv2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
-#tsv2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/*.*.lgt.good.candidates.tsv"
-tsv2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.*.lgt.good.candidates.tsv"
-dataFiles <- lapply(Sys.glob(tsv2load), read.delim2,sep="\t")
+tsv2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.*.lgt.good.candidates.tsv"       # provides the path to all files matching the pattern
+dataFiles <- lapply(Sys.glob(tsv2load), read.delim2,sep="\t")                                       # creates a large list out of all files
 ```
 
 # add the name
@@ -34,22 +64,22 @@ Add the GAGA id as a name to the different list elements.
 Add the database origin as a name to the different list elements.
 Set the GAGA-id and database origin separated with a "." as a name for each element of the list "dataFiles".
 Each element in the list is one genome, either from the noAnt or the eukaryotic database including the candidates.
-```{r}
-ids<-gsub(".*/(.+-[0-9]+)\\..+.lgt.good.candidates.tsv","\\1",Sys.glob(tsv2load))
-type<-gsub(".*/(.+-[0-9]+)\\.(.+).lgt.good.candidates.tsv","\\2",Sys.glob(tsv2load))
-names(dataFiles)<-paste(ids,type,sep=".")
+```{r large list LGT candidates}
+ids<-gsub(".*/(.+-[0-9]+)\\..+.lgt.good.candidates.tsv","\\1",Sys.glob(tsv2load))           # create a column "ids" out of the file names 
+type<-gsub(".*/(.+-[0-9]+)\\.(.+).lgt.good.candidates.tsv","\\2",Sys.glob(tsv2load))        # create a column "type" out of the file names (either euk or noAnt)
+names(dataFiles)<-paste(ids,type,sep=".")                                                   # Give each element in the large list a name e.g. GAGA-0515.euk
 ```
-
+The list "dataFiles" contains `r length(dataFiles)` elements from 163 genomes with LGT candidates predicted either by a euk database or a noAnt database. Each genome can have one noAnt candidate table and one euk candidate table, which means out of possible 326 (163 genomes x 2 database predictions) elements, only 7 elements were missing from the genomes and almost all GAGA genomes had both database LGT prediction tables.
 
 # Combine all GAGA ids
 Combine tsv files from all GAGA ids in the large list element ("dataFiles") to one big data frame ("df").
-```{r}
-
+```{r make large dataframe}
 df<-rbindlist(dataFiles,idcol = T, fill=TRUE) #the fill=TRUE option fills missing columns
 ```
-
-The unfiltered df containes 13664 candidates from all 162 selected genomes together.
+The unfiltered df containes `r length(df)` candidates from all 162 selected genomes together.
 Each row in the dataframe represents one candidate.
+
+
 ```{r}
 head(df)
 ```
@@ -516,4 +546,103 @@ p1
 #ggsave("LGT_filtering.png", path = "/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced")
 ```
 
-Last changed 2021/10/29
+
+# Plot the number of predicted candidates vs number of high-quality remaining candidates (497 LGTs) separated by species
+```{r plot candidates}
+# Count the number of unfiltered predicted candidates per genome
+df_count<-df %>%
+  separate(.id, sep="\\.", c(".id","database")) %>%
+  dplyr::select(.id, cand.locus, cand.scaffold, cand.start, cand.end) %>%
+  group_by(.id) %>% tally() %>%
+  dplyr::rename(total_LGT_count=n)
+
+# Count the number of remaining high-quality LGT candidates and add them to the df_count dataframe 
+library(readxl)
+library(writexl)
+HQ_LGTs<-read_xlsx("/home/j/j_rink02/Downloads/LGTs.LocusLevel.Expression.xlsx")
+
+df2<-HQ_LGTs %>%
+  group_by(.id, species, subfamily) %>% tally() %>%
+  dplyr::rename(high_quality_LGT_count=n)
+
+
+# Merge the two dataframes
+df.new<-merge(df_count, df2,by.x=c(".id"),by.y=c(".id"),all.x=T,all.y=T) %>%
+  mutate_all(~replace(., is.na(.), 0)) %>%
+  dplyr::relocate("total_LGT_count",.before= "high_quality_LGT_count")
+
+df.new$total_LGT_count<-as.numeric(df.new$total_LGT_count)
+df.new$high_quality_LGT_count<-as.numeric(df.new$high_quality_LGT_count)
+head(df.new)
+
+df.new$outfiltered_candidates<-(df.new$total_LGT_count - df.new$high_quality_LGT_count)
+
+# Save the dataframe to fill in missing species names 
+write_xlsx(df.new,"/home/j/j_rink02/Documents/Numbers_of_LGT_candidates_per_species.xlsx")
+
+# Reload the table
+LGT_candidates<-read_xlsx("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/Numbers_of_LGT_candidates_per_species.xlsx")
+
+# Make stacked bar plot to compare the number of good candidates vs number of predicted candidates
+p<-LGT_candidates %>% 
+   select(-total_LGT_count) %>% 
+   gather(type, count, high_quality_LGT_count:outfiltered_candidates) %>% 
+   ggplot(., aes(x=species, y=count, fill=forcats::fct_rev(type))) +
+   geom_bar(stat="identity") +
+   coord_flip() +
+   ylab("Number of candidates") +
+   xlab("Species") +
+   theme_classic() +
+   labs(fill="Candidates") +
+   scale_fill_manual(values=c("lightblue", "darkblue")) +
+   scale_y_continuous(breaks=seq(0, 1400, 200)) 
+p
+
+LGT_candidates$subfamily<-as.factor(LGT_candidates$subfamily)
+
+library(scales)
+numColors <- length(levels(LGT_candidates$subfamily)) # How many colors you need (12 colors)
+getColors <- scales::brewer_pal('qual') # Create a function that takes a number and returns a qualitative palette of that length (from the scales package)
+myPalette <- getColors(numColors)
+names(myPalette) <- levels(LGT_candidates$subfamily) # Give every color an appropriate name
+
+p1 <- p + theme(axis.text.y = element_text(colour=myPalette[LGT_candidates$subfamily]))
+p1
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/Candidates_good_vs_outfiltered.pdf",p1,width=8,height=15)
+
+
+# Make a bar plot to show the number of automatically predicted candidates per species
+head(LGT_candidates)
+
+LGT2<- LGT_candidates %>%
+  ungroup() %>%
+  arrange(subfamily,total_LGT_count) %>%
+    mutate(species = fct_inorder(species) )
+
+
+p0<-ggplot(LGT2, aes(x = species, y = total_LGT_count, 
+             group = subfamily, 
+             fill = subfamily)) +
+  geom_col(col=1,size=.2,position = position_stack()) +
+  coord_flip() +
+  scale_fill_viridis_d("subfamily") +
+  ylab("Number of predicted candidates") +
+  xlab("Species") +
+  scale_y_continuous(breaks=seq(0,1500,200))+
+  theme_classic() +
+  theme(legend.position = "bottom",axis.text.y=element_text(size=6.5))+
+  geom_point(aes(col=high_quality_LGT_count != 0),size=2) +
+  scale_color_manual(name=NULL, labels=c("Genome with high-quality LGT"),values="black", na.translate=F)+
+  guides(fill = guide_legend(override.aes = list(shape = NA),ncol = 4, title.position = "top",title = "Subfamily", reverse=TRUE))+
+  theme(axis.text.y = element_text(face = "italic"))+
+  theme(legend.title.align=0.5)
+p0
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/Nr_predicted_candidates.pdf",p0,width=10,height=15)
+``` 
+
+
+Last changed 2022/02/07
+
+

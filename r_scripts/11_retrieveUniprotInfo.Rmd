@@ -296,3 +296,106 @@ p3<-ggplot(pt6, aes(fill=Uniprot_tax_order, y=Nr_of_LGTs, x=.id)) +
   theme_classic()
 p3
 ```
+
+
+#### Analysis: Plot q_cov vs s_cov to check for protein completeness and patterns
+```{r}
+library(readxl)
+df_analysis<-read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.tsv", sep="\t")
+
+df_analysis$CDS.q_covs<-as.numeric(df_analysis$CDS.q_covs)
+df_analysis$CDS.s_covs<-as.numeric(df_analysis$CDS.s_covs)
+df_analysis$CDS.pids<-as.numeric(df_analysis$CDS.pids)
+df_analysis$Protein.names<-as.factor(df_analysis$Protein.names)
+
+# Cluster the protein names a bit more to get less categories as fill points
+df_analysis$Protein.names<-gsub("(.*?)\\(EC.*","\\1",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub("Cyclopropane.*",
+                                  "Cyclopropane fatty acyl phospholipid synthase",df_analysis$Protein.names) 
+df_analysis$Protein.names<-gsub("50S ribosomal protein.*",
+                                  "50S ribosomal protein",df_analysis$Protein.names) 
+df_analysis$Protein.names<-gsub("Chaperone protein.*",
+                                  "Chaperone protein",df_analysis$Protein.names) 
+df_analysis$Protein.names<-gsub("DNA mismatch repair protein.*",
+                                  "DNA mismatch repair protein",df_analysis$Protein.names) 
+df_analysis$Protein.names<-gsub("NADH.*",
+                                  "NADH-quinone oxidoreductase",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub("Protein translocase.*",
+                                  "Protein translocase",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub("Sodium.*",
+                                  "Sodium/alanine symporter family protein",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub("Transcription.*",
+                                  "Transcription factor",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub(".*Phage.*",
+                                  "Phage protein",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub(".*haperon.*",
+                                  "Chaperone",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub("Inactivated homolog of predicted Zn-dependent protease.*",
+                                  "Inactivated homolog of predicted Zn-dependent protease",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub(".*repair protein.*",
+                                  "DNA repair protein",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub(".*Minor capsid protein.*",
+                                  "Minor capsid protein",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub(".*Lyzozyme.*",
+                                  "Lysozyme",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub("DUF1016.*",
+                                  "Lysozyme",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub(".*[t|T]ransposase.*",
+                                  "TE",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub("Protein.*",
+                                  "Unclassified protein",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub("Ankyrin.*",
+                                  "Ankyrin repeat protein",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub("DNA.*",
+                                  "DNA-related protein",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub("Helix-turn-helix transcriptional regulator",
+                                  "TE",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub(".*reverse transcriptase.*",
+                                  "TE",df_analysis$Protein.names)
+df_analysis$Protein.names<-gsub("Uncharacterized.*",
+                                  "Uncharacterized protein",df_analysis$Protein.names)
+
+df_analysis<- df_analysis %>%
+  dplyr::filter(Protein.names!="Uncharacterized protein" & Protein.names!="Unclassified protein" & Protein.names!="Deleted.") %>%
+  filter(Protein.names!="Uncharacterized protein.*")
+
+df_analysis<- df_analysis %>%
+  dplyr::filter(CDS.s_covs > 60) %>%
+  dplyr::filter(CDS.q_covs > 80) %>%
+  dplyr::filter(Protein.names != "Ankyrin repeat protein")
+```
+
+
+```{r}
+p <- ggplot(df_analysis, aes(CDS.q_covs, CDS.s_covs))+ 
+  geom_point(aes(color=Protein.names, size= 5), size=6)+
+    scale_color_viridis(discrete = TRUE, option = "C")+
+  scale_fill_viridis(discrete = TRUE) +
+  theme_bw()+
+  theme(legend.position = "bottom",axis.text.y=element_text(size=7))+
+  ylab("Subject coverage") +
+  xlab("Query coverage")
+p
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/q_cov_vs_s_cov.pdf", p, width=20, height=10)
+```
+It does not make much sense to plot q_cov against s_cov, as q_cov is almost aways > 90 %. 
+Thus we will try to plot s_cov with pid.
+
+```{r}
+df_analysis<- df_analysis %>%
+  dplyr::filter(CDS.s_covs > 60) %>%
+  dplyr::filter(CDS.pids > 60) %>%
+  dplyr::filter(Protein.names != "Ankyrin repeat protein")
+
+p0.1 <- ggplot(df_analysis, aes(CDS.s_covs, CDS.pids))+ 
+  geom_point(aes(color=Protein.names, size= 5), size=6)+
+  theme_bw()+
+  theme(legend.position = "bottom",axis.text.y=element_text(size=7))+
+  ylab("Subject coverage") +
+  xlab("Pids")
+p0.1
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/s_cov_vs_pid.pdf", p0.1, width=20, height=10)
+
+```
