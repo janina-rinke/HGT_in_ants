@@ -216,7 +216,7 @@ This can be used to filter for candidates which contain a correct Start and a co
 df4$CDSid<-gsub("ID=(.*?)\\;.*","\\1",df4$X9)
 
 # Upload the file including the codons and change it to merge it accordingly
-CodonsDF<-read.csv("/Users/Janina/sciebo/Master.LGTs/all.start.stop.codons2.tsv", sep="\t", header=F)
+CodonsDF<-read.csv("/Users/Janina/sciebo/Master.LGTs/all.start.stop.codons.tsv", sep=";", header=F)
 CodonsDF$locusID<-gsub("(.*?)\\.fa","\\1",CodonsDF$V1) #make column locusID to group on
 CodonsDF$CDSid<-gsub("(.*?) .*","\\1",CodonsDF$V2) #make column CDSid to group on
 
@@ -232,7 +232,7 @@ For every LGT candidate region, CDS starts, CDS ends and CDS total counts will b
 # For a single file
 df.final<-df.new %>%  
   dplyr::group_by(.id, locus.scaffold, locus.position) %>% 
-  dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";"),CDS.UniProtIDs = paste0(UniProtID, collapse = ";"),dfast.donor = paste0(dfastBacteriapredicted, collapse = ";")) 
+  dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.lengths = paste0(CDS.length, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";"),CDS.UniProtIDs = paste0(UniProtID, collapse = ";"),dfast.donor = paste0(dfastBacteriapredicted, collapse = ";")) 
 
 # To extract pid, q_cov_s_cov
 #gsub(".*?\\[(.*?)\\].*","\\1",df4$X9)
@@ -264,7 +264,7 @@ df5$totalcount<-as.numeric(df5$totalcount)
 # For all files
 df6<-df5 %>%  
   dplyr::group_by(locusID, GAGAid,locus.scaffold, locus.position) %>% 
-  dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";"),CDS.UniprotIDs = paste0(UniProtID, collapse = ";"),CDS.cogs = paste0(cog, collapse = ";"),CDS.tigrs = paste0(tigr, collapse = ";"),CDS.pids = paste0(pid, collapse = ";"),CDS.q_covs = paste0(q_cov, collapse = ";"),CDS.s_covs = paste0(s_cov, collapse = ";"),CDS.Eval = paste0(Eval, collapse = ";"),CDS.startCodons = paste0(startCodon, collapse = ";"),CDS.stopCodons = paste0(stopCodon, collapse = ";")) 
+  dplyr::summarize(CDS.starts = paste0(CDS.start, collapse = ";"),CDS.ends = paste0(CDS.end, collapse = ";"),CDS.lengths = paste0(CDS.length, collapse = ";"),CDS.totalcounts = paste0(totalcount, collapse = ";"),CDS.products = paste0(product, collapse = ";"),CDS.UniprotIDs = paste0(UniProtID, collapse = ";"),CDS.cogs = paste0(cog, collapse = ";"),CDS.tigrs = paste0(tigr, collapse = ";"),CDS.pids = paste0(pid, collapse = ";"),CDS.q_covs = paste0(q_cov, collapse = ";"),CDS.s_covs = paste0(s_cov, collapse = ";"),CDS.Eval = paste0(Eval, collapse = ";"),CDS.startCodons = paste0(startCodon, collapse = ";"),CDS.stopCodons = paste0(stopCodon, collapse = ";")) 
 
 # Some candidates did not have a RNAseq summary file, therefore the GAGAid and locus.position is missing here. Here, the information for GAGAid and locus.position need to be added again.
 df6 <- df6 %>%
@@ -291,8 +291,6 @@ head(LGTs)
 LGTs$locus.position<-str_extract(LGTs$cand.locus,":.*") 
 LGTs$locus.position<-gsub(":","",LGTs$locus.position)
 
-# Change scaffold in 22 genomes with XY.1.XY to XY_1_XY to group based on scaffold
-
 LGTs.locuslevel.df<-merge(LGTs,df6,by.x=c(".id","locus.position"),by.y=c("GAGAid","locus.position"),all=T)
 
 LGTs.final.df<-LGTs.locuslevel.df %>%
@@ -304,17 +302,16 @@ LGTs.final.df<-LGTs.locuslevel.df %>%
 #write_xlsx(LGTs.final.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.xlsx")
 
 ### To extract the CDS-level dataframe
-CDS.final.df<-separate_rows(LGTs.final.df, "CDS.starts", "CDS.ends", "CDS.totalcounts", "CDS.products", "CDS.UniprotIDs", "CDS.cogs", "CDS.tigrs", "CDS.pids", "CDS.q_covs", "CDS.s_covs", "CDS.Eval", "CDS.startCodons","CDS.stopCodons",sep= ";")
+CDS.final.df<-separate_rows(LGTs.final.df, "CDS.starts", "CDS.ends", "CDS.lengths", "CDS.totalcounts", "CDS.products", "CDS.UniprotIDs", "CDS.cogs", "CDS.tigrs", "CDS.pids", "CDS.q_covs", "CDS.s_covs", "CDS.Eval", "CDS.startCodons","CDS.stopCodons",sep= ";")
 
 # Save the CDS level table including expression and dfast results 
-#write_xlsx(CDS.final.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.xlsx")
+write_xlsx(CDS.final.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.xlsx")
 ```
 `r nrow(CDS.final.df)` CDS sequences were predicted for the 497 candidates in total.
 
 
 ## Completeness check: Summary and analysis of candidates
 ```{r summary}
-
 # Filter LGT candidates where all CDS are expressed (read cut-off: < 10)
 dfExpression<-LGTs.final.df %>%
   dplyr::filter(CDS.totalcounts > 10 & CDS.totalcounts != "NA")
@@ -427,23 +424,6 @@ G515.expression
 #write.table(G515.expression,"/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/G515.expression.tsv",sep="\t",quote = F,row.names = F)
 ```
 
-
-## Add the information from the dfast reannotation to the table
-```{r add reannotation columns}
-# Add reannotated start and stop codons
-# Use df4 to extract the ids matching ids in the start.stop.codons.table (MGA1; MGA2)
-df4$CDSid<-gsub("ID=(.*?)\\;.*","\\1",df4$X9)
-
-# Upload the file including the codons and change it to merge it accordingly
-CodonsDF<-read.csv("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/all.reannotated.start.stop.codons.tsv", sep=";", header=F)
-CodonsDF$locusID<-gsub("(.*?)\\.1000.out.start.stop.codons.tsv","\\1",CodonsDF$V1) #make column locusID to group on
-CodonsDF$CDSid<-gsub("(.*?) .*","\\1",CodonsDF$V2) #make column CDSid to group on
-
-CodonsDF$reannotatedstartCodon<-word(CodonsDF$V2,4)
-CodonsDF$reannotatedstopCodon<-word(CodonsDF$V2,5)
-
-df4<-merge(df4,CodonsDF,by.x=c("locusID","CDSid"),by.y=c("locusID","CDSid"),all=T)
-```
 
 # Add reannotation data 
 ## Extract expression from reannotated RNAseq mapping files
@@ -586,5 +566,104 @@ head(df.Reannotation)
 ```
 From dfast, `r length(reannotated.gffs)` gff files were loaded. In total, `r length(df.Reannotation)` CDS sequences were predicted in all LGT candidates.
 
-## Add start and stop codons for every CDS.
-This can be used to filter for candidates which contain a correct Start and a correct Stop Codon.
+## Add start and stop codons for every reannotated CDS.
+```{r add reannotated start and stop codons}
+# Use df4 to extract the ids matching ids in the start.stop.codons.table (MGA1; MGA2)
+df.Reannotation$CDSid<-gsub("ID=(.*?)\\;.*","\\1",df.Reannotation$X9)
+
+# Upload the file including the codons and change it to merge it accordingly
+reannotatedCodonsDF<-read.csv("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/all.reannotated.start.stop.codons.tsv", sep=";", header=F)
+reannotatedCodonsDF$locusID<-gsub("(.*?)\\.1000.out.*","\\1",reannotatedCodonsDF$V1) #make column locusID to group on
+reannotatedCodonsDF$CDSid<-gsub("(.*?) .*","\\1",reannotatedCodonsDF$V2) #make column CDSid to group on
+
+reannotatedCodonsDF$reannotated.startCodon<-word(reannotatedCodonsDF$V2,4)
+reannotatedCodonsDF$reannotated.stopCodon<-word(reannotatedCodonsDF$V2,5)
+
+df.Reannotation<-merge(df.Reannotation,reannotatedCodonsDF,
+                       by.x=c("locusID","CDSid"),by.y=c("locusID","CDSid"),all.x=T)
+```
+
+## Merge old and reannotated dataframes
+Extract more information for the reannotated CDS-level table (df.Reannotation) and collapse the df.Reannotation to merge it with the old locus-level table (LGTs.final.df). 
+After that, merge the old CDS-level table and the new CDS level table.
+```{r summary reannotated CDS level}
+# Extract some more information from the reannotation
+df.re5<-df.Reannotation
+df.re5$cog<-str_extract(df.Reannotation$note,"COG:.*") 
+df.re5$tigr<-str_extract(df.Reannotation$note,"TIGR:.*") 
+df.re5$values<-gsub(".*?\\[(.*?)\\].*","\\1",df.Reannotation$X9)
+
+df.re5$reannotated.pid<-str_extract(df.re5$values,"pid:.*? ") 
+df.re5$reannotated.pid<-gsub(".*pid:","",df.re5$reannotated.pid)
+df.re5$reannotated.pid<-gsub("%.*","",df.re5$reannotated.pid)
+
+df.re5$reannotated.q_cov<-str_extract(df.re5$values,"q_cov:.*?%") 
+df.re5$reannotated.q_cov<-gsub(".*q_cov:","",df.re5$reannotated.q_cov) 
+df.re5$reannotated.q_cov<-gsub("%","",df.re5$reannotated.q_cov) 
+
+df.re5$reannotated.s_cov<-str_extract(df.re5$values,"s_cov:.*?%") 
+df.re5$reannotated.s_cov<-gsub(".*s_cov:","",df.re5$reannotated.s_cov) 
+df.re5$reannotated.s_cov<-gsub("%","",df.re5$reannotated.s_cov) 
+
+df.re5$reannotated.Eval<-str_extract(df.re5$values,"Eval:.*?%") 
+df.re5$reannotated.Eval<-gsub(".*Eval:","",df.re5$reannotated.Eval) 
+df.re5$reannotated.Eval<-gsub("%","",df.re5$reannotated.Eval) 
+
+df.re5$reannotatedtotalcount<-as.numeric(df.re5$reannotatedtotalcount)
+
+# Delete additional CDS sequences 
+df.re5<- df.re5 %>%
+  filter(reannotated.CDS.start !='7783431')
+
+# For all files
+df.re6<-df.re5 %>%  
+  dplyr::group_by(locusID, GAGAid,locus.scaffold, locus.position) %>% 
+  dplyr::summarize(Reannotated.CDS.starts = paste0(reannotated.CDS.start, collapse = ";"),Reannotated.CDS.ends = paste0(reannotated.CDS.end, collapse = ";"),Reannotated.CDS.lengths = paste0(reannotated.CDS.length, collapse = ";"),Reannotated.CDS.totalcounts = paste0(reannotatedtotalcount, collapse = ";"),Reannotated.CDS.pids = paste0(reannotated.pid, collapse = ";"),Reannotated.q_covs = paste0(reannotated.q_cov, collapse = ";"),Reannotated.s_covs = paste0(reannotated.s_cov, collapse = ";"),Reannotated.Eval = paste0(reannotated.Eval, collapse = ";"),Reannotated.startCodon = paste0(reannotated.startCodon, collapse = ";"),Reannotated.stopCodon = paste0(reannotated.stopCodon, collapse = ";")) 
+
+# Some candidates did not have a RNAseq summary file, therefore the GAGAid and locus.position is missing here. Here, the information for GAGAid and locus.position need to be added again.
+df.re6 <- df.re6 %>%
+  dplyr::mutate(GAGAid = ifelse(is.na(GAGAid), locusID, GAGAid)) %>%
+  dplyr::mutate(locus.scaffold = ifelse(is.na(locus.scaffold), locusID, locus.scaffold)) %>%
+  dplyr::mutate(locus.position = ifelse(is.na(locus.position), locusID, locus.position))
+
+df.re6$GAGAid<-gsub("(.*?)\\..*","\\1",df.re6$GAGAid) 
+df.re6$locus.scaffold<-gsub(".*\\.(.*?)\\..*","\\1",df.re6$locus.scaffold) 
+df.re6$locus.position<-gsub(".*\\.(.*?)\\.*","\\1",df.re6$locus.position) 
+
+```
+
+### Merge LGTs.final.df (locus-level) with Reannotated locus-level dataframe
+```{r merge locus-level df with reannotated locus-level df}
+# Add reannotation to Locus level final df
+Final.Locuslevel.df<-merge(LGTs.final.df,df.re6,by.x=c("locusID",".id","locus.scaffold","locus.position"),by.y=c("locusID","GAGAid","locus.scaffold","locus.position"),all=T)
+
+Final.Locuslevel.df<- Final.Locuslevel.df %>%
+  dplyr::relocate("Reannotated.CDS.starts",.before="CDS.ends") %>%
+  dplyr::relocate("Reannotated.CDS.ends",.after="CDS.ends") %>%
+  dplyr::relocate("Reannotated.CDS.lengths",.after="CDS.lengths") %>%
+  dplyr::relocate("Reannotated.CDS.totalcounts",.after="CDS.totalcounts") %>%
+  dplyr::relocate("Reannotated.CDS.pids",.after="CDS.pids") %>%
+  dplyr::relocate("Reannotated.q_covs",.after="CDS.q_covs") %>%
+  dplyr::relocate("Reannotated.s_covs",.after="CDS.s_covs") %>%
+  dplyr::relocate("Reannotated.startCodon",.after="CDS.startCodons") %>%
+  dplyr::relocate("Reannotated.stopCodon",.after="CDS.stopCodons") %>%
+  dplyr::relocate("Reannotated.Eval",.after="CDS.Eval")
+
+write_xlsx(Final.Locuslevel.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.Reannotation.xlsx")
+```
+
+
+```{r}
+### Add reannotation to CDS level final df
+Final.Locuslevel.df<-read_xlsx("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.Reannotation.xlsx")
+
+Final.CDSlevel.df<-separate_rows(Final.Locuslevel.df, "CDS.starts","Reannotated.CDS.starts","CDS.ends", "Reannotated.CDS.ends","CDS.lengths","Reannotated.CDS.lengths","CDS.totalcounts", "Reannotated.CDS.totalcounts","CDS.products","CDS.UniprotIDs","CDS.cogs","CDS.tigrs","CDS.pids","Reannotated.CDS.pids","CDS.q_covs","Reannotated.q_covs","CDS.s_covs","Reannotated.s_covs","CDS.Eval","Reannotated.Eval","CDS.startCodons","Reannotated.startCodon","CDS.stopCodons","Reannotated.stopCodon",sep= ";") %>%
+  dplyr::mutate(across(where(is.character), ~na_if(., "NA")))
+
+
+head(Final.CDSlevel.df)
+# Save the CDS level table including expression and dfast results 
+write_xlsx(Final.CDSlevel.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.Reannotation.xlsx")
+
+write.table(Final.CDSlevel.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.Reannotation.tsv",sep="\t",quote = F,row.names = F)
+```

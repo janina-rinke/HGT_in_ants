@@ -1,0 +1,95 @@
+---
+  title: "Compare reannotated and previously annotated LGT candidates"
+author: "Janina Rinke"
+output: 
+  html_document:
+  toc: true
+toc_float: true
+toc_depth: 2
+collapsed: true
+number_sections: true
+df_print: paged
+pdf_document: default
+---
+  <STYLE TYPE="text/css">
+  <!--
+  td{
+    font-family: Arial;
+    font-size: 8pt;
+    padding:0px;
+    cellpadding="0";
+    cellspacing="0"
+  }
+th {
+  font-family: Arial;
+  font-size: 8pt;
+  height: 20px;
+  font-weight: bold;
+  text-align: right;
+  background-color: #ccccff;
+}
+table {
+  border-spacing: 0px;
+  border-collapse: collapse;
+}
+--->
+  </STYLE>
+  ---
+  
+```{r global-options, include=FALSE}
+# Define the global chunk options
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r libraries}
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(utils)
+library(tidyr)
+library(viridis)
+library(tidyverse)
+```
+
+```{r load data}
+df.re.final<-read_delim("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.Reannotated.tsv")
+```
+
+# Make different plots
+```{r make plots}
+# Calculate length extension
+df.re.final$CDS.lengths<-as.numeric(df.re.final$CDS.lengths)
+df.re.final$Reannotated.CDS.lengths<-as.numeric(df.re.final$Reannotated.CDS.lengths)
+
+df.re.final2<-df.re.final%>%
+  mutate(length_extension = Reannotated.CDS.lengths - CDS.lengths)
+
+df.re.final2<-df.re.final2 %>%
+  dplyr::filter(!is.na(length_extension))
+
+df.re.final2$length_extension<-as.numeric(df.re.final2$length_extension)
+
+head(df.re.final2)
+
+# Plot the extension of each CDS from the old annotation compared to the reannotation
+p1<-df.re.final2 %>% 
+  ggplot(aes(x = CDS.startCodons, fill=CDS.startCodons)) +
+  geom_bar()
+
+p2<-df.re.final2 %>% 
+  ggplot(aes(x = Reannotated.startCodon, fill=Reannotated.startCodon)) +
+  geom_bar()
+p2
+
+
+p1<-ggplot(df.re.final2, aes(x = 1:nrow(df.re.final2), y = length_extension)) +
+  geom_line(color="darkblue") +
+  theme(axis.text.x=element_blank()) +
+  theme_classic() +
+  ggtitle("Extension of the CDS length from previous to reannotation")
+p1
+
+p1 + labs(x="LGT candidate",y="Length extension")
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/CDS_extension.pdf", p1, width=15, height=10)
+```

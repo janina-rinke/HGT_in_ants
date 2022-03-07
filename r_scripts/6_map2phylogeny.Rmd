@@ -163,7 +163,7 @@ tp3 #plot the tree
 # A.1) LGT data: Include the LGT data in the circular phylogeny
 ```{r}
 library(readxl)
-LGTs<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.xlsx")
+LGTs<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.UniProt.Info.Reannotated.xlsx")
 ```
 
 
@@ -419,4 +419,24 @@ CDS.ankyrins$type<-"ankyrin repeat protein"
 head(CDS.ankyrins)
 ```
 
-Last updated 2022/01/23
+
+
+# A.10) Plot the Lysozymes only 
+```{r plot Lysozymes}
+# tp3 is needed
+head(LGTs)
+Lys<-subset(LGTs,Protein.names=="DUF1016 family protein" | Protein.names=="DUF1016 family protein;NA" | Protein.names=="DUF1016 family protein;NA;NA" | Protein.names=="DUF1016 family protein;NA;NA;NA" | Protein.names=="Lyzozyme M1") %>% group_by(.id) %>% tally()
+colnames(Lys)<-c(".id","protein")
+
+Lys$type<-"Lysozyme"
+head(Lys)
+
+tpLys<-tp3 %<+% Lys
+
+tpLys1<-tpLys+geom_tippoint(aes(size=protein),col="red", alpha=.5)
+tpLys1
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.Lyzozymes.pdf",width = 16,height=24) #save the tree in a pdf
+```
+
+Last updated 2022/02/23
