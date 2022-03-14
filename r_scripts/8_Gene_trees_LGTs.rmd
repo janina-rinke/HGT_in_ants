@@ -86,7 +86,7 @@ library(UniprotR)
 #extract the representativeIDs from the blast hit names
 all_info$representativeIDs<-gsub(".*RepID_(.*?)_.*","\\1",all_info$id)
 
-# query unirprot with the representative IDs.
+# query uniprot with the representative IDs.
 df.representativeIDs<-GetNamesTaxa(all_info$representativeIDs[all_info$type!="LGT"])
 all_info<-merge(all_info,df.representativeIDs,by.x="representativeIDs",by.y="row.names",all.x=T)
 
