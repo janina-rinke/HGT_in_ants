@@ -1,7 +1,7 @@
-# HGT_in_ants
+# HGT in Ants
 This repository stores all the scripts to evaluate LGTs within ant genomes.
 
-**Introduction to the code repositories**
+**Introduction to the Code Repositories**
 
 In here, you can find four different folders storing all the data to analyse horizontal gene transfers from bacteria to ants.
 
