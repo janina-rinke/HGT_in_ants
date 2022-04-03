@@ -1,0 +1,392 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+What you need:
+- genome fasta file
+- gene annotation file as gff
+- LGT locus as e.g. "GAGA-0098.Scaffold31.1152742-1153911"
+- LGT gff annotation
+
+```{bash}
+#collect input
+cd /home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/0_data/genome
+# reference genomes 
+ln -s /home/projects/ku_00039/people/joeviz/GAGA_genomes/Genome_assemblies/GAGA_all_final_assemblies_softmasked/* .
+
+# gene annotations gff and protein fasta
+cd /home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/0_data/gene_annotations/
+ln -s /home/projects/ku_00039/people/joeviz/GAGA_annotations/Final_GAGA_annotations/*/*_final_annotation_repfilt_addreannot_noparpse_representative.gff3 .
+ln -s /home/projects/ku_00039/people/joeviz/GAGA_annotations/Final_GAGA_annotations/*/*_final_annotation_repfilt_addreannot_noparpse_representative.pep.fasta .
+
+# LGT reannotations
+#from  /global/homes/jg/schradel/data/GAGA/candidate_LGTs/reannotation.dfast.results.tar.gz
+
+```
+
+
+```{bash def-prepareData}
+# Here, we define the function prepareData that prepares all the required entries for each locus
+############################################
+# FUNCTION: prepareData
+###########################################
+
+# the function takes 5 variables:
+# $1 = LGT locus as "GAGA-0098.Scaffold31.1152742-1153911"
+# $2 = shift size as "10000" (how much should the LGT region be expanded to check the synteny)
+# $3 = Folder containing ant gene annotations (gff and peptide fasta) as "/home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/0_data/gene_annotations"
+# $4 = lgt Folder containing dfast output folders as ""/home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/0_data/results"
+# $5 = Folder containing genome fastas as "/home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/0_data/genome"
+
+function prepareData {
+  #locus="GAGA-0098.Scaffold31.1152742-1153911"
+  locus=$1
+  tabLoc=$(echo $locus|perl -pe 's/(.*?)\.(.*)\.([0-9]+?)-([0-9]+?)/$1\t$2\t$3\t$4/g')
+  read GAGAid scaffold start stop <<< "$tabLoc"
+  
+  
+  # define size of the extension around LGT locus to use for the annotation
+  shiftSize=$2
+  
+  # this defines the fasta file to use as reference genome
+  genome=$(ls ${genomeFolder}/${GAGAid}*.fasta)
+  
+  # index fasta
+  if [ -f "${genome}.fai" ]; then
+      echo "index exists."
+  else 
+    samtools faidx ${genome}
+  fi
+  
+  # create "genome file" for bedtools
+  if [ -f "${genome}.genome" ]; then
+      echo "genome file exists."
+  else 
+      cut -f 1,2 ${genome}.fai > ${genome}.genome
+  fi
+  
+  
+  ## expand with bedtools slop
+  # create bedfile extended by 5000 bp around the locus
+  echo -e ${scaffold}"\t"${start}"\t"${stop}"\t"${locus} |bedtools slop -b ${shiftSize} -g ${genome}.genome >${outFolder}/${locus}.${shiftSize}.bed
+  
+  # extract fasta
+  bedtools getfasta -bed ${outFolder}/${locus}.${shiftSize}.bed -fi ${genome} -fo ${outFolder}/${locus}.${shiftSize}.fa
+  
+  # rename fasta
+  sed -i "s/>/\>${GAGAid}./g" ${outFolder}/${locus}.${shiftSize}.fa
+  
+  # subset gene annotation gff for corresponding region
+  annotation=$(ls ${annotationFolder}/${GAGAid}*.gff3)
+  
+  bedtools intersect -f 1 -b ${outFolder}/${locus}.${shiftSize}.bed -a ${annotation} > ${outFolder}/${locus}.genes.gff3
+  
+  # shift gff annotations
+  #sumShift=`expr $start - $shiftSize`
+  #bedtools shift -s -$sumShift -i 2_pipeline/${locus}.genes.gff3 -g ${genome}.genome|
+  cat ${outFolder}/${locus}.genes.gff3 | perl -pe 's/^(${scaffold})/'${GAGAid}'.$1/g' |gffread --force-exons - > ${outFolder}/${locus}.shifted.genes.gff3
+  
+  # get LGT annotation
+  lgt=$(readlink -f ${lgtFolder}/${locus}.1000.out/genome_reannotate_mod_intersect.gff)
+  cat $lgt | perl -pe 's/^(${scaffold})/'${GAGAid}'.$1/g'|perl -pe 's/ID=/ID='${GAGAid}'/g' > ${outFolder}/${locus}.lgt.gff3
+  
+  # get protein fasta
+  mkdir -p ${outFolder}/proteins/
+  proteinFasta=$(readlink -f ${annotationFolder}/${GAGAid}*.pep.fasta)
+  ln -s ${proteinFasta} ${outFolder}/proteins/
+}
+```
+
+
+```{bash def-processData}
+############################################
+# FUNCTION: processData
+############################################
+# this function takes one argument
+# $1= out folder containing output of prepareData function above
+function processData {
+  outf=$1
+  # combine all LGT regions in one fasta
+  cat ${outf}/*-*fa   > ${outf}/all.fa
+  samtools faidx ${outf}/all.fa
+  # align genome regions with minimap2
+  minimap2 -X -N 50 -p 0.1 -c ${outf}/all.fa ${outf}/all.fa > ${outf}/all.paf
+  # combine gffs 
+  cat ${outf}/*-*shifted.genes.gff3   >  ${outf}/all.shifted.genes.gff3
+  cat  ${outf}/all.shifted.genes.gff3 |awk -F$'\t' '{OFS=FS}{if ($3=="mRNA" || $3=="transcript") {$3="gene";print $0}}' > ${outf}/all.shifted.genes.only.gff3
+  cat ${outf}/*.lgt.gff3 > ${outf}/all.LGT.gff3
+  #remove genes from the ant annotation overlapping the LGT CDS
+  bedtools intersect -v -b ${outf}/all.LGT.gff3 -a ${outf}/all.shifted.genes.only.gff3 > ${outf}/all.shifted.genes.only.filtered.gff3
+}
+```
+
+```{bash lysozyme}
+
+cd /home/projects/ku_00039/people/luksch/GAGA/LGT_analysis
+targetLGT="lysozyme"
+outFolder="/home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/2_pipeline/${targetLGT}"
+annotationFolder="0_data/gene_annotations"
+lgtFolder="0_data/results"
+genomeFolder="0_data/genome"
+
+
+#rm -rf ${outFolder}/*
+mkdir ${outFolder}/
+# extract LGT region +- 10 kb
+## get LGT region bed files for all candidates
+
+module purge
+module load tools ngs bedtools/2.30.0  minimap2/2.24r1122 samtools/1.14 parallel/20210722 gffread/0.12.4
+
+# prepare data for each LGT to be analyzed
+prepareData "GAGA-0098.Scaffold31.1152742-1153911" 40000
+prepareData "GAGA-0099.Scaffold20.2658162-2659328" 40000
+prepareData "GAGA-0103.Scaffold3.176889-177498" 40000
+prepareData "GAGA-0222.Scaffold8.5584886-5586057" 40000
+prepareData "GAGA-0223.Scaffold1.1848750-1849914" 40000
+prepareData "GAGA-0224.Scaffold2.5523877-5525052" 40000
+prepareData "GAGA-0256.Scaffold2.7916318-7917363" 40000
+prepareData "GAGA-0288.Scaffold13.4154918-4156109" 40000
+prepareData "GAGA-0328.Scaffold36.505675-506652" 40000
+prepareData "GAGA-0407.Scaffold17.737281-738661" 40000
+prepareData "GAGA-0463.Scaffold5.10066752-10067894" 40000
+prepareData "GAGA-0510.Scaffold38.1250818-1251998" 40000
+prepareData "GAGA-0511.Scaffold84.595202-596389" 40000
+prepareData "GAGA-0512.Scaffold4.5227523-5228691" 40000
+prepareData "GAGA-0513.Scaffold6.3022732-3024790" 40000
+prepareData "GAGA-0533.Scaffold25.1172728-1173697" 40000
+prepareData "GAGA-0578.Scaffold3.7430181-7431567" 40000
+
+# processData
+processData $outFolder
+
+```
+
+```{bash cfa}
+cd /home/projects/ku_00039/people/luksch/GAGA/LGT_analysis
+targetLGT="cfa1"
+outFolder="/home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/2_pipeline/${targetLGT}"
+annotationFolder="0_data/gene_annotations"
+lgtFolder="0_data/results"
+genomeFolder="0_data/genome"
+
+#rm -rf ${outFolder}/*
+mkdir ${outFolder}/
+# extract LGT region +- 10 kb
+## get LGT region bed files for all candidates
+
+module purge
+module load tools ngs bedtools/2.30.0  minimap2/2.24r1122 samtools/1.14 parallel/20210722 gffread/0.12.4
+
+# prepare data for each LGT to be analyzed
+prepareData "GAGA-0502.Scaffold36.343969-348755" 40000
+prepareData "GAGA-0502.Scaffold36.144621-149765" 40000
+prepareData "GAGA-0359.Scaffold27.548903-551122" 40000
+prepareData "GAGA-0485.Scaffold4.8837683-8839152" 40000
+prepareData "GAGA-0485.Scaffold6.5437357-5438799" 40000
+prepareData "GAGA-0502.Scaffold36.144621-149765" 40000
+prepareData "GAGA-0502.Scaffold7.8320662-8321878" 40000
+prepareData "GAGA-0502.Scaffold36.144621-149765" 40000
+prepareData "GAGA-0359.Scaffold11.5852663-5853883" 40000
+prepareData "GAGA-0502.Scaffold36.144621-149765" 40000
+prepareData "GAGA-0485.Scaffold4.8837683-8839152" 40000
+prepareData "GAGA-0502.Scaffold36.343969-348755" 40000
+prepareData "GAGA-0485.Scaffold4.8848842-8849572" 40000
+prepareData "GAGA-0359.Scaffold2.8938296-8942661" 40000
+prepareData "GAGA-0359.Scaffold114.45916-47135" 40000
+prepareData "GAGA-0359.Scaffold43.592158-593375" 40000
+prepareData "GAGA-0502.Scaffold39.21081-21451" 40000
+prepareData "GAGA-0502.Scaffold10.4109459-4110669" 40000
+prepareData "OUT-0001.WHNR01000088.1.32800-34183" 40000
+prepareData "OUT-0002.Scaffold4.8855059-8856542" 40000
+prepareData "OUT-0001.CM020810.1.311254-320250" 40000
+prepareData "OUT-0001.CM020810.1.304118-308835" 40000
+prepareData "OUT-0002.Scaffold13.1195512-1196725" 40000
+prepareData "OUT-0001.CM020810.1.304118-308835" 40000
+prepareData "OUT-0001.CM020810.1.311254-320250" 40000
+prepareData "OUT-0002.Scaffold13.1204192-1205409" 40000
+prepareData "OUT-0001.CM020810.1.311254-320250" 40000
+prepareData "OUT-0001.CM020808.1.1376398-1377617" 40000
+prepareData "OUT-0002.Scaffold13.1199847-1201065" 40000
+
+# processData
+processData $outFolder
+```
+
+
+```{bash etherase}
+cd /home/projects/ku_00039/people/luksch/GAGA/LGT_analysis
+targetLGT="etherase1"
+outFolder="/home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/2_pipeline/${targetLGT}"
+annotationFolder="0_data/gene_annotations"
+lgtFolder="0_data/results"
+genomeFolder="0_data/genome"
+
+#rm -rf ${outFolder}/*
+mkdir ${outFolder}/
+# extract LGT region +- 10 kb
+## get LGT region bed files for all candidates
+
+module purge
+module load tools ngs bedtools/2.30.0  minimap2/2.24r1122 samtools/1.14 parallel/20210722 gffread/0.12.4
+
+prepareData "NCBI-0005.NW_020229769.1.103912-105724" 50000
+prepareData "GAGA-0200.Scaffold111.362774-364682" 50000
+prepareData "GAGA-0221.Scaffold3.8820002-8820310" 50000
+
+# processData
+processData $outFolder
+```
+
+
+```{bash}
+# run orthofinder
+
+module purge
+# Load all required modules for the job
+module load ngs tools
+module load anaconda3/4.4.0
+module load perl/5.24.0
+module load ncbi-blast/2.11.0+
+module load mcl/14-137
+module load fastme/2.1.5
+module load dlcpar/1.0
+module load orthofinder/2.5.4
+module load mafft/7.453
+module load fasttree/2.1.11
+
+orthofinder -f ${outFolder}/proteins/ -S diamond -t 40 -og
+```
+
+
+```{r}
+library(gggenomes)
+colorSet <- grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = T)]
+indir<-"../2_pipeline/etherase1"
+#indir<-"../2_pipeline/lysozymes"
+```
+
+```{r}
+# parse sequence length and some metadata from fasta file
+ant_seqs <- read_fai(paste(indir,"/all.fa.fai",sep="")) 
+
+ant_seqs$seq_desc<-ant_seqs$seq_id
+
+ant_seqs <- ant_seqs %>%
+  extract(seq_id, into = c("bin_id","scaffold", "start","end"), "(\\S+?)\\.(\\S+)\\:(\\S+)-(\\S+)",remove=F, convert=T) %>%
+  arrange(seq_id, length) %>% 
+  relocate(seq_desc,.after="seq_id")
+
+ant_seqs$seq_id<-gsub("\\:.*","",ant_seqs$seq_id)
+ant_seqs$bin_id<-ant_seqs$seq_id
+```
+
+
+```{r}
+#remove some seqs if there are nearly identical duplicates
+#ant_seqs<-ant_seqs[!duplicated(ant_seqs$bin_id),]
+```
+
+
+```{r}
+# load LGTs
+#ant_LGTs <- read_feats(paste(indir,"/all.LGT.gff3",sep=""),infer_cds_parents=F)  %>% 
+ant_LGTs <- read_gff(paste(indir,"/all.LGT.gff3",sep=""))  %>% 
+  extract(seq_id, into = c("file_id","scaffold"), "(\\S+?)\\.(\\S+)",remove=F, convert=T) %>% 
+  relocate(c(start,end),.after = "scaffold")
+
+# load ant genes
+ant_genes <- read_feats(paste(indir,"/all.shifted.genes.only.filtered.gff3",sep=""),infer_cds_parents = T)  %>% 
+  extract(seq_id, into = c("file_id","scaffold"), "(\\S+?)\\.(\\S+)",remove=F, convert=T) %>% 
+  relocate(c(start,end),.after = "scaffold")
+
+# add orthology
+orthofinder.path<-list.files(paste(indir,"/proteins/OrthoFinder/",sep=""),full.names = T)
+orthologs<-read_delim(paste(last(orthofinder.path),"/Orthogroups/Orthogroups.tsv",sep=""))
+stackOrtho<-reshape2::melt(orthologs,id="Orthogroup") %>% separate_rows(value,sep = ", ", convert = FALSE)
+ortho.match<-subset(stackOrtho, value %in% ant_genes$feat_id )
+  
+
+ant_genes<-merge(ant_genes,ortho.match,by.x="feat_id",by.y="value",all.x=T)
+
+p3 <- gggenomes(feats = ant_genes,genes=ant_LGTs,seqs = ant_seqs) +
+         geom_seq() + 
+         geom_bin_label() +
+         geom_feat(position="strand",aes(color=Orthogroup),size=2)+
+         geom_gene(col="red",size=5)+
+         theme(legend.position = "none")
+
+```
+
+```{r}
+#http://dgenies.toulouse.inra.fr/documentation/formats
+ant_links <- read_paf(paste(indir,"/all.paf",sep="")) %>% 
+  extract(seq_id, into = c("file_id1","scaffold","locus1Start","locus1End"), "(\\S+)\\.(\\S+)\\:(\\S+)\\-(\\S+)",remove=F, convert=T) %>% 
+  extract(seq_id2, into = c("file_id2","scaffold2","locus2Start","locus2End"), "(\\S+)\\.(\\S+)\\:(\\S+)\\-(\\S+)",remove=F, convert=T) #%>% 
+  #subset(map_match>1000)
+
+ant_links$seq_id<-gsub("\\:.*","",ant_links$seq_id)
+ant_links$seq_id2<-gsub("\\:.*","",ant_links$seq_id2)
+
+ant_links$start<-ant_links$start+ant_links$locus1Start
+ant_links$start2<-ant_links$start2+ant_links$locus2Start
+ant_links$end<-ant_links$end+ant_links$locus1Start
+ant_links$end2<-ant_links$end2+ant_links$locus2Start
+
+
+
+p4 <-  gggenomes(feats = ant_genes,genes=ant_LGTs,seqs = ant_seqs,links = ant_links) +
+         geom_seq() + 
+         geom_bin_label() +
+         geom_feat(position="strand",aes(color=Orthogroup),size=2)+
+         geom_gene(col="red",size=4,fill="red")+
+         theme(legend.position = "none")+
+         geom_link(aes(alpha=de),lwd=0,alpha=.5)+
+         scale_color_manual(values=colorSet)+
+         geom_feat_label(aes(label=Orthogroup),size=2)#+
+         #geom_feat_label(aes(label=feat_id),size=2)#+
+         #geom_seq_label(hjust = 1.5,vjust=-.1) 
+
+ant_LGT_longestCDS<-ant_LGTs %>%
+    group_by(paste(file_id,seq_id)) %>% # for each unique sample
+    arrange(desc(end-start)) %>% # order by total_reads DESC
+    slice(1) # select the first row, i.e. with highest total_reads
+
+p4.flip2 <-p4 %>% flip_seqs(ant_LGT_longestCDS$seq_id[ant_LGT_longestCDS$strand=="-"])
+```
+
+```{r lysozyme-plot, eval=FALSE, include=FALSE}
+p4.lysozymes <-  gggenomes(feats=ant_genes,genes=ant_LGTs,seqs = ant_seqs[c(2,1,3,11,6,8,12,13,14,15,4,5,10,7,9,17,16),],links = ant_links) +
+         geom_seq() + 
+         geom_bin_label(aes(label=gsub("\\."," ",bin_id))) +
+         geom_feat(position="identity",aes(color=Orthogroup),size=2)+
+         geom_gene(col="red",size=4,fill="red")+
+         theme(legend.position = "none")+
+         geom_link(aes(alpha=NM),lwd=0)+
+         scale_color_manual(values=colorSet)+
+         #geom_feat_label(aes(label=Orthogroup),size=2)+
+         geom_seq_label(hjust = 1.5,aes(label=paste(start,"-",end,sep=""))) 
+         #geom_feat_label(aes(label=feat_id),size=2)#+
+
+p4.lysozymes.flip2 <- p4.lysozymes %>% flip_seqs(ant_LGT_longestCDS$seq_id[ant_LGT_longestCDS$strand=="-"])
+#ggsave("../3_results/lysozymes.synteny.pdf",plot=p4.lysozymes.flip2,width = 6,height=12)
+```
+
+```{r etherase-plot, eval=FALSE, include=FALSE}
+p4.lysozymes <-  gggenomes(feats=ant_genes,genes=ant_LGTs,seqs = ant_seqs[c(1,2,3),],links = ant_links) +
+         geom_seq() + 
+         geom_bin_label(aes(label=gsub("\\."," ",bin_id))) +
+         geom_feat(position="identity",aes(color=Orthogroup),size=2)+
+         geom_gene(col="red",size=4,fill="red")+
+         theme(legend.position = "none")+
+         geom_link(aes(alpha=NM),lwd=0)+
+         #geom_feat_label(aes(label=Orthogroup),size=2)+
+         geom_seq_label(hjust = 1.5,aes(label=paste(start,"-",end,sep=""))) 
+         #geom_feat_label(aes(label=feat_id),size=2)#+
+
+p4.lysozymes.flip2 <- p4.lysozymes %>% flip_seqs(ant_LGT_longestCDS$seq_id[ant_LGT_longestCDS$strand=="-"])
+#ggsave("../3_results/lysozymes.synteny.pdf",plot=p4.lysozymes.flip2,width = 6,height=12)
+```
+
+

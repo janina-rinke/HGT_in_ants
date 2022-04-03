@@ -105,6 +105,25 @@ GAGA-0328.LGT	GAGA-0579_Scaffold2	93.861	619	36	2	1	618	762894	763511	0.0	931	61
 ```
 Here, all Carebara species occurred as hits showing that these are two independent and separate LGT events.
 
+##### 2.3 Sequence search with the Etherase sequence from GAGA-0221 (Camponotus fellah).
+
+Input file:`Etherase_sequence.txt`
+
+Output file: `blast_Etherase_GAGAgenomes.out`
+
+```bash
+GAGA-0221.LGT  GAGA-0221_Scaffold3    100.000 909    0      0      1      909    8819326 8820234 0.0    1679   909
+GAGA-0221.LGT  NCBI-0005_NW_020229769.1       99.010 909    9      0      1      909    105240 104332 0.0    1629   909
+GAGA-0221.LGT  GAGA-0361_Scaffold4    99.010 909    9      0      1      909    3723826 3724734 0.0    1629   909
+GAGA-0221.LGT  GAGA-0362_Scaffold15   98.900 909    10     0      1      909    5724715 5725623 0.0    1624   909
+GAGA-0221.LGT  GAGA-0396_Scaffold28   98.680 909    12     0      1      909    2026308 2027216 0.0    1613   909
+GAGA-0221.LGT  GAGA-0200_Scaffold111  98.130 909    17     0      1      909    363210 364118 0.0    1585   909
+GAGA-0221.LGT  GAGA-0374_Scaffold20   96.370 909    33     0      1      909    2858966 2859874 0.0    1496   909
+GAGA-0221.LGT  GAGA-0360_Scaffold16   95.820 909    38     0      1      909    5909052 5909960 0.0    1469   909
+```
+
+In the BLAST search with GAGA-0221 Etherase sequence as input, in total eight species occurred as hits. All of these species were *Camponotus* species, as well as *Polyrhachis* and *Colobopsis*.
+
 ### 3 Intersect newly detected sequences with LGT loci
 Take the `LGTs.candidateloci.loose.bed` file and intersect this file with the coordinates from the BLAST search. Use those intersected hits and re-run dfast with the coordinates of these LGT loci.
 
@@ -235,21 +254,34 @@ Now, `dfast` can be run with the extracted FASTA sequence.
 #### 3.2 For all files:
 ##### 3.2.1 Change all bed files fitting to blast bed format
 
+The pipeline produces two bed files: one file called `LGTs.candidateloci.loose.bed` which consists of candidates blasted against the prokaryotic database and another file `LGTs.nA.candidateloci.loose.bed` consisting of candidates without any ant genomes. We need to change both bed files and run the code against each file separately to identify additional candidates.
+
 ```bash
 cd /global/scratch2/j_rink02/master/lgt/0_data
 
 # Copy file to work on it
 for i in */*; do cp $i/LGTs.candidateloci.loose.bed $i/LGTs.candidateloci2.loose.bed; done
 
+for i in */*; do cp $i/LGTs.nA.candidateloci.loose.bed $i/LGTs.nA.candidateloci2.loose.bed; done
+
 # Control that all directories have this file
 ls */*/LGTs.candidateloci2.loose.bed
+ls */*/LGTs.nA.candidateloci2.loose.bed
 
 # Insert GAGAid in all files at beginning of each line
 for i in GAGA-*; do echo $i ; cat $i/results/LGTs.candidateloci2.loose.bed | awk -v ID=$i '{print (ID "_" $0)}' > $i/results/LGTs.candidateloci.GAGAid.bed; done
 
+for i in GAGA-*; do echo $i ; cat $i/results/LGTs.nA.candidateloci2.loose.bed | awk -v ID=$i '{print (ID "_" $0)}' > $i/results/LGTs.nA.candidateloci.GAGAid.bed; done
+-------------------------------------------------------------------------
+
 for i in OUT-*; do echo $i ; cat $i/results/LGTs.candidateloci2.loose.bed | awk -v ID=$i '{print (ID "_" $0)}' > $i/results/LGTs.candidateloci.GAGAid.bed; done
 
+for i in OUT-*; do echo $i ; cat $i/results/LGTs.nA.candidateloci2.loose.bed | awk -v ID=$i '{print (ID "_" $0)}' > $i/results/LGTs.nA.candidateloci.GAGAid.bed; done
+-------------------------------------------------------------------------
+
 for i in NCBI-*; do echo $i ; cat $i/results/LGTs.candidateloci2.loose.bed | awk -v ID=$i '{print (ID "_" $0)}' > $i/results/LGTs.candidateloci.GAGAid.bed; done
+
+for i in NCBI-*; do echo $i ; cat $i/results/LGTs.nA.candidateloci2.loose.bed | awk -v ID=$i '{print (ID "_" $0)}' > $i/results/LGTs.nA.candidateloci.GAGAid.bed; done
 
 # awk 'pattern{action}' file
 # -v: introduces a variable
@@ -278,15 +310,19 @@ NCBI-0001_NC_039518.1   8533069 8533318 CP000248.1;2062540;2062696;4.142E-13;85;
 Input file: `blast_Lyzozyme_GAGA-0328.bed` (BLAST output)
 
 ```bash
-for i in */results; do bedtools intersect -wa -a $i/LGTs.candidateloci.GAGAid.bed -b /global/scratch2/j_rink02/master/lgt/0_data/local_blast/blast_Lysozyme_GAGA-0328.bed >> /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results.bed; done
+# Run on LGTs.candidateloci.GAGAid.bed
+for i in */results; do bedtools intersect -wa -a $i/LGTs.candidateloci.GAGAid.bed -b /global/scratch2/j_rink02/master/lgt/0_data/local_blast/blast_Lyzozyme_GAGA-0328.bed >> /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Lyzozymes.bed; done
+
+# Run on LGTs.nA.candidateloci.GAGAid.bed
+for i in */results; do bedtools intersect -wa -a $i/LGTs.nA.candidateloci.GAGAid.bed -b /global/scratch2/j_rink02/master/lgt/0_data/local_blast/blast_Lyzozyme_GAGA-0328.bed >> /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Lyzozymes_nA.bed; done
 
 # -b: BAM/BED/GFF file to compare to
 # -wa: write the original entry in A for each overlap
 ```
 
-As an output file (`results.bed`), all intersected hits appear from the `LGTs.candidateloci.GAGAid.bed` file from every directory.
+As an output file (`results_Lyzozymes.bed`), all intersected hits appear from the `LGTs.candidateloci.GAGAid.bed` and `LGTs.nA.candidateloci.GAGAid.bed` files from every directory.
 
-Output file `results.bed`:
+Output file `results_Lyzozymes.bed`:
 ```bash
 GAGA-0328_Scaffold36    505675  506652  CP003883.1;614723;615361;3.700E-119;437;639;75.400;Wolbachia endosymbiont of Drosophila simulans
 GAGA-0331_Scaffold2506  5741    6367    CP003883.1;614723;615361;3.441E-116;427;639;74.800;Wolbachia endosymbiont of Drosophila simulans
@@ -297,11 +333,73 @@ GAGA-0578_Scaffold3     7430181 7430859 CP001391.1;1355371;1356031;1.064E-136;49
 GAGA-0579_Scaffold2     762893  763897  CP003883.1;614723;615361;2.392E-101;378;639;73.600;Wolbachia endosymbiont of Drosophila simulans
 ```
 
+Output file `results_Lyzozymes_nA.bed`:
+```bash
+GAGA-0328_Scaffold36    505675  506652  CP003883.1;614723;615361;3.700E-119;437;639;75.400;Wolbachia endosymbiont of Drosophila simulans wNo    437,
+GAGA-0331_Scaffold2506  5741    6367    CP003883.1;614723;615361;3.441E-116;427;639;74.800;Wolbachia endosymbiont of Drosophila simulans wNo    427,
+GAGA-0378_Scaffold29    1056525 1057476 CP003883.1;614734;615371;9.234E-114;419;638;74.700;Wolbachia endosymbiont of Drosophila simulans wNo    419,
+GAGA-0382_Scaffold1     29205332        29206276        AM999887.1;257710;257844;6.423E-14;88;135;76.600;Wolbachia endosymbiont of Culex quinquefasc
+GAGA-0533_Scaffold25    1172728 1173697 CP003883.1;614753;615361;1.545E-83;319;624;71.200;Wolbachia endosymbiont of Drosophila simulans wNo     319,
+GAGA-0578_Scaffold3     7430181 7430859 CP001391.1;1355371;1356031;1.064E-136;495;661;76.900;Wolbachia sp. wRi  495,455 -1,-1   496,456 0,0
+GAGA-0579_Scaffold2     762893  763897  CP003883.1;614723;615361;2.392E-101;378;639;73.600;Wolbachia endosymbiont of Drosophila simulans wNo    378,
+```
+
+
+#### For the Etherases:
+Input file: `blast_Etherase_GAGAgenomes.bed` (BLAST output)
+
+```bash
+cd /global/scratch2/j_rink02/master/lgt/0_data
+
+# Run on LGTs.candidateloci.GAGAid.bed
+for i in */results; do bedtools intersect -wa -a $i/LGTs.candidateloci.GAGAid.bed -b /global/scratch2/j_rink02/master/lgt/0_data/local_blast/blast_Etherase_GAGAgenomes.bed >> /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Etherase.bed; done
+
+# Run on LGTs.nA.candidateloci.GAGAid.bed
+for i in */results; do bedtools intersect -wa -a $i/LGTs.nA.candidateloci.GAGAid.bed -b /global/scratch2/j_rink02/master/lgt/0_data/local_blast/blast_Etherase_GAGAgenomes.bed >> /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Etherase_nA.bed; done
+
+# -b: BAM/BED/GFF file to compare to
+# -wa: write the original entry in A for each overlap
+```
+
+Output file `results_Etherase.bed`:
+```bash
+GAGA-0221_Scaffold3    8820002 8820310 BX293980.2;283224;283430;4.979E-29;138;207;75.500;Mycoplasma mycoides subsp. mycoides SC str. PG1      138,147
+GAGA-0361_Scaffold4    3723812 3724743 CP002082.1;345109;346044;9.206E-131;475;936;71.900;Spiroplasma mirum ATCC 29335 475,536,461,451,471,78,468,191,
+GAGA-0362_Scaffold15   5725502 5725614 CP005077.1;787673;787786;4.142E-13;85;114;76.300;Spiroplasma chrysopicola DF-1 85     -1     86     0
+```
+
+Output file `results_Etherase_nA.bed`:
+```bash
+GAGA-0200_Scaffold111   363196  364682  CP002082.1;345738;346044;1.926E-41;179;307;73.400;Spiroplasma mirum ATCC 29335  179,474,532,209,213,145,568,
+GAGA-0221_Scaffold3     8819312 8820310 CP002082.1;345109;346044;1.189E-132;482;936;72.000;Spiroplasma mirum ATCC 29335 482,537,464,451,483,82,474,2
+GAGA-0360_Scaffold16    5909048 5910576 CP002082.1;345088;346035;2.759E-124;454;948;71.200;Spiroplasma mirum ATCC 29335 454,583,531,165,115,449,546,
+GAGA-0361_Scaffold4     3723812 3724743 CP002082.1;345109;346044;9.206E-131;475;936;71.900;Spiroplasma mirum ATCC 29335 475,536,461,451,471,78,468,1
+GAGA-0362_Scaffold15    5724696 5725632 CP002082.1;345109;346046;1.650E-137;498;938;72.300;Spiroplasma mirum ATCC 29335 498,551,486,469,487,87,487,2
+GAGA-0374_Scaffold20    2858962 2859996 CP011856.1;383809;384320;3.573E-109;404;512;78.000;Spiroplasma eriocheiris      404,482,527,179,143,302,483,
+GAGA-0396_Scaffold28    2026294 2027752 CP002082.1;345338;346044;8.915E-104;386;707;72.700;Spiroplasma mirum ATCC 29335 386,423,344,345,363,85,363,8
+NCBI-0005_NW_020229769.1        103912  105255  CP001668.1;276469;277784;3.688E-136;493;1316;68.900;Mycoplasma mycoides subsp. capri str. GM12  493,
+```
+
+In this step, only three out of the originally eight detected hits appeared in the prokaryotic database with the ant genomes. This is due to the fact, that the other detected candidates have been identified within the `no.Ant database`. Here, the file `LGTs.nA.candidateloci.bed` was successfully intersected and found the other candidates.
+
 ##### 3.2.3 Extract FASTA sequence for resulting coordinates
 ```bash
 cd /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy
 
-for i in *; do bedtools getfasta -fi /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy/$i -bed /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results.bed -fo /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/$i.fa; done
+# For the Lysozymes
+# prokaryotic database candidates
+for i in *; do bedtools getfasta -fi /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy/$i -bed /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Lyzozymes.bed -fo /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/$i.Lyzozyme.fa; done
+
+# noAnt database candidates
+for i in *; do bedtools getfasta -fi /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy/$i -bed /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Lyzozymes_nA.bed -fo /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/$i.Lyzozyme.nA.fa; done
+
+
+# For the Etherases
+#prokaryotic database candidates
+for i in *; do bedtools getfasta -fi /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy/$i -bed /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Etherase.bed -fo /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/$i.Etherase.fa; done
+
+#noAnt database candidates
+for i in *; do bedtools getfasta -fi /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy/$i -bed /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Etherase_nA.bed -fo /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/$i.Etherase.nA.fa; done
 
 # -fi: <input FASTA>
 # -bed BED input file with coordinates
@@ -340,7 +438,12 @@ find . -type f -empty -delete
 
 Files in the directory `dfast_candidates`after deletion of empty files:
 ```bash
-GAGA-0328.fa  GAGA-0331.fa  GAGA-0378.fa  GAGA-0382.fa	GAGA-0533.fa  GAGA-0578.fa  GAGA-0579.fa  tmp
+GAGA-0200.Etherase.nA.fa  GAGA-0331.Lyzozyme.nA.fa  GAGA-0374.Etherase.nA.fa  GAGA-0533.Lyzozyme.fa	GAGA_genomes_database.Etherase.fa     tmp
+GAGA-0221.Etherase.fa	  GAGA-0360.Etherase.nA.fa  GAGA-0378.Lyzozyme.fa     GAGA-0533.Lyzozyme.nA.fa	GAGA_genomes_database.Etherase.nA.fa
+GAGA-0221.Etherase.nA.fa  GAGA-0361.Etherase.fa     GAGA-0378.Lyzozyme.nA.fa  GAGA-0578.Lyzozyme.fa	GAGA_genomes_database.Lyzozyme.fa
+GAGA-0328.Lyzozyme.fa	  GAGA-0361.Etherase.nA.fa  GAGA-0382.Lyzozyme.fa     GAGA-0578.Lyzozyme.nA.fa	GAGA_genomes_database.Lyzozyme.nA.fa
+GAGA-0328.Lyzozyme.nA.fa  GAGA-0362.Etherase.fa     GAGA-0382.Lyzozyme.nA.fa  GAGA-0579.Lyzozyme.fa	NCBI-0005.Etherase.nA.fa
+GAGA-0331.Lyzozyme.fa	  GAGA-0362.Etherase.nA.fa  GAGA-0396.Etherase.nA.fa  GAGA-0579.Lyzozyme.nA.fa	run_dfast_BLAST_candidates.sh
 ```
 
 Now, dfast can be run on all remaining files in this directory and all information can be obtained for those additional candidates identified with BLAST.
