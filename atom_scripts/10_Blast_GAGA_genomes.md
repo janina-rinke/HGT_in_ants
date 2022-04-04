@@ -495,7 +495,9 @@ The dfast jobs would take too long for all additionally identified candidates to
 cd /global/scratch2/databases/dfast
 
 # Extract relevant bacteria
- seqkit grep -n -r -p "Sodalis|Serratia|Yersinia|Rahnella|Escherichia" /global/scratch2/databases/dfast/uniprot_bacteria-0.9.fasta > ~/relevant.enterobacteria.CFA.uni90.fa
+seqkit grep -n -r -p "Sodalis|Serratia|Yersinia|Rahnella|Escherichia" /global/scratch2/databases/dfast/uniprot_bacteria-0.9.fasta > ~/relevant.enterobacteria.CFA.uni90.fa
+
+cd ~
 
 # Build a dfast database
 source /usr/share/modules/init/bash
@@ -507,6 +509,10 @@ module list
 
 # Build dfast reference database
 /global/projects/programs/source/dfast/dfast_core-1.2.12/scripts/reference_util.py formatdb -i ~/relevant.enterobacteria.CFA.uni90.fa
+
+/global/projects/programs/source/dfast/dfast_core-1.2.12/scripts/reference_util.py fasta2dfast -i relevant.enterobacteria.CFA.uni90.fa -o relevant.enterobacteria.CFA.uni90.ref
+
+/global/projects/programs/source/dfast/dfast_core-1.2.12/scripts/reference_util.py formatdb -i relevant.enterobacteria.CFA.uni90.ref
 
  ```
 
