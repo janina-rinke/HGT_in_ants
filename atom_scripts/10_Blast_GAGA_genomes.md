@@ -496,6 +496,18 @@ cd /global/scratch2/databases/dfast
 
 # Extract relevant bacteria
  seqkit grep -n -r -p "Sodalis|Serratia|Yersinia|Rahnella|Escherichia" /global/scratch2/databases/dfast/uniprot_bacteria-0.9.fasta > ~/relevant.enterobacteria.CFA.uni90.fa
+
+# Build a dfast database
+source /usr/share/modules/init/bash
+module use /global/projects/programs/modules
+module load annotation/dfast/1.2.12
+
+# To check which modules are loaded
+module list
+
+# Build dfast reference database
+/global/projects/programs/source/dfast/dfast_core-1.2.12/scripts/reference_util.py formatdb -i ~/relevant.enterobacteria.CFA.uni90.fa
+
  ```
 
  Slightly change the dfast script and use less memory with the smaller database for Enterobacteria:
