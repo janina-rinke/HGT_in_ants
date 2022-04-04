@@ -451,6 +451,8 @@ Now, dfast can be run on all remaining files in this directory and all informati
 
 #### 3.3 Run dfast on additionally identified LGT candidates
 
+##### 3.3.1 Write a dfast job script
+
 `cd /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates`
 
 nano `run_dfast_BLAST_candidates.sh`
@@ -483,3 +485,48 @@ find . -name "NCBI*" | parallel -I% --max-args 1 qsub -v file="%" run_dfast_BLAS
 
 find . -name "OUT*" | parallel -I% --max-args 1 qsub -v file="%" run_dfast_BLAST_candidates.sh
 ```
+
+##### 3.3.2 Build specific blast databases for dfast
+
+The dfast jobs would take too long for all additionally identified candidates to run against, so we will build specific bacterial databases to significantly shorten the dfast search.
+
+###### Build a database for all Enterobacteria to run dfast for the additional CFA synthases:
+```bash
+cd /global/scratch2/databases/dfast
+
+# Extract relevant bacteria
+ seqkit grep -n -r -p "Sodalis|Serratia|Yersinia|Rahnella|Escherichia" /global/scratch2/databases/dfast/uniprot_bacteria-0.9.fasta > ~/relevant.enterobacteria.CFA.uni90.fa
+ ```
+
+ Slightly change the dfast script and use less memory with the smaller database for Enterobacteria:
+
+ `cd /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates`
+
+ nano `run_dfast_CFA_candidates.sh`
+ ```
+ #$ -S /bin/bash
+ #$ -N batchCFAsearch
+ #$ -cwd
+ #$ -w e
+ #$ -V
+ #$ -pe smp 15
+ #$ -l h_vmem=2G
+ #$ -o /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/tmp/batch.dfast.job.out
+ #$ -e global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/tmp/batch.dfast.job.err
+ #$ -wd /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates
+
+ conda activate dfast
+
+ echo "Running on file: $file"
+
+ dfast -g $file --force --metagenome --cpu 15 --debug --use_original_name t --minimum_length 100 --database ~/relevant.enterobacteria.CFA.uni90.fa -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/blast_output_dfast/$file --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
+ ```
+
+ Submit the CFA jobs:
+ ```
+ find . -name "GAGA*" | parallel -I% --max-args 1 qsub -hostname=sebb09 -v file="%"  run_dfast_CFA_candidates.sh
+
+ find . -name "NCBI*" | parallel -I% --max-args 1 qsub -hostname=sebb09 -v file="%" run_dfast_CFA_candidates.sh
+
+ find . -name "OUT*" | parallel -I% --max-args 1 qsub -hostname=sebb09 -v file="%" run_dfast_CFA_candidates.sh
+ ```
