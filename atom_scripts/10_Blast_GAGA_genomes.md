@@ -446,6 +446,15 @@ GAGA-0328.Lyzozyme.nA.fa  GAGA-0362.Etherase.fa     GAGA-0382.Lyzozyme.nA.fa  GA
 GAGA-0331.Lyzozyme.fa	  GAGA-0362.Etherase.nA.fa  GAGA-0396.Etherase.nA.fa  GAGA-0579.Lyzozyme.nA.fa	run_dfast_BLAST_candidates.sh
 ```
 
+Additionally, all GAGA genomes which have more than one additional BLAST hit (e.g. all CFA synthase genomes) will have a multifasta file with all sequences detected in their genomes. However, for DFAST we would like to get every sequence in its own fasta file and then name it by the sequence (e.g. GAGA-id.Scaffold.start-stop.fa).
+
+```bash
+awk '/^>/ {OUT=substr($0,2) ".fa"}; OUT {print >OUT}' GAGA-0350.CFA.nA.fa
+```
+
+
+
+
 Now, dfast can be run on all remaining files in this directory and all information can be obtained for those additional candidates identified with BLAST.
 
 
@@ -488,14 +497,14 @@ find . -name "OUT*" | parallel -I% --max-args 1 qsub -v file="%" run_dfast_BLAST
 
 ##### 3.3.2 Build specific blast databases for dfast
 
-The dfast jobs would take too long for all additionally identified candidates to run against, so we will build specific bacterial databases to significantly shorten the dfast search.
+The dfast jobs would take too long for all additionally identified candidates to run against, so we will build a specific bacterial database with the bacteria of interest to significantly shorten the dfast search. The bacteria of interest are Wolbachia (Lysozymes), Enterobacteria (CFA-Synthases) & Spiroplasma/Mycoplasma (Etherases).
 
-###### Build a database for all Enterobacteria to run dfast for the additional CFA synthases:
+###### Build a database for all bacteria of interest to run dfast for the additional group-specific candidates:
 ```bash
 cd /global/scratch2/databases/dfast
 
 # Extract relevant bacteria
-seqkit grep -n -r -p "Sodalis|Serratia|Yersinia|Rahnella|Escherichia" /global/scratch2/databases/dfast/uniprot_bacteria-0.9.fasta > ~/relevant.enterobacteria.CFA.uni90.fa
+seqkit grep -n -r -p "Wolbachia|Sodalis|Serratia|Yersinia|Rahnella|Escherichia|Spiroplasma|Mycoplasma" /global/scratch2/databases/dfast/uniprot_bacteria-0.9.fasta > ~/relevant.bacteria.uni90.fa
 
 cd ~
 
@@ -508,43 +517,41 @@ module load annotation/dfast/1.2.12
 module list
 
 # Build dfast reference database
-/global/projects/programs/source/dfast/dfast_core-1.2.12/scripts/reference_util.py formatdb -i ~/relevant.enterobacteria.CFA.uni90.fa
+/global/projects/programs/source/dfast/dfast_core-1.2.12/scripts/reference_util.py fasta2dfast -i relevant.bacteria.uni90.fa -o relevant.bacteria.uni90.ref
 
-/global/projects/programs/source/dfast/dfast_core-1.2.12/scripts/reference_util.py fasta2dfast -i relevant.enterobacteria.CFA.uni90.fa -o relevant.enterobacteria.CFA.uni90.ref
-
-/global/projects/programs/source/dfast/dfast_core-1.2.12/scripts/reference_util.py formatdb -i relevant.enterobacteria.CFA.uni90.ref
+/global/projects/programs/source/dfast/dfast_core-1.2.12/scripts/reference_util.py formatdb -i relevant.bacteria.uni90.ref
 
  ```
 
- Slightly change the dfast script and use less memory with the smaller database for Enterobacteria:
+ Slightly change the dfast script and use less memory with the smaller database for our bacteria of interest:
 
  `cd /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates`
 
- nano `run_dfast_CFA_candidates.sh`
+ nano `run_dfast_additional_candidates.sh`
  ```
  #$ -S /bin/bash
- #$ -N batchCFAsearch
+ #$ -N plusLGTs
  #$ -cwd
  #$ -w e
  #$ -V
- #$ -pe smp 15
+ #$ -pe smp 10
  #$ -l h_vmem=2G
  #$ -o /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/tmp/batch.dfast.job.out
- #$ -e global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/tmp/batch.dfast.job.err
+ #$ -e /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/tmp/batch.dfast.job.err
  #$ -wd /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates
 
  conda activate dfast
 
  echo "Running on file: $file"
 
- dfast -g $file --force --metagenome --cpu 15 --debug --use_original_name t --minimum_length 100 --database ~/relevant.enterobacteria.CFA.uni90.fa -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/blast_output_dfast/$file --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
+ dfast -g $file --force --cpu 10 --debug --use_original_name t --minimum_length 100 --database ~/relevant.bacteria.uni90.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/blast_output_dfast/$file --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
  ```
 
- Submit the CFA jobs:
+ Submit the jobs:
  ```
- find . -name "GAGA*" | parallel -I% --max-args 1 qsub -hostname=sebb09 -v file="%"  run_dfast_CFA_candidates.sh
+ find . -name "GAGA*" | parallel -I% --max-args 1 qsub -v file="%"  run_dfast_additional_candidates.sh
 
- find . -name "NCBI*" | parallel -I% --max-args 1 qsub -hostname=sebb09 -v file="%" run_dfast_CFA_candidates.sh
+ find . -name "NCBI*" | parallel -I% --max-args 1 qsub -v file="%" run_dfast_additional_candidates.sh
 
- find . -name "OUT*" | parallel -I% --max-args 1 qsub -hostname=sebb09 -v file="%" run_dfast_CFA_candidates.sh
+ find . -name "OUT*" | parallel -I% --max-args 1 qsub -v file="%" run_dfast_additional_candidates.sh
  ```
