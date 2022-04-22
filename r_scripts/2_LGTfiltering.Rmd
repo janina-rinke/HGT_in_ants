@@ -55,7 +55,7 @@ library(stringr)
 
 Load all tsv files for the different GAGA ids in a list of data frames.
 ```{r}
-tsv2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.*.lgt.good.candidates.tsv"       # provides the path to all files matching the pattern
+tsv2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.*.lgt.good.candidates.tsv" #provides the path to all files matching the pattern
 dataFiles <- lapply(Sys.glob(tsv2load), read.delim2,sep="\t")                                       # creates a large list out of all files
 ```
 
@@ -506,7 +506,7 @@ write.table(complete_df,"/global/scratch2/j_rink02/master/lgt/2_analysis/GAGA.LG
 # Assign names to x
 x <- c("original", "1st_filtering_step", "2nd_filtering_step", "3rd_filtering_step","4th filtering step", "Merging candidate loci", "Manual investigation")
 # Assign names to y
-y <- c(13664, 5355, 5173, 5081, 4785, 1148, 410)
+y <- c(13664, 5355, 5173, 5081, 4785, 1148, 497)
 # Assign names to z
 z <- c(162, 142, 141, 138, 134, 134, 0)
 # Assign x to "Filtering_step" as column name
@@ -530,7 +530,7 @@ p0
 
 # flipped version
 p1 <- ggplot(filtering_df, aes(x =reorder(Filtering_step, Nr_candidates), y = Nr_candidates)) +
-  geom_bar(aes(fill=as.factor(Nr_candidates)), stat="identity", width = 0.4) + theme_classic() +
+  geom_bar(aes(fill=as.factor(Nr_candidates)), stat="identity", width = 0.6) + theme_classic() +
   geom_text(aes(label=Nr_candidates), hjust=1.3, color = "white", position=position_dodge(width=1.0), size = 3) +
   scale_fill_gradient(low="darkgreen", high ="darkblue") +
   theme(legend.position = "none") +
@@ -538,12 +538,13 @@ p1 <- ggplot(filtering_df, aes(x =reorder(Filtering_step, Nr_candidates), y = Nr
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_fill_viridis_d(breaks = rev, direction = -1)+
   scale_y_continuous(position = "right", breaks = seq(0,14000, 2000)) +
-  labs(title = "Filtering of predicted LGT candidates", x = NULL, y="Number of candidates")
+  labs(title = "Filtering of predicted HGT candidates", x = NULL, y="Number of candidates") +
+  theme(plot.margin = unit(c(2, 2, 3, 3), "cm"))
 p1
 ```
 ```{r}
 
-#ggsave("LGT_filtering.png", path = "/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced")
+ggsave("LGT_filtering.pdf",path="/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots", width=10,height=8)
 ```
 
 
@@ -642,7 +643,5 @@ p0
 ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/Nr_predicted_candidates.pdf",p0,width=10,height=15)
 ``` 
 
-
-Last changed 2022/02/07
 
 

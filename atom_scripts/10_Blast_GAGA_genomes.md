@@ -449,11 +449,55 @@ GAGA-0331.Lyzozyme.fa	  GAGA-0362.Etherase.nA.fa  GAGA-0396.Etherase.nA.fa  GAGA
 Additionally, all GAGA genomes which have more than one additional BLAST hit (e.g. all CFA synthase genomes) will have a multifasta file with all sequences detected in their genomes. However, for DFAST we would like to get every sequence in its own fasta file and then name it by the sequence (e.g. GAGA-id.Scaffold.start-stop.fa).
 
 ```bash
-awk '/^>/ {OUT=substr($0,2) ".fa"}; OUT {print >OUT}' GAGA-0350.CFA.nA.fa
+awk '/^>/ {OUT=substr($0,2) ".fa"}; OUT {print >OUT}' GAGA*
+
+awk '/^>/ {OUT=substr($0,2) ".fa"}; OUT {print >OUT}' NCBI*
+
+awk '/^>/ {OUT=substr($0,2) ".fa"}; OUT {print >OUT}' OUT*
+```
+The file names are still in the wrong format and some entries are duplicated in the files. This needs to be changed and files need to be cleaned from duplicates:
+
+```bash
+# Remove _ and replace with .
+for i in * ; do mv ${i} `echo ${i} | sed 's/_/\./'`; done
+
+# Remove : and replace with .
+for i in * ; do mv ${i} `echo ${i} | sed 's/\:/\./'`; done
+
+# Remove duplicates
+for i in *; do cat $i | seqkit rmdup -s -o $i; done
 ```
 
+Additional candidates which need to be re-run with dfast in the `dfast_candidates` directory:
+```bash
+GAGA-0331.Scaffold2506.5741-6367        GAGA-0485.Scaffold33.855025-856421.fa   NCBI-0008.NW_021848844.1.4160-5517.fa                                
+GAGA-0350.Scaffold105.254062-255279.fa  GAGA-0485.Scaffold41.1016805-1018164.fa NCBI-0008.NW_021848985.1.6369-8604.fa                                
+GAGA-0350.Scaffold295.86215-87652.fa    GAGA-0485.Scaffold4.8837683-8839152.fa  NCBI-0008.NW_021849229.1.1486-2181.fa                                
+GAGA-0350.Scaffold3.291594-292520.fa    GAGA-0485.Scaffold4.8848842-8849572.fa  NCBI-0008.NW_021850465.1.77608-78020.fa                              
+GAGA-0350.Scaffold3.293727-295959.fa    GAGA-0485.Scaffold60.210127-212655.fa   NCBI-0008.NW_021852441.1.4-581.fa                                    
+GAGA-0350.Scaffold410.52515-53734.fa    GAGA-0485.Scaffold6.5437357-5438799.fa  OUT-0001.CM020808.1.1376398-1377617.fa                               
+GAGA-0359.Scaffold114.45916-47135.fa    GAGA-0495.Scaffold15103.97-806.fa       OUT-0001.CM020810.1.304118-304848.fa                                 
+GAGA-0359.Scaffold11.5852663-5853883.fa GAGA-0495.Scaffold1944.11279-11957.fa   OUT-0001.CM020810.1.306868-308835.fa                                 
+GAGA-0359.Scaffold11.5894458-5895894.fa GAGA-0495.Scaffold3031.1989-3409.fa     OUT-0001.CM020810.1.311254-313221.fa                                 
+GAGA-0359.Scaffold177.209553-211591.fa  GAGA-0495.Scaffold3031.3707-4349.fa     OUT-0001.CM020810.1.315240-317207.fa                                 
+GAGA-0359.Scaffold27.548903-549804.fa   GAGA-0495.Scaffold8418.1-629.fa         OUT-0001.CM020810.1.319227-320250.fa                                 
+GAGA-0359.Scaffold27.550186-551122.fa   GAGA-0502.Scaffold10.4109459-4110669.fa OUT-0001.CM020815.1.7508464-7509896.fa                               
+GAGA-0359.Scaffold2.8938296-8940528.fa  GAGA-0502.Scaffold104.261855-262248.fa  OUT-0001.CM020817.1.1707598-1708955.fa                               
+GAGA-0359.Scaffold2.8941735-8942661.fa  GAGA-0502.Scaffold106.161430-161824.fa  OUT-0001.CM020819.1.5842557-5843229.fa                               
+GAGA-0359.Scaffold313.72749-73969.fa    GAGA-0502.Scaffold150.30586-30956.fa    OUT-0001.CM020819.1.5845600-5846272.fa                               
+GAGA-0359.Scaffold43.592158-593375.fa   GAGA-0502.Scaffold24.3179491-3179882.fa OUT-0001.WHNR01000088.1.32800-34183.fa                               
+GAGA-0360.Scaffold16.5909048-5910576    GAGA-0502.Scaffold36.144621-145755.fa   OUT-0002.Scaffold13.1195512-1196725.fa                               
+GAGA-0361.Scaffold4.3723812-3724743     GAGA-0502.Scaffold36.148517-149765.fa   OUT-0002.Scaffold13.1199847-1201065.fa                               
+GAGA-0362.Scaffold15.5724696-5725632    GAGA-0502.Scaffold36.343969-345107.fa   OUT-0002.Scaffold13.1204192-1205409.fa                               
+GAGA-0374.Scaffold20.2858962-2859996    GAGA-0502.Scaffold36.347892-348755.fa   OUT-0002.Scaffold42.419451-420884.fa                                 
+GAGA-0382.Scaffold1.29205332-29206276   GAGA-0502.Scaffold39.21081-21451.fa     OUT-0002.Scaffold4.8850598-8853022.fa                                
+GAGA-0396.Scaffold28.2026294-2027752    GAGA-0502.Scaffold54.758627-759021.fa   OUT-0002.Scaffold4.8855059-8856542.fa                                
+GAGA-0485.Scaffold12.5837061-5838283.fa GAGA-0502.Scaffold7.8320662-8321878.fa  OUT-0002.Scaffold92.25861-27286.fa                                   
+GAGA-0485.Scaffold2.586098-587534.fa    NCBI-0008.NW_021848844.1.1255-1636.fa   tmp
+```
 
-
+72 additional candidates need to be re-run with dfast.
+These candidates are hits for the Lysozymes, CFA synthases and Etherases.
 
 Now, dfast can be run on all remaining files in this directory and all information can be obtained for those additional candidates identified with BLAST.
 
