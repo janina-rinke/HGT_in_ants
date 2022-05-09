@@ -643,5 +643,35 @@ p0
 ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/Nr_predicted_candidates.pdf",p0,width=10,height=15)
 ``` 
 
+### Plot the number of initally predicted candidates vs candidates remaining after filtering as a dotplot
+```{r}
+LGT_candidates<-read_xlsx("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/Numbers_of_LGT_candidates_per_species.xlsx")
+
+sum(LGT_candidates$total_LGT_count) #13821 candidates in total before filtering
+sum(LGT_candidates$high_quality_LGT_count) #489 candidates in total after filtering
+
+mean(LGT_candidates$total_LGT_count) # on average 84,8 candidates were predicted per species
+mean(LGT_candidates$high_quality_LGT_count) # on average, only 3 high-quality candidates remained
+
+LGT_candidates$subfamily<-as.factor(LGT_candidates$subfamily)
+head(LGT_candidates)
+
+library(viridis)
+
+# Dotplot to compare filtering of candidates
+p1<-ggplot(LGT_candidates, aes(x = high_quality_LGT_count, y = total_LGT_count)) +
+    geom_point(aes(color = subfamily), size = 3) +
+    labs(x = "High quality HGTs after filtering",
+         y = "Automatically predicted candidates before filtering") +
+   scale_y_continuous(breaks = seq(0, 2000, by = 200)) +
+   scale_color_viridis(discrete = TRUE, option = "D")+
+   scale_fill_viridis(discrete = T) +
+  theme_minimal()
+
+p1
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Nr_predicted_candidates_vs_filtered_RAW.pdf",p1, width=10, height=7)
+```
+
 
 

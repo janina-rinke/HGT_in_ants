@@ -132,7 +132,7 @@ Add the species identity from `FAS.genes.and.names.tsv`
 tp$data$label[tp$data$isTip==T]<-gsub("_.*","",tp$data$label[tp$data$isTip==T])
 
 tp2<-tp %<+% data2add
-tp2
+tp2 
 ```
 
 # A) Make complex tree with the subfamilies highlighted by color
@@ -154,7 +154,7 @@ tp3<-tp2 +
 
 # tp2.5 is a less complicated tree without UFboot
 tp2.5<-tp2 +
-  geom_tiplab2(aes(label=paste(label,cleanSpeciesID,sep=" "), color = Subfamily),size=2,align = T,linesize = .1)
+  geom_tiplab2(aes(label=paste(cleanSpeciesID,sep=" "), color = Subfamily),size=2,align = T,linesize = .1) # remove GAGAid from label 
 ```
 
 ```{r}
@@ -263,7 +263,7 @@ tp5.5 <- tp2.5 +
       )
 tp5.5
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/try.pdf",width=13,height=26) #save the tree in a pdf
+#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/try.pdf",width=13,height=26) #save the tree in a pdf
 ```
 
 # A.5) Make a dataframe for the bacteria and subset the LGT count into Wolbachia and Blochmannia origin

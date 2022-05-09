@@ -1,0 +1,334 @@
+---
+title: "Species-specific LGTs"
+author: "Janina Rinke"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    code_folding: hide
+  pdf_document: default
+--- 
+</STYLE>
+---
+
+
+This script evaluates species-specific LGTs. 
+```{r global-options, include=FALSE}
+# Define the global chunk options
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r libraries, include = FALSE}
+library(knitr)
+library(tidyverse)
+library(kableExtra)
+library(flextable)
+library(magrittr)
+library(dplyr)
+```
+
+### Load the LGT table with all high-quality candidates
+```{r}
+library(readxl)
+
+# Read CDS level table to extract all unique HGTs
+LGTs<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
+```
+
+
+```{r}
+colnames(LGTs)
+
+# create grouping for protein type
+LGTs$type<-"other"
+LGTs$type[grep("Ank",LGTs$Protein.names)]<-"Ank"
+LGTs$type[grep("Cyclopropane|EC 2.1.1.79",LGTs$Protein.names)]<-"CFA"
+LGTs$type[grep("N-acetylmuramic",LGTs$Protein.names)]<-"MurNAc"
+LGTs$type[grep("DUF1016|Lysozyme|lysozyme|Lyzozyme",LGTs$Protein.names)]<-"Lys"
+LGTs$type[grep("Uncharacterized|uncharacterized|unknown|Deleted",LGTs$Protein.names)]<-"Unknown"
+LGTs$type[grep("Fragment",LGTs$Protein.names)]<-"Fragmented"
+LGTs$type[grep("50S",LGTs$Protein.names)]<-"Ribsomal protein"
+
+# Remove all non-species specific HGTs
+Unique.LGTs<-LGTs %>%
+  dplyr::filter(type=="other") %>%                            # filter out all Anks, Lys, MurNAcs, Uncharacterized LGTs...
+  dplyr::distinct(Protein.names, .keep_all = T)  %>%          # Only keep unique Proteins
+  dplyr::distinct(CDS.UniprotIDs, .keep_all = T) %>%          # Make sure that we really only have each UniProt Id once
+  drop_na(Protein.names)                                      # Remove Proteins with NA
+
+# count number of species with unique proteins
+Unique.species.count<-Unique.LGTs %>% 
+  dplyr::count(species, subfamily)
+
+# count the number of bacterial donors
+Unique.LGTs$donor<-"other"
+Unique.LGTs$donor[grep("Sodalis",Unique.LGTs$Organism)]<-"Sodalis"
+Unique.LGTs$donor[grep("Wolbachia",Unique.LGTs$Organism)]<-"Wolbachia"
+Unique.LGTs$donor[grep("Serratia",Unique.LGTs$Organism)]<-"Serratia"
+Unique.LGTs$donor[grep("Spiroplasma",Unique.LGTs$Organism)]<-"Spiroplasma"
+Unique.LGTs$donor[grep("Yersinia",Unique.LGTs$Organism)]<-"Yersinia"
+Unique.LGTs$donor[grep("Cardinium",Unique.LGTs$Organism)]<-"Cardinium"
+Unique.LGTs$donor[grep("Baumannia|Blochmannia|Candidatus",Unique.LGTs$Organism)]<-"Blochmannia-like"
+
+Unique.bac.count<-Unique.LGTs %>% 
+  dplyr::count(donor)
+colnames(Unique.bac.count)<-c("donor","count")
+
+head(Unique.LGTs)
+
+# count the number of expressed proteins
+Unique.LGTs$Reannotated.CDS.totalcounts<-as.numeric(Unique.LGTs$Reannotated.CDS.totalcounts)
+
+Unique.LGTs %>% 
+  dplyr::count(Reannotated.CDS.totalcounts > 100)
+
+
+
+#---------------------------------#
+#Reannotated.CDS.totalcounts > 5
+#FALSE	65			
+#TRUE	30			
+#NA	7	
+#----------------------------------#
+
+
+# Assign general functions
+Unique.LGTs$funct<-"other"
+Unique.LGTs$funct[grep("transcriptional|Transcription|transcription",Unique.LGTs$Protein.names)]<-"Transcription"
+Unique.LGTs$funct[grep("transposase|Transposase",Unique.LGTs$Protein.names)]<-"TE-related"
+Unique.LGTs$funct[grep("transport|Transport",Unique.LGTs$Protein.names)]<-"Transport"
+Unique.LGTs$funct[grep("biosynthesis|de novo",Unique.LGTs$Protein.names)]<-"Metabolic function"
+Unique.LGTs$funct[grep("biosynthetic|metabolic",Unique.LGTs$Gene.ontology..biological.process.)]<-"Metabolic function"
+Unique.LGTs$funct[grep("regulation",Unique.LGTs$Gene.ontology..biological.process.)]<-"Regulatory function"
+Unique.LGTs$funct[grep("protein",Unique.LGTs$Gene.ontology..biological.process.)]<-"Protein-related function"
+Unique.LGTs$funct[grep("cell wall | membrane",Unique.LGTs$Gene.ontology..biological.process.)]<-"Cell wall/Membrane-related"
+Unique.LGTs$funct[grep("cell wall | membrane",Unique.LGTs$Gene.ontology..GO.)]<-"Cell wall/Membrane-related"
+Unique.LGTs$funct[grep("DNA|RNA",Unique.LGTs$Gene.ontology..molecular.function.)]<-"DNA repair / DNA binding"
+Unique.LGTs$funct[grep("metal",Unique.LGTs$Gene.ontology..molecular.function.)]<-"Metallopeptidase activity"
+
+Funct<-Unique.LGTs %>% 
+  dplyr::count(funct)
+colnames(Funct)<-c("Function","count")
+
+
+```
+
+### Make different plots to provide an overview of species-specific HGTs
+```{r}
+install.packages("ggpubr")
+library(ggpubr)
+
+# Make a plot to show how many species have unique LGTs and they subfamily identity
+species_bp <- ggbarplot(Unique.species.count, x = "species", y = "n",
+          fill = "subfamily",               # change fill color by cyl
+          color = "white",            # Set bar border colors to white
+          palette = "jco",            # jco journal color palett. see ?ggpar
+          sort.val = "asc",           # Sort the value in ascending order
+          sort.by.groups = TRUE,      # Sort inside each group
+          x.text.angle = 60           # Rotate vertically x axis texts
+          ) +
+  ylab("Number of unique HGTs") +
+  xlab("")
+species_bp + font("x.text", size = 10)
+
+#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Unique.LGTs.of.species_RAW.pdf", species_bp, width=15, height=10)
+
+# Make a plot to show the expression 
+Unique.LGTs$Reannotated.CDS.lengths<-as.numeric(Unique.LGTs$Reannotated.CDS.lengths)
+Unique.LGTs$Reannotated.s_covs<-as.numeric(Unique.LGTs$Reannotated.s_covs)
+
+Unique.LGTs$Uniprot_organism<-gsub("cellular.*?),","",Unique.LGTs$Uniprot_organism)
+Unique.LGTs$Uniprot_organism<-gsub(".*?, .*?, .*?, (.*?), .*","\\1",Unique.LGTs$Uniprot_organism)
+
+expression_vs_s_cov <- ggscatter(Unique.LGTs, x = "Reannotated.s_covs", y = "Reannotated.CDS.totalcounts",
+                add = "reg.line",               # Add regression line
+                conf.int = TRUE              # Add confidence interval
+                #color = "Uniprot_organism", palette = "jco", # Color by groups "cyl"
+              # shape = "Uniprot_organism"                   # Change point shape by groups "cyl"
+                )
+expression_vs_s_cov
+
+head(Unique.LGTs)
+
+Unique.LGTs$Reannotated.CDS.totalcounts<-as.numeric(Unique.LGTs$Reannotated.CDS.totalcounts)
+# Make a density plot to show s_cov
+s_cov<-Unique.LGTs %>%
+ #filter( Reannotated.CDS.totalcounts<5000 ) %>%
+  ggplot( aes(x=Reannotated.s_covs)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    theme_minimal()
+s_cov
+```
+
+
+## Make a plot for the bacterial donors
+```{r}
+# Compute percentages
+Unique.bac.count$fraction <- Unique.bac.count$count / sum(Unique.bac.count$count)
+
+# Compute the cumulative percentages (top of each rectangle)
+Unique.bac.count$ymax <- cumsum(Unique.bac.count$fraction)
+
+# Compute the bottom of each rectangle
+Unique.bac.count$ymin <- c(0, head(Unique.bac.count$ymax, n=-1))
+
+# Compute label position
+Unique.bac.count$labelPosition <- (Unique.bac.count$ymax + Unique.bac.count$ymin) / 2
+
+# Compute a good label
+Unique.bac.count$label <- paste0(Unique.bac.count$donor, "\n n= ", Unique.bac.count$count)
+
+# Make the plot
+bac.plot<-ggplot(Unique.bac.count, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=donor)) +
+  geom_rect() +
+  geom_label( x=3.5, aes(y=labelPosition, label=label), size=6) +
+  scale_fill_brewer(palette=4) +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  theme(legend.position = "none")
+bac.plot
+
+#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Unique.LGTs.bacteria_RAW.pdf", bac.plot, width=10, height=10)
+```
+
+
+
+
+
+
+```{r}
+library(UniprotR)
+go<-GetProteinGOInfo(Unique.LGTs$CDS.UniprotIDs[!is.na(Unique.LGTs$CDS.UniprotIDs)])
+#Plot Biological process information top 10 go terms  
+PlotGOBiological(go, Top = 10) 
+#Plot molecular function information top 20 go terms
+Plot.GOMolecular(go, Top = 20)
+#Plot subcellualr localization information 
+Plot.GOSubCellular(go) 
+#Combine Gene ontology plots into one plot 
+p_combined<-PlotGoInfo(go)
+#Handy visualization for publications 
+p2_combined<-PlotGOAll(GOObj = go, Top = 10, directorypath = getwd(), width = 8, height = 5)
+```
+
+
+## Make a plot concerning function and identity
+```{r}
+head(Funct)
+
+Funct$Function<-as.factor(Funct$Function)
+
+Funct %>%
+  mutate(Function = fct_reorder(Function, desc(count))) %>%
+  ggplot( aes(x=Function, y=count)) +
+    geom_bar(stat="identity", fill="#69b3a2", alpha=.6, width=.4) +
+    coord_flip() +
+    xlab("") +
+    theme_minimal()
+
+#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Unique.LGTs.function_RAW.pdf", width=12, height=10)
+```
+
+
+
+## Plot Overview plots for global LGTs
+
+````{r}
+
+LGTs$Reannotated.CDS.lengths<-as.numeric(LGTs$Reannotated.CDS.lengths)
+LGTs$Reannotated.s_covs<-as.numeric(LGTs$Reannotated.s_covs)
+LGTs$Reannotated.q_covs<-as.numeric(LGTs$Reannotated.q_covs)
+LGTs$Reannotated.CDS.totalcounts<-as.numeric(LGTs$Reannotated.CDS.totalcounts)
+
+
+# Make a density plot to show s_cov
+s_cov<-LGTs %>%
+  ggplot( aes(x=Reannotated.s_covs)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    theme_minimal()+
+  xlab("Subject coverage of bacterial reference protein")
+s_cov
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Scov_global_RAW.pdf", s_cov,width=15, height=10)
+
+# Show q_cov
+q_cov<-LGTs %>%
+  ggplot( aes(x=Reannotated.q_covs)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    theme_minimal()
+q_cov
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/qcov_global_RAW.pdf", q_cov,width=12, height=10)
+
+# Show CDS_lengths (Reannotated)
+CDS_lengths<-LGTs %>%
+  ggplot( aes(x=Reannotated.CDS.lengths)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    theme_minimal()
+CDS_lengths
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/CDS_lengths_global_RAW.pdf", CDS_lengths,width=12, height=10)
+
+expression<-LGTs %>%
+  filter(Reannotated.CDS.totalcounts<5000 ) %>%
+  ggplot( aes(x=Reannotated.CDS.totalcounts)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=1) +
+    theme_minimal()
+expression
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/expression_global_RAW.pdf", expression,width=12, height=10)
+
+LGTs %>% 
+  dplyr::count(Reannotated.CDS.lengths > 6000)
+#-------------------------------------------------#
+#Reannotated.CDS.totalcounts > 100
+#FALSE	557			
+#TRUE	384			
+#NA	112	
+#-------------------------------------------------#
+
+#-------------------------------------------------#
+#Reannotated.CDS.totalcounts > 5000
+#FALSE	884			
+#TRUE	57			
+#NA	112
+#-------------------------------------------------#
+```
+
+
+### Count number of extended and minimized loci after reannotation
+```{r}
+LGTs$Reannotated.CDS.lengths<-as.numeric(LGTs$Reannotated.CDS.lengths)
+LGTs$CDS.lengths<-as.numeric(LGTs$CDS.lengths)
+
+
+head(LGTs)
+LGTs %>% 
+  dplyr::count(Reannotated.CDS.lengths< CDS.lengths)
+
+#--------------------------------------#
+#Reannotated.CDS.lengths > CDS.lengths
+#FALSE	843			
+#TRUE	78			
+#NA	132			
+#---------------------------------------#
+
+LGTs %>% 
+  dplyr::count(CDS.startCodons == "ATG") # without extension 546 ATG start codons
+
+LGTs %>% 
+  dplyr::count(Reannotated.startCodon == "ATG") # after extension 628 ATG start codons 
+
+LGTs %>% 
+  dplyr::count(CDS.stopCodons == "TAA" | CDS.stopCodons == "TAG") # without extension 586 stop codons
+LGTs %>% 
+  dplyr::count(Reannotated.stopCodon == "TAA" | Reannotated.stopCodon == "TAG" ) # with extension 704
+
+
+LGTs %>% 
+  dplyr::count(CDS.startCodons == "ATG" & CDS.stopCodons == "TAA" | CDS.stopCodons =="TAG") # 355 complete candidates
+
+LGTs %>% 
+  dplyr::count(Reannotated.startCodon == "ATG" & Reannotated.stopCodon == "TAA" | Reannotated.stopCodon =="TAG") #525
+
+````
