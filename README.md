@@ -4,17 +4,20 @@
 This repository holds all the code to evaluate LGTs within ant genomes (subproject of the Global Ant Genomics Alliance).
 In here, you can find four different folders storing all the data to analyse horizontal gene transfers from bacteria to ants.
 
-1. Atom Scripts
+## 1. Atom Scripts
 This folder holds all initial workflows and Markdown scripts for different analyses within the Linux environment, as well as useful information about data and file types.
 
-2. R Scripts
-This folder contains scripts that have been written in RStudio 4.3.1.
+## 2. bash Scripts
+This folder holds scripts written in bash which can directly be submitted to the GridEngine Cluster.
 
-3. Perl Scripts
+## 3. Perl Scripts
 This folder holds the code to analyse RNAseq reads and conduct the RNAseq mapping for all high-quality LGT candidates.
 
-4. Python Scripts
+## 4. Python Scripts
 This folder contains a script to plot a pie chart of all bacterial donors of LGTs.
+
+## 5. R Scripts
+This folder contains scripts that have been written in RStudio 4.3.1.
 
 **Information about code & scripts**
 
@@ -25,7 +28,7 @@ Local and remote copies of files and folders
 macbase=/Users/Janina/sciebo/Master.LGTs
 ```
 
-### 2.1 Atom Scripts
+### 1.1 Atom Scripts
 General & Useful Information about data and file types
 ```bash
 ./atom_scripts/1_Data_and_file_types.md
@@ -88,3 +91,5 @@ We ran gene trees on prokaryotic protein LGT sequences and their closest blast h
 ```bash
 ./atom_scripts/11_Run_GeneTrees.md
 ```
+
+### 2.1 bash Scripts
