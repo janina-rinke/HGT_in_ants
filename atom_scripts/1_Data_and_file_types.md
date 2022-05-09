@@ -1,4 +1,6 @@
 # Data and file types
+This script contains information about different file types used in Linux programming and examples for simple commands using these files.
+
 
 `.gz files` gunzip
 
@@ -166,5 +168,3 @@ Output options:
 # -o FILE: Write output to file
 # -r: Show specified region. Format: scaffold:start-end.
 ```
-
-Last changed 23/06/2021

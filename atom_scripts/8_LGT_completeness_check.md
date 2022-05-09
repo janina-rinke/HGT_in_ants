@@ -1,5 +1,4 @@
 # Check LGT candidates for completeness
-##### Janina Rinke, 29.10.2021
 
 
 ## 1. Extract for every candidate the best uniprot hit from `dfast`.
@@ -122,5 +121,4 @@ sambamba view -h -F [NH]==1 mergedRNAseq.LGTregion.bam > uniquely_mapped.LGTregi
 cd /home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/run_final_keepingbam_pergagaid
 
 for i in */*; do sambamba view -h -F [NH]==1 $i/mergedRNAseq.LGTregion.bam > $i/uniquely_mapped.LGTregion.bam; done
-
 ```

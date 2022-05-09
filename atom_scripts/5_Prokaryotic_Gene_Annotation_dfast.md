@@ -1,6 +1,5 @@
 ## Prokaryotic gene annotation with `dfast` and `prodigal`
 
-##### Janina Rinke, 02.07.2021
 dfast: https://dfast.ddbj.nig.ac.jp/
 
 

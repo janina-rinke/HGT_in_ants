@@ -1,5 +1,6 @@
 # Calculating the coverage of candidate sequences and within the genome
-# Janina Rinke, 30.05.2021
+
+This script was our initial approach to calculate the coverage of LGTs and investigate reads. In the end, we used a different RNAseq mapping approach to calculate the coverage and conducted all analyses within R. All information about the analyses can be found in the thesis.
 
 - Based on mapped PacBio reads
 - Summary: Mapping of reads against genome -> Divide into windows -> calculate coverage in every window
@@ -92,12 +93,3 @@ For every sliding window, calculate coverage relative to "average coverage" and 
 ```
 p1 <-     ggplot(lgt.stackedL.good[[selection]],aes(x=covWindowCenter,y=log(cov/averageGlobalCoverage,2)))
 ```
-
-
--> Entweder Kandidaten, die sich um einen bestimmten Wert von der average coverage in dem sliding window unterscheiden rausschmeißen ODER wenn die coverage in dem sliding window der Kandidaten sehr low, bzw 0 ist rausschmeißen (damit werden Kandidaten, die keine reads haben, entfernt wie z.B. `GAGA-0343.Scaffold25-3332043-3332282`).
-
-Z.B sowas filtern wie: subset(cov = 0) column `cov` und `c_overlap` in Betracht ziehen
-
--> Wenn column `c_overlap`= 0 heißt es dann, in diesem Bereich gibt es höchstwahrscheinlich keine mapped PacBio reads?
-
-Last changed 23/06/2021 

@@ -1,6 +1,9 @@
 # LGT analysis
 
-##1. Extraction of border regions in PACBIO reads
+This script contains some commands to work with PacBio reads within the targeted ant genomes. In the final thesis, we did not end up using these commands to filter for misassemblies or investigate reads.
+
+
+## 1. Extraction of border regions in PACBIO reads
 
 ### 1.1 Viewing PacBio reads in the IGV web browser application
 
@@ -82,4 +85,3 @@ bedtools intersect -a LGTs.Scaffold96.windows.bed -b LGTs.coordinates.bed -f 1 -
 ```bash
 samtools faidx genome.fasta scaffold1:1000-100000
 ```
-Last updated 2021/05/19

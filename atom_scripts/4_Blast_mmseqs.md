@@ -1,5 +1,8 @@
 # Blast of LGT candidates with MMseqs2
-The file with all 496 LGT candidates can be found here:
+
+This script was used to annotate all final high-quality LGT candidates with the program `mmseqs2`. At the end, we used another tool to annotate all putative prokaryotic genes in this study.
+
+The file with all 497 LGT candidates can be found here:
 ```bash
 /global/scratch2/j_rink02/master/lgt/0_data/candidatefiles/GAGA.LGTs.allcoordinates.tsv
 ```
@@ -244,5 +247,3 @@ GAGA-0020.Scaffold42.25702-28653	WP_174516805.1	0.515	2889	448	0	2889	1	8	931	4.
 GAGA-0024.Scaffold1.16539177-16545088	WP_191111450.1	0.552	2751	399	0	2753	3	44	934	1.061E-289	963
 GAGA-0024.Scaffold5.1578789-1581254	WP_174516805.1	0.463	2463	472	0	2463	1	56	935	3.639E-224	724
 ```
-
-Last changed 2021/07/20
