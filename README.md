@@ -28,7 +28,7 @@ Local and remote copies of files and folders
 macbase=/Users/Janina/sciebo/Master.LGTs
 ```
 
-### 1.1 Atom Scripts
+### 1.1 Atom scripts
 General & Useful Information about data and file types
 ```bash
 ./atom_scripts/1_Data_and_file_types.md
@@ -92,4 +92,30 @@ We ran gene trees on prokaryotic protein LGT sequences and their closest blast h
 ./atom_scripts/11_Run_GeneTrees.md
 ```
 
-### 2.1 bash Scripts
+### 2.1 Bash scripts
+Blast any LGT candidate against a bacterial database and obtain the 20 best blast hits to create a phylogeny
+```bash
+./bash_scripts/LGT_pipeline.sh
+./bash_scripts/proteinBlast.sh
+```
+
+### 3.1 Perl scripts
+
+#### Modify all gff files obtained from dfast to obtain coordinates in reference to the genomes
+```bash
+./perl_scripts/1_Modify_gffs.pl
+```
+
+#### Run RNAseq mapping with StringTie
+```bash
+./perl_scripts/2_run_rna_mapping_wholegenome.pl
+```
+
+### 4.1 Python scripts
+Create a donut chart for bacterial origin of LGTs
+```bash
+./python_scripts/1_pie_chart.py
+```
+
+### 5.1 R scripts
+In this folder, the main analyses for LGT candidates can be found. All scripts have been written in RStudio 4.3.1
