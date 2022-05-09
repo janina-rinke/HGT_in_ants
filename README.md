@@ -118,4 +118,79 @@ Create a donut chart for bacterial origin of LGTs
 ```
 
 ### 5.1 R scripts
-In this folder, the main analyses for LGT candidates can be found. All scripts have been written in RStudio 4.3.1
+In this folder, the main analyses for LGT candidates can be found. All scripts have been written in RStudio 4.3.1.
+
+#### GAGA LGT finder analysis
+```bash
+./r_scripts/0_analyseLGTs.Rmd
+```
+
+#### Script to plot LGT candidates from automated prediction
+```bash
+./r_scripts/1_Candidate_plot.Rmd
+```
+
+#### LGT filtering of predicted candidates with pre-defined thresholds
+```bash
+./r_scripts/2_LGTfiltering.Rmd
+```
+
+#### Prepare candidates for BLAST searches
+```bash
+./r_scripts/3_Preparation_blast_candidates.Rmd
+```
+#### Visualization plots of LGT candidates
+```bash
+./r_scripts/4_Avg_length_plot.Rmd
+./r_scripts/5_Distribution_plots_avg_read_length.Rmd
+```
+
+#### Visualize LGT candidates and plot GAGA phylogeny with LGTs
+```bash
+./r_scripts/6_map2phylogeny.Rmd
+```
+
+#### Obtain all information from dfast gffs for candidates
+```bash
+./r_scripts/7_screenDfastGFFs.Rmd
+```
+
+#### Phylogeny creator for single LGT candidates with information from UniProt
+```bash
+./r_scripts/8_Gene_trees_LGTs.Rmd
+```
+
+#### Plot RNAseq coverage for all candidates using data from RNAseq mapping
+We used unique read counts as input and added up all read counts for all life stages within each respective HGT candidate.
+
+```bash
+./r_scripts/9_plotCoverage.Rmd
+```
+
+#### Calculate the expression and completeness of Candidates
+Here, we obtained a summary CDS-level table with information for all candidates, as well as a locus-level table with summarized information for all high-quality HGT candidates.
+```bash
+./r_scripts/10_calculateExpression.Rmd
+```
+
+#### Retrieve additional information from UniProt
+We used the package *uniprotR* to obtain additional information for all LGT candidates and integrated this information into our summarized tables.
+```bash
+./r_scripts/11_retrieveUniprotInfo.Rmd
+```
+
+####Comparison of original annotation and re-reannotation
+We visualized this comparison as a CDS length extension plot.
+```bash
+./r_scripts/12_ReannotationPlots.Rmd
+```
+
+#### Synteny of clade-specific LGTs
+```bash
+./r_scripts/13_Synteny.Rmd
+```
+
+#### Detail analyses of unique and species-specific LGTs and creation of plots for global LGTs
+```bash
+./r_scripts/14_Unique_LGTs.Rmd 
+```

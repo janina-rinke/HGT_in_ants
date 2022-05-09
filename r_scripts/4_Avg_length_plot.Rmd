@@ -1,5 +1,4 @@
 # Script to plot average length of good candidates 
-# Janina Rinke, 09.07.2021
 
 ```{r}
 library(ggplot2)
@@ -11,13 +10,13 @@ library(tidyverse)
 library(export)
 ```
 
-# Load the file with all good candidates from Excel 
+# Load the file with all good candidates from Excel
 ```{r}
 df <- GAGA_LGT_162_filtered_good_candidates_taxonomy
 head(df)
 ```
 
-# Split the candidate regions into single candidates 
+# Split the candidate regions into single candidates
 ```{r}
 new_df <- separate_rows(df, cand.start, cand.end, convert = T)
 ```
@@ -29,13 +28,13 @@ new_df <- separate_rows(df, cand.start, cand.end, convert = T)
 new_df$cand.length<-new_df$cand.end-new_df$cand.start
 ```
 
-# remove everything from GAGA-0200 to exclude the large region with the whole Blochmannia genome 
+# remove everything from GAGA-0200 to exclude the large region with the whole Blochmannia genome
 ```{r}
 dfnoGAGA200 <-subset(new_df, .id != "GAGA-0200.euk")
 ```
 
 # plot overview plots
-plot histogram of length to see how the candidates are distributed 
+plot histogram of length to see how the candidates are distributed
 ```{r}
 # length of candidate
 p0 <- ggplot(dfnoGAGA200, aes(x=cand.length)) +
@@ -52,9 +51,9 @@ p0 + geom_vline(aes(xintercept=mean(cand.length)), color="darkred", linetype="da
 
 
 ```{r}
-#splitted by subfamily 
+#splitted by subfamily
 p1 <- ggplot(dfnoGAGA200, aes(x=cand.length, fill =subfamily, color=subfamily)) +
-  geom_histogram(position="identity", alpha=0.2)+theme_classic() + 
+  geom_histogram(position="identity", alpha=0.2)+theme_classic() +
   scale_x_continuous(breaks = seq(0,8000, 1000)) +
   theme(legend.position = "top") +
   ggtitle("LGT candidate length for each ant subfamily") +

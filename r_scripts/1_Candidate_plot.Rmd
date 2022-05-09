@@ -1,5 +1,4 @@
 # R Script for plotting LGT candidates from automatic prediction
-# Janina Rinke, 09.04.2021
 
 
 #set working directory
@@ -81,6 +80,3 @@ p1 + theme(
 
 # Export to powerpoint
 graph2ppt(file="length_of_candidates")
-
-Last changed 2021/05/11
-Added to GitHub 

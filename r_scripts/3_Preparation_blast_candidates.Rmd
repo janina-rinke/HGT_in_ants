@@ -1,5 +1,4 @@
 # Script to prepare .tsv file for blast of candidates
-# Janina Rinke, 21.06.2021
 
 ```{r}
 library(ggplot2)
@@ -8,7 +7,7 @@ library(dplyr)
 library(tidyr)
 ```
 
-Load the file with all good candidates from Excel 
+Load the file with all good candidates from Excel
 ```{r}
 # data <- GAGA_LGT_162_filtered_good_candidates
 
@@ -22,7 +21,7 @@ new_candidates %>%
   select(.id, cand.scaffold, cand.start.x, cand.end.x)
 ```
 
-### Get only one candidate per row 
+### Get only one candidate per row
 
 Possibility 1: Split the columns with several candidates to only contain one candidate per row
 ```{r}
@@ -52,7 +51,7 @@ new_df$.id <- data2
 new_df <- new_df[-c(8, 12), ] # rows with negative end coordinates removed
 ```
 
-### Save file as tsv file 
+### Save file as tsv file
 ```{r}
 write.table(new_df,"/Users/Janina/sciebo/Master.LGTs/blastNewCandidates.tsv",sep="\t",quote = F,row.names = F, col.names = F)
 ```

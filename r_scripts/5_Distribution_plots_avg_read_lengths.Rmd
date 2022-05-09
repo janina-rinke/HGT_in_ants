@@ -1,5 +1,4 @@
 # Distribution plots of average read lengths in all GAGA genomes 
-# Janina Rinke, 21.08.2021
 
 ---
 title: "R Notebook: Read lengths distribution plots"
@@ -17,7 +16,7 @@ setwd("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data")
 
 # Load the data
 ```{r}
-PacBio <- read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGT_avg_reads_boundary_region.csv") 
+PacBio <- read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGT_avg_reads_boundary_region.csv")
 stLFR <- read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGT_avg_reads_boundary_region_stLFR.csv")
 ```
 
@@ -29,7 +28,7 @@ cleaned_PacBio <- na.omit(PacBio)
 
 mean <- mean(cleaned_PacBio$avg_read_length_boundary_region) #12748
 median <- median(cleaned_PacBio$avg_read_length_boundary_region) #12541
-``` 
+```
 
 ```{r}
 stLFR[,2] <- as.numeric(as.character(stLFR[,2]))
@@ -39,7 +38,7 @@ cleaned_stLFR <- na.omit(stLFR)
 
 stLFRmean <- mean(cleaned_stLFR$avg_read_length_boundary_region) #107
 stLFRmedian <- median(cleaned_stLFR$avg_read_length_boundary_region) #100
-``` 
+```
 # Plot the data
 ```{r}
 ggplot(cleaned_PacBio, aes(x=avg_read_length_boundary_region)) +
@@ -47,10 +46,10 @@ ggplot(cleaned_PacBio, aes(x=avg_read_length_boundary_region)) +
   scale_x_continuous(position = "bottom", breaks = seq(0,25000, 5000)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(title = "Average read lengths in PacBio genomes", x = "Average read length", y="Count") +
-  geom_vline(xintercept = median(cleaned_PacBio$avg_read_length_boundary_region), col = "red", lwd = 1) 
+  geom_vline(xintercept = median(cleaned_PacBio$avg_read_length_boundary_region), col = "red", lwd = 1)
 
 graph2ppt(file="PacBio_read_distribution")
-``` 
+```
 
 ```{r}
 ggplot(cleaned_stLFR, aes(x=avg_read_length_boundary_region)) +
@@ -58,12 +57,12 @@ ggplot(cleaned_stLFR, aes(x=avg_read_length_boundary_region)) +
   scale_x_continuous(position = "bottom", breaks = seq(0,300, 20)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(title = "Average read lengths in stLFR genomes", x = "Average read length", y="Count") +
-  geom_vline(xintercept = median(cleaned_stLFR$avg_read_length_boundary_region), col = "red", lwd = 1) 
+  geom_vline(xintercept = median(cleaned_stLFR$avg_read_length_boundary_region), col = "red", lwd = 1)
 
 graph2ppt(file="stLFR_read_distribution")
-``` 
+```
 
-# Load the data for plotting the number of candidates per genome 
+# Load the data for plotting the number of candidates per genome
 ```{r}
 LGTcount <- read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/GAGA.LGT.162.resulting.good.candidates.csv")
 LGTcount_clean <- na.omit(LGTcount)
@@ -74,7 +73,7 @@ class(LGTcount$species)
 class(LGTcount$subfamily)
 ```
 
-# Plot the number of LGT candidates 
+# Plot the number of LGT candidates
 ```{r}
 ggplot(LGTcount, aes(x=reorder(species, species, function(x)-length(x)), fill=subfamily, color = subfamily)) +
   geom_bar(position="identity", alpha=0.2) +theme_classic() +
@@ -83,5 +82,4 @@ ggplot(LGTcount, aes(x=reorder(species, species, function(x)-length(x)), fill=su
 
 #library(export)
 graph2ppt(file="LGT_candidate_numbers_sorted")
-``` 
-
+```
