@@ -43,3 +43,17 @@ GAGA-0360	Scaffold16	5909052	5909960
 ```bash
 samtools faidx genome Scaffold:start-stop > /global/scratch2/j_rink02/master/lgt/2_analysis/selection_analysis/Etherases/etherases.fa
 ```
+
+Extract CDS for the bacterial etherase from closest bacterial hit and from two outgroups from NCBI BLAST:
+
+```bash
+#closest bacterial hit: Spiroplasma sp.
+elink -db protein -id "APE13601.1" -target nuccore | efilter -molecule mrna| efetch -format fasta_cds_na >> /global/scratch2/j_rink02/master/lgt/2_analysis/selection_analysis/Etherases/etherases.fa
+
+#Outgroup 1: Paraclostridium bifermentans
+elink -db protein -id "UAG17450.1" -target nuccore | efilter -molecule mrna| efetch -format fasta_cds_na >> /global/scratch2/j_rink02/master/lgt/2_analysis/selection_analysis/Etherases/etherases.fa
+
+#Outgroup 2:
+elink -db protein -id "QQK08127.1" -target nuccore | efilter -molecule mrna| efetch -format fasta_cds_na >> /global/scratch2/j_rink02/master/lgt/2_analysis/selection_analysis/Etherases/etherases.fa
+
+```
