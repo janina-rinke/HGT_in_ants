@@ -1,17 +1,17 @@
-# Selection analysis of selected LGTs using HyPhy and RELAX
+# Selection analysis of selected LGTs using HyPhy
 
-Here, we will test for signatures of selection acting at different branches among the gene trees of LGTs.
+Here, we will test for signatures of selection acting at different branches among gene trees of LGTs derived from bacteria.
 
+## Etherases in eight different Camponotini species
+#### Calculate selection for Etherase LGTs
 
-### Calculate selection for Etherase LGTs
-
-Compare the etherases from all ant species and the closest bacterial hit plus two outgroups and test for signatures of positive selection across different branches in the phylogeny. 
+Compare the etherases from all ant species and test for signatures of positive selection across different branches in the phylogeny. 
 
 Our working hypothesis is that etherases were adapted in the respective ants and allowed them to use the bacterially-derived gene.
 
-### 1. Make a FASTA file of the coding sequence (nucleotide sequence) of the ant etherase genes.
+#### 1. Make a FASTA file of the coding sequence (nucleotide sequence) of the ant etherase genes.
 
-#### 1.1 Extract all necessary CDS for the ant etherases (8 ant species with etherases):
+##### 1.1 Extract all necessary CDS for the ant etherases (8 ant species with etherases):
 
 Coordinates of etherases:
 ```bash
@@ -53,8 +53,9 @@ CATGTTCAT
 >Cflo
 TTA....
 ```
-#### 1.2 Remove stop codons and anything that is not a multiple of three
-To obtain dNdS ratios and for prank and hyphy to work correctly, we need to transform the FASTA CDS sequences into a codon-fasta file with a custom perl script.
+##### 1.2 Remove stop codons and anything that is not a multiple of three
+To obtain dNdS ratios and for `prank` and `hyphy` to work correctly, we need to transform the FASTA CDS sequences into a codon-fasta file with a custom perl script called `replace_stop_codons.pl`.
+
 ```bash
 perl replace_stop_codons.pl etherases.cds.fa etherases_codoncorrect.cds.fa 
 ```
@@ -68,7 +69,7 @@ TTATTTACTATTAATAATATCAATTATTCGATTGCTATGTTGTGCNNNNNNTTTTTGACTTGTTTTAAAATCAACATTCT
 ```
 
 
-### 2 Make an alignment from the CDS FASTA file and compute a gene tree
+#### 2 Make an alignment from the CDS FASTA file and compute a gene tree
 For this, we will use a custom script called `dNdS.sh` which takes our corrected CDS FASTA file as input, makes the alignment and computes a gene tree (`IQtree`) using the alignment
 
 ```bash
