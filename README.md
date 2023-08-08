@@ -149,6 +149,7 @@ In this folder, the main analyses for HGT candidates can be found. All scripts h
 ```
 
 #### Visualize HGT candidates and plot GAGA phylogeny with HGTs
+This script was used to plot all HGTs detected by the automatic HGT finder pipeline, which is visualized in Figure 1. 
 ```bash
 ./r_scripts/6_map2phylogeny.Rmd
 ```

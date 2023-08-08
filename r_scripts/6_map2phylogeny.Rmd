@@ -41,9 +41,10 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 Load the necessary R libraries
 ```{r libraries}
 #if (!requireNamespace("BiocManager", quietly = TRUE))
-    #install.packages("BiocManager")
+   #install.packages("BiocManager")
 
 #BiocManager::install("treeio")
+#install.packages("devtools")
 #devtools::install_github("GuangchuangYu/ggtree")
 library(treeio)
 library(ggtree)
@@ -60,7 +61,7 @@ Load data from google spreadsheet (Already stored in an R object that you can ju
 #gsheet<-read_sheet(id,sheet="GlobalOverview",skip = 2,na = c(""," ","NA","#DIV/0!"),col_types = "c",trim_ws=T)
 #GlobalOverview<-as.data.frame(gsheet,stringsAsFactors=F)
 #save(GlobalOverview,file="../../misc/data/gsheet.GlobalOverview.21-09-22.Robj")
-load("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/gsheet.GlobalOverview.21-09-22.Robj")
+load("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/gsheet.GlobalOverview.21-09-22.Robj")
 ```
 
 Create a dataframe where the first row is the GAGA id (e.g. GAGA-0002), which are also used as the tip labels in the phylogeny
@@ -106,7 +107,7 @@ data2add$cleanSpeciesID<-dplyr::coalesce(data2add$Species,data2add$Species..from
 
 Load the tree file of all the GAGA genomes.
 ```{r}
-tree <- read.iqtree("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/hymenoptera_psc98_partition_b1000_40threads_msubnucl.treefile")
+tree <- read.iqtree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/hymenoptera_psc98_partition_b1000_40threads_msubnucl.treefile")
 ```
 
 Create a very quick and dirty plot of the phylogeny
@@ -170,8 +171,7 @@ tp2.5
 ```{r}
 library(readxl)
 
-#LGTs<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.xlsx")
-LGTs<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.UniProt.Info.Reannotated.xlsx")
+LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.UniProt.Info.Reannotated.xlsx")
 ```
 
 
@@ -197,6 +197,7 @@ tp5
 
 ```{r}
 #BiocManager::install("ggstar")
+#BiocManager::install("ggtreeExtra")
 library(ggtree)
 library(ggtreeExtra)
 library(ggplot2)
@@ -250,7 +251,7 @@ tp5.5 <- tp2.5 +
          grid.params=list(alpha=.2)      # Parameter to adjust gridlines around the tree
       ) +
       scale_fill_discrete(     #color of the external geom_layer
-       name="Protein",        #name of the legend for the external geom_layer
+       name="HGT-encoded protein",        #name of the legend for the external geom_layer
        guide=guide_legend(keywidth=1,keyheight=1,order=6, ncol=6)
       ) +
       theme(legend.position="bottom", # the position of legend.
@@ -262,13 +263,11 @@ tp5.5 <- tp2.5 +
           #legend.spacing.y = unit(0.01, "cm")
       )
 tp5.5
-
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/try.pdf",width=13,height=26) #save the tree in a pdf
 ```
 
 # A.5) Make a dataframe for the bacteria and subset the LGT count into Wolbachia and Blochmannia origin
 ```{r}
-LGT.bacteria<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.xlsx")[,c(15,2)]
+LGT.bacteria<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.xlsx")[,c(15,2)]
 
 # Make categories for all bacteria
 LGT.bacteria$bac.type<-"other"
@@ -316,7 +315,7 @@ tp6 <- tp5.5 +
       ) +
       scale_fill_brewer(    #color of the external geom_layer
       
-       name="Prokaryote origin",        #name of the legend for the external geom_layer
+       name="HGT Prokaryote origin",        #name of the legend for the external geom_layer
        guide=guide_legend(keywidth=1,keyheight=1,order=6, ncol=6)
       ) +
       theme(legend.position="bottom", # the position of legend.
@@ -329,7 +328,7 @@ tp6 <- tp5.5 +
       )
 tp6
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacteria_RAW.pdf", width=20, height=25)
+#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacteria_RAW.pdf", width=20, height=25)
 #ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/try.pdf",width=13,height=26) #save the tree in a pdf
 ```
 
@@ -357,115 +356,4 @@ tp7
 
 #ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacterialorigin.pdf",width=15,height=30) #save the tree in a pdf
 #graph2ppt(file="/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacterialorigin.ppt", width=12, height=12)
-```
-
-# A.8) Plot the number of CDS and their expression together with the protein layer
-```{r}
-#CDS<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.xlsx")
-#colnames(CDS)
-
-# For the number of CDS
-#Create a tally dataframe that counts how many CDS we have per species.
-#CDS.tally<-as.data.frame(table(select(CDS,.id)))
-#colnames(CDS.tally)<-c("GAGAid","CDS.count")
-
-# For the expression of the CDS sequences
-#CDS.expression<-CDS[,c(23,2)]
-#CDS.expression <- CDS.expression %>% count(.id,CDS.totalcounts, sort = T)
-#colnames(CDS.expression)<-c("GAGAid","expression","count")
-
-#CDS.expression <- na.omit(CDS.expression)
-#CDS.expression$expression <- as.numeric(CDS.expression$expression)
-
-#CDS.expression<-CDS.expression %>%
-  #dplyr::filter(expression != "NA") %>%
-  #dplyr::filter(expression > 10)
-
-#head(CDS.expression)
-```
-
-```{r}
-# For the second CDS bar layer outside of the tree, over the protein layer 
-tp7 <- tp5.5 +
-  new_scale_fill() +
-  geom_fruit(
-          data=CDS.tally,
-          geom=geom_bar,
-          mapping=aes(y=GAGAid, x=CDS.count), #The count will be mapped to x
-          pwidth=1.5,      # Width of the external layer
-          stat="identity",
-          orientation="y", #The orientation of the axis
-          position=position_stackx(hexpand=.9),   #Adjust the position of the geom_layer
-          axis.params =list(
-                         axis="x",       # add axis text of the layer.
-                         vjust=0.2,
-                         text.angle=0,   # the text size of axis.
-                         text.size=1.5,
-                         hjust=1,        # adjust the horizontal position of text of axis
-                         nbreak=1,       # number of lines within geom_layer,
-                           ),
-         grid.params=list(alpha=1.2)      # Parameter to adjust gridlines around the tree
-      ) +
-      scale_fill_discrete(     #color of the external geom_layer
-       name="Number of CDS",        #name of the legend for the external geom_layer
-       guide=guide_legend(keywidth=1,keyheight=1,order=6, ncol=6)
-      ) +
-      theme(legend.position="bottom", # the position of legend.
-            legend.box="vertical", legend.margin = margin(0,0,0,0), #change the spacing between the legend and the plot
-            legend.box.margin=margin(10,10,10,10),
-          legend.background=element_rect(fill=NA), # the background of legend.
-          legend.title=element_text(size=12), # the title size of legend.
-          legend.text=element_text(size=10) # the text size of legend.
-          #legend.spacing.y = unit(0.01, "cm")
-      )
-tp7
-
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/CDS.numbers.pdf",width=13,height=26) #save the tree in a pdf
-```
-
-```{r}
-# For the third layer (CDS expression) 
-tp8 <- tp7 +
-  new_scale_fill() 
-
-gheatmap(tp8,CDS.expression, offset=10,
-         colnames_position="top",
-         colnames_angle=90, colnames_offset_y = 1,
-         hjust=0, font.size=2) +
-    scale_fill_viridis_d(option="D", name="CDS expression")
-
-tp8
-
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/CDS.expression.pdf",width=13,height=26) #save the tree in a pdf
-```
-
-# A.9) Plot only the ankyrin repeat proteins
-Create a dataframe that counts the genomes with ankyrin repeats
-```{r}
-#Only select the ankyrins to show them as a heatmap
-CDS.ankyrins<-subset(CDS,CDS.products=="Ankyrin repeat protein") %>% group_by(.id) %>% tally()
-colnames(CDS.ankyrins)<-c(".id","protein")
-
-CDS.ankyrins$type<-"ankyrin repeat protein"
-head(CDS.ankyrins)
-```
-
-
-
-# A.10) Plot the Lysozymes only 
-```{r plot Lysozymes}
-# tp3 is needed
-head(LGTs)
-Lys<-subset(LGTs,Protein.names=="DUF1016 family protein" | Protein.names=="DUF1016 family protein;NA" | Protein.names=="DUF1016 family protein;NA;NA" | Protein.names=="DUF1016 family protein;NA;NA;NA" | Protein.names=="Lyzozyme M1") %>% group_by(.id) %>% tally()
-colnames(Lys)<-c(".id","protein")
-
-Lys$type<-"Lysozyme"
-head(Lys)
-
-tpLys<-tp3 %<+% Lys
-
-tpLys1<-tpLys+geom_tippoint(aes(size=protein),col="red", alpha=.5)
-tpLys1
-
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.Lyzozymes.pdf",width = 16,height=24) #save the tree in a pdf
 ```
