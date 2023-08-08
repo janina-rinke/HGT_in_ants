@@ -38,7 +38,7 @@ General & Useful Information about data and file types
 ```
 Initially used commands to work with PacBio reads within the targeted ant genomes.
 ```bash
-./markdown_scripts/2_HGT_Radanalysis.md
+./markdown_scripts/2_HGT_Readanalysis.md
 ```
 
 Initial starting point to calculate coverage of HGT Candidates
