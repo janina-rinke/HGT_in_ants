@@ -5,21 +5,6 @@
 This repository holds all the code to evaluate HGTs (synonym: LGTs) within ant genomes (subproject of the Global Ant Genomics Alliance).
 In here, you can find five different folders storing all the data to analyse horizontal gene transfers from bacteria to ants.
 
-### 1. Markdown Scripts (`.md`)
-This folder holds all initial workflows and Markdown scripts for different analyses within the Linux environment, as well as useful information about data and file types.
-
-### 2. Bash Scripts (`.sh`)
-Contains scripts written in bash which can directly be submitted to any cluster.
-
-### 3. Perl Scripts (`.pl`)
-Code to analyse RNAseq reads obtained from GAGA and conduct the RNAseq mapping for all high-quality HGT candidates to investigate gene expression.
-
-### 4. Python Scripts (`.py`)
-This folder contains a script to plot a pie chart of all bacterial donors of HGTs.
-
-### 5. R Scripts (`.Rmd`)
-This folder contains scripts that have been written in RStudio 4.3.1.
-
 ## Information about Code & Scripts
 
 Local and remote copies of files and folders: 
@@ -30,8 +15,9 @@ macbase=/Users/Janina/sciebo/MASTER/Masterarbeit/lgt
 # cluster
 cluster=/global/scratch2/j_rink02/master/HGT
 ```
+### 01. Markdown Scripts (`.md`)
+This folder holds all initial workflows and Markdown scripts for different analyses within the Linux environment, as well as useful information about data and file types.
 
-### 1.1 Markdown scripts - detailed information
 General & Useful Information about data and file types
 ```bash
 ./markdown_scripts/1_Data_and_file_types.md
@@ -94,15 +80,16 @@ We ran gene trees on the clade-specific prokaryotic protein HGT sequences (Lysoz
 ```bash
 ./markdown_scripts/11_Run_GeneTrees.md
 ```
+### 02. Bash Scripts (`.sh`)
+Contains scripts written in bash which can directly be submitted to any cluster.
 
-### 2.1 Bash scripts
 Blast any HGT candidate against a bacterial database and obtain the 20 best blast hits to create a phylogeny
 ```bash
 ./bash_scripts/HGT_pipeline.sh
 ./bash_scripts/proteinBlast.sh
 ```
-
-### 3.1 Perl scripts
+### 03. Perl Scripts (`.pl`)
+Code to analyse RNAseq reads obtained from GAGA and conduct the RNAseq mapping for all high-quality HGT candidates to investigate gene expression.
 
 #### Modify all gff files obtained from dfast to obtain coordinates in reference to the genomes
 ```bash
@@ -113,14 +100,14 @@ Blast any HGT candidate against a bacterial database and obtain the 20 best blas
 ```bash
 ./perl_scripts/2_run_rna_mapping_wholegenome.pl
 ```
+### 04. Python Scripts (`.py`)
+This folder contains a script to plot a pie chart of all bacterial donors of HGTs.
 
-### 4.1 Python scripts
-This script was used to create a donut plot of the bacterial donors of HGTs, which is visualized in Figure 2. 
+The script was used to create a donut plot of the bacterial donors of HGTs, which is visualized in Figure 2. 
 ```bash
 ./python_scripts/1_Bacterial_distribution_piechart.ipynb
 ```
-
-### 5.1 R scripts
+### 05. R Scripts (`.Rmd`)
 In this folder, the main analyses for HGT candidates can be found. All scripts have been written in RStudio 4.3.1.
 
 #### GAGA HGT finder analysis
