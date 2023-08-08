@@ -26,7 +26,7 @@ Local and remote copies of files and folders
 
 ```bash
 # mac
-macbase=/Users/Janina/sciebo/Master.HGTs
+macbase=/Users/Janina/sciebo/MASTER/Masterarbeit/lgt
 # cluster
 cluster=/global/scratch2/j_rink02/master/HGT
 ```
