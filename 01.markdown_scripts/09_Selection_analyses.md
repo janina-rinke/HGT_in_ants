@@ -1,6 +1,6 @@
 # Selection analysis of selected LGTs using HyPhy
 
-Here, we will test for signatures of selection acting at different branches among gene trees of LGTs derived from bacteria.
+Test for signatures of selection acting at different branches among gene trees of LGTs derived from bacteria.
 
 ## Etherases in eight different Camponotini species
 #### Calculate selection for Etherase LGTs
