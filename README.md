@@ -18,16 +18,16 @@ cluster=/global/scratch2/j_rink02/master/HGT
 ### 01. Markdown Scripts (`.md`)
 This folder holds all initial workflows and Markdown scripts for different analyses within the Linux environment, as well as useful information about data and file types.
 
-General & Useful Information about data and file types
+1 General & Useful Information about data and file types
 ```bash
-./markdown_scripts/1_Data_and_file_types.md
+./markdown_scripts/01_Data_and_file_types.md
 ```
-Initially used commands to work with PacBio reads within the targeted ant genomes.
+2 Initially used commands to work with PacBio reads within the targeted ant genomes.
 ```bash
 ./markdown_scripts/2_HGT_Readanalysis.md
 ```
 
-Initial starting point to calculate coverage of HGT Candidates
+3 Initial starting point to calculate coverage of HGT Candidates
 ```bash
 ./markdown_scripts/3_Calculation_Coverage.md
 ```
