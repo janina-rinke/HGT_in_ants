@@ -105,50 +105,50 @@ In this folder, the main analyses for HGT candidates can be found. All scripts h
 
 #### GAGA HGT finder analysis
 ```bash
-./r_scripts/0_analyseLGTs.Rmd
+./r_scripts/00_analyseLGTs.Rmd
 ```
 
 #### Script to plot HGT candidates from automated prediction
 ```bash
-./r_scripts/1_Candidate_plot.Rmd
+./r_scripts/01_Candidate_plot.Rmd
 ```
 
 #### HGT filtering of predicted candidates with pre-defined thresholds
 ```bash
-./r_scripts/2_HGTfiltering.Rmd
+./r_scripts/02_HGTfiltering.Rmd
 ```
 
 #### Prepare candidates for BLAST searches
 ```bash
-./r_scripts/3_Preparation_blast_candidates.Rmd
+./r_scripts/03_Preparation_blast_candidates.Rmd
 ```
 #### Visualization plots of HGT candidates
 ```bash
-./r_scripts/4_Avg_length_plot.Rmd
-./r_scripts/5_Distribution_plots_avg_read_length.Rmd
+./r_scripts/04_Avg_length_plot.Rmd
+./r_scripts/05_Distribution_plots_avg_read_length.Rmd
 ```
 
 #### Visualize HGT candidates and plot GAGA phylogeny with HGTs
 This script was used to plot all HGTs detected by the automatic HGT finder pipeline, which is visualized in Figure 1. 
 ```bash
-./r_scripts/6_map2phylogeny.Rmd
+./r_scripts/06_map2phylogeny.Rmd
 ```
 
 #### Obtain all information from dfast gffs for candidates
 ```bash
-./r_scripts/7_screenDfastGFFs.Rmd
+./r_scripts/07_screenDfastGFFs.Rmd
 ```
 
 #### Phylogeny creator for single HGT candidates with information from UniProt
 ```bash
-./r_scripts/8_Gene_trees_HGTs.Rmd
+./r_scripts/08_Gene_trees_HGTs.Rmd
 ```
 
 #### Plot RNAseq coverage for all candidates using data from RNAseq mapping
 We used unique read counts as input and added up all read counts for all life stages within each respective HGT candidate.
 
 ```bash
-./r_scripts/9_plotCoverage.Rmd
+./r_scripts/09_plotCoverage.Rmd
 ```
 
 #### Calculate the expression and completeness of Candidates
