@@ -72,35 +72,7 @@ We checked for selection using HyPhy on the clade-specific HGTs (Lysozymes, MurN
 ```bash
 ./markdown_scripts/09_Selection_analyses.md
 ```
-
-### 02. Bash Scripts (`.sh`)
-Contains scripts written in bash which can directly be submitted to any cluster.
-
-Blast any HGT candidate against a bacterial database and obtain the 20 best blast hits to create a phylogeny
-```bash
-./bash_scripts/HGT_pipeline.sh
-./bash_scripts/proteinBlast.sh
-```
-### 03. Perl Scripts (`.pl`)
-Code to analyse RNAseq reads obtained from GAGA and conduct the RNAseq mapping for all high-quality HGT candidates to investigate gene expression.
-
-#### Modify all gff files obtained from dfast to obtain coordinates in reference to the genomes
-```bash
-./perl_scripts/1_Modify_gffs.pl
-```
-
-#### Run RNAseq mapping with StringTie
-```bash
-./perl_scripts/2_run_rna_mapping_wholegenome.pl
-```
-### 04. Python Scripts (`.py`)
-This folder contains a script to plot a pie chart of all bacterial donors of HGTs.
-
-The script was used to create a donut plot of the bacterial donors of HGTs, which is visualized in Figure 2. 
-```bash
-./python_scripts/1_Bacterial_distribution_piechart.ipynb
-```
-### 05. R Scripts (`.Rmd`)
+### 02. R Scripts (`.Rmd`)
 In this folder, the main analyses for HGT candidates can be found. All scripts have been written in RStudio 4.3.1.
 
 #### GAGA HGT finder analysis
@@ -174,4 +146,24 @@ We visualized this comparison as a CDS length extension plot.
 #### Detail analyses of unique and species-specific HGTs and creation of plots for global HGTs
 ```bash
 ./r_scripts/14_Unique_HGTs.Rmd 
+```
+
+### 03. Perl Scripts (`.pl`)
+Code to analyse RNAseq reads obtained from GAGA and conduct the RNAseq mapping for all high-quality HGT candidates to investigate gene expression.
+
+#### Modify all gff files obtained from dfast to obtain coordinates in reference to the genomes
+```bash
+./perl_scripts/1_Modify_gffs.pl
+```
+
+#### Run RNAseq mapping with StringTie
+```bash
+./perl_scripts/2_run_rna_mapping_wholegenome.pl
+```
+### 04. Python Scripts (`.py`)
+This folder contains a script to plot a pie chart of all bacterial donors of HGTs.
+
+The script was used to create a donut plot of the bacterial donors of HGTs, which is visualized in Figure 2. 
+```bash
+./python_scripts/1_Bacterial_distribution_piechart.ipynb
 ```
