@@ -104,6 +104,7 @@ The script was used to create a donut plot of the bacterial donors of HGTs, whic
 In this folder, the main analyses for HGT candidates can be found. All scripts have been written in RStudio 4.3.1.
 
 #### GAGA HGT finder analysis
+Identification of HGTs with protein-coding hits and conduction of overview plots for all HGT candidates detected by the automated HGT finder pipeline. These overview plots were used as a starting point for all downstream analyses and to determine filters for the identification of true HGTs.
 ```bash
 ./r_scripts/00_analyseLGTs.Rmd
 ```
