@@ -48,6 +48,9 @@ if (!require(remotes)) {
 }
 remotes::install_github('jorvlan/raincloudplots')
 
+#BiocManager::install("GenomicRanges")
+install.packages("tidyverse")
+
 library(doParallel)
 library(ggplot2)
 library(GenomicRanges)

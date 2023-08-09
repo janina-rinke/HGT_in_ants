@@ -1,6 +1,6 @@
-# Blast of LGT candidates with MMseqs2
+# Blast of LGT candidates with `mmseqs2`
 
-This script was used to annotate all final high-quality LGT candidates with the program `mmseqs2`. At the end, we used another tool to annotate all putative prokaryotic genes in this study.
+This script was initially used to annotate all final high-quality LGT candidates with the program `mmseqs2`. For the final gene annotation, we continued with `dfast` to annotate all putative prokaryotic genes in this study.
 
 The file with all 497 LGT candidates can be found here:
 ```bash

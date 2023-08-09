@@ -105,7 +105,7 @@ In this folder, the main analyses for HGT candidates can be found. All scripts h
 
 #### GAGA HGT finder analysis
 ```bash
-./r_scripts/0_analyseHGTs.Rmd
+./r_scripts/0_analyseLGTs.Rmd
 ```
 
 #### Script to plot HGT candidates from automated prediction
