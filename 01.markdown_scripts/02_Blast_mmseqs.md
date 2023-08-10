@@ -1,7 +1,5 @@
 # Blast of LGT candidates with `mmseqs2`
 
-This script was initially used to annotate all final high-quality LGT candidates with the program `mmseqs2`. For the final gene annotation, we continued with `dfast` to annotate all putative prokaryotic genes in this study.
-
 The file with all 497 LGT candidates can be found here:
 ```bash
 /global/scratch2/j_rink02/master/lgt/0_data/candidatefiles/GAGA.LGTs.allcoordinates.tsv
