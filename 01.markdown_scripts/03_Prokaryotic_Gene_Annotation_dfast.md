@@ -27,7 +27,7 @@ Number of tRNAs:	52
 Number of CRISPRs:	2
 ```
 
-####1.2 Run `dfast` on the cluster
+#### 1.2 Run `dfast` on the cluster
 The dfast command-line tool is also referred to as dfast-core to differentiate it from its online version.
 ##### Install `dfast` with `conda`:
 ```bash

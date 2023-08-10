@@ -19,22 +19,17 @@ cluster=/global/scratch2/j_rink02/master/HGT
 This folder holds all markdown scripts for different analyses within the Linux environment.
 
 #### Calculation of reads overlapping HGT boundaries
-
-I used bedtools and samtools to calculate the reads overlapping the start, end and total sequence length of HGT candidates.
+`bedtools` and `samtools` were used to map raw sequencing reads to the respective genomes and to calculate reads overlapping the start, end, and total sequence length of HGT candidates.
 ```bash
 ./markdown_scripts/01_countBoundaryReads.md
 ```
 
-#### MMseqs2
-`mmseqs2` was run to annotate putative prokaryotic HGT sequences in ant genomes.
+#### Prokaryotic gene annotation 
+`mmseqs2` and `dfast` were run to annotate putative prokaryotic HGT sequences in ant genomes.
 ```bash
+# Find the best blast hit with mmseqs with running against UniRef90, NR and NT databases.
 ./markdown_scripts/02_Blast_mmseqs.md
-```
-
-#### DFAST
-
-DFAST was run as another prokaryotic gene annotation tool.
-```bash
+# Run dfast against dfast protein database, COG and TIGR databases
 ./markdown_scripts/03_Prokaryotic_Gene_Annotation_dfast.md
 ```
 
