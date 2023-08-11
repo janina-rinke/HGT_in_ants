@@ -21,21 +21,19 @@ This folder holds all markdown scripts for different analyses within the Linux e
 #### Calculation of reads overlapping HGT boundaries
 `bedtools` and `samtools` were used to map raw sequencing reads to the respective genomes and to calculate reads overlapping the start, end, and total sequence length of HGT candidates.
 ```bash
+#Calculate extension based on average read length distribution, count one read value per boundary
 ./markdown_scripts/01_countBoundaryReads.md
+# Read counts only for remaining HQ HGT candidates, count 3 values: start, end, complete HGT + extension
+./markdown_scripts/02_count3ValueBoundaryReads_HQ_LGTs.md
 ```
 
 #### Prokaryotic gene annotation 
 `mmseqs2` and `dfast` were run to annotate putative prokaryotic HGT sequences in ant genomes.
 ```bash
 # Find the best blast hit with mmseqs with running against UniRef90, NR and NT databases.
-./markdown_scripts/02_Blast_mmseqs.md
+./markdown_scripts/03_Blast_mmseqs.md
 # Run dfast against dfast protein database, COG and TIGR databases
-./markdown_scripts/03_Prokaryotic_Gene_Annotation_dfast.md
-```
-
-Read counts only for remaining HQ HGT candidates
-```bash
-./markdown_scripts/04_ReadCounts_FilteredCandidates.md
+./markdown_scripts/04_Prokaryotic_Gene_Annotation_dfast.md
 ```
 
 #### Check completeness of HGT candidates
