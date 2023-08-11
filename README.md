@@ -41,7 +41,7 @@ Input files are files obtained from `dfast`.
 ```
 
 #### Re-annotation of incomplete HGT candidates
-All candidates were extended by 1000 bp in 5' and 3' direction and re-annotated with `dfast`.
+All candidates were extended by 1000 bp in 5' and 3' direction and re-annotated with `dfast` to identify HGTs which were annotated incompletely.
 ```bash
 ./markdown_scripts/05_reannotation.DFAST.md
 ```
@@ -84,49 +84,47 @@ We calculated average read lengths for both PacBio and stLFR genomes separately.
 ./r_scripts/03_Distribution_plots_avg_read_length.Rmd
 ```
 
-#### Visualize HGT candidates and plot GAGA phylogeny with HGTs
-This script was used to plot all HGTs detected by the automatic HGT finder pipeline, which is visualized in Figure 1. 
+#### Calculate expression of HGTs and candidate completeness
+Here, we obtained a summary CDS-level table, as well as a locus-level table with summarized information, including expression based on RNAseq data, for all high-quality HGT candidates.
 ```bash
-./r_scripts/04_map2phylogeny.Rmd
+./r_scripts/04_calculateExpression.Rmd
+```
+
+#### Plot coverage of gene expression for all HGTs
+We used unique read counts as input and added up all read counts for all life stages within each respective HGT candidate. RNAseq coverage was visualized for each HGT candidate.
+
+```bash
+./r_scripts/05_plotRNAseqCoverage.Rmd
 ```
 
 #### Obtain all information from dfast gffs for candidates
+Query coverage and subject coverage were added as additional information for every HGT candidate to estimate completeness and functionality of the HGT.
 ```bash
-./r_scripts/05_screenDfastGFFs.Rmd
+./r_scripts/06_screenDfastGFFs.Rmd
 ```
 
-#### Phylogeny creator for single HGT candidates with information from UniProt
+#### Visualize HGT candidates and plot GAGA phylogeny with HGTs
+This script was used to plot all HGTs detected by the automatic HGT finder pipeline, which is visualized in Figure 1. 
 ```bash
-./r_scripts/06_Gene_trees_HGTs.Rmd
-```
-
-#### Plot RNAseq coverage for all candidates using data from RNAseq mapping
-We used unique read counts as input and added up all read counts for all life stages within each respective HGT candidate.
-
-```bash
-./r_scripts/07_plotCoverage.Rmd
-```
-
-#### Calculate the expression and completeness of Candidates
-Here, we obtained a summary CDS-level table with information for all candidates, as well as a locus-level table with summarized information for all high-quality HGT candidates.
-```bash
-./r_scripts/08_calculateExpression.Rmd
+./r_scripts/07_map2phylogeny.Rmd
 ```
 
 #### Retrieve additional information from UniProt
-We used the package *uniprotR* to obtain additional information for all HGT candidates and integrated this information into our summarized tables.
+We used the package *uniprotR* to obtain additional information for all HGT candidates and integrated this information into our summarized tables for functional analyses and as a basis for in-depth analyses of clade-specific LGTs.
 ```bash
-./r_scripts/09_retrieveUniprotInfo.Rmd
+./r_scripts/08_retrieveUniprotInfo.Rmd
 ```
 
 #### Synteny of clade-specific HGTs
+All clade-specific LGT regions were extended by 50 kb up- and downstream to infer synteny of genes.
 ```bash
-./r_scripts/10_Synteny.Rmd
+./r_scripts/09_Synteny.Rmd
 ```
 
 #### Detail analyses of unique and species-specific HGTs and creation of plots for global HGTs
+This script was used to investigate unique and species-specific HGTs which is visualized in Figure 6.
 ```bash
-./r_scripts/11_Unique_HGTs.Rmd 
+./r_scripts/10_Unique_HGTs.Rmd 
 ```
 
 ### 03. Perl Scripts (`.pl`)
@@ -142,9 +140,7 @@ Code to analyse RNAseq reads obtained from GAGA and conduct the RNAseq mapping f
 ./perl_scripts/2_run_rna_mapping_wholegenome.pl
 ```
 ### 04. Python Scripts (`.py`)
-This folder contains a script to plot a pie chart of all bacterial donors of HGTs.
-
-The script was used to create a donut plot of the bacterial donors of HGTs, which is visualized in Figure 2. 
+Script used to create a donut plot of the bacterial donors of HGTs, which is visualized in Figure 2. 
 ```bash
 ./python_scripts/1_Bacterial_distribution_piechart.ipynb
 ```
