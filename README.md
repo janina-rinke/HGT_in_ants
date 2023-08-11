@@ -28,42 +28,40 @@ This folder holds all markdown scripts for different analyses within the Linux e
 ```
 
 #### Prokaryotic gene annotation 
-`mmseqs2` and `dfast` were run to annotate putative prokaryotic HGT sequences in ant genomes.
+`prodigal`, `kraken2`, and `dfast` were run to annotate putative prokaryotic HGT sequences in ant genomes. For all downstream analyses, only `dfast` results were used.
+
 ```bash
-# Find the best blast hit with mmseqs with running against UniRef90, NR and NT databases.
-./markdown_scripts/03_Blast_mmseqs.md
-# Run dfast against dfast protein database, COG and TIGR databases
-./markdown_scripts/04_Prokaryotic_Gene_Annotation_dfast.md
+./markdown_scripts/03_Prokaryotic_Gene_Annotation_dfast.md
 ```
 
 #### Check completeness of HGT candidates
 Input files are files obtained from `dfast`.
 ```bash
-./markdown_scripts/05_HGT_completeness_check.md
+./markdown_scripts/04_HGT_completeness_check.md
 ```
 
 #### Re-annotation of incomplete HGT candidates
 All candidates were extended by 1000 bp in 5' and 3' direction and re-annotated with `dfast`.
 ```bash
-./markdown_scripts/06_reannotation.DFAST.md
+./markdown_scripts/05_reannotation.DFAST.md
 ```
 
 #### Check for additional candidates within all GAGA genomes
 We used this script to identify putative HGTs that were previously filtered out due to our strict filtering criteria. All resulting candidates were intersected with initially predicted HGT candidates by the automated HGT finder pipeline.
 ```bash
-./markdown_scripts/07_Blast_GAGA_genomes.md
+./markdown_scripts/06_Blast_GAGA_genomes.md
 ```
 
 #### Running gene trees on HGTs of interest
 We ran gene trees on the clade-specific prokaryotic protein HGT sequences (Lysozymes, MurNAc etherases, CFA synthases) and their closest blast homologs to conduct phylogenetic analyses.
 ```bash
-./markdown_scripts/08_Run_GeneTrees.md
+./markdown_scripts/07_Run_GeneTrees.md
 ```
 
 #### Checking for selection among clade-specific HGTs
 We checked for selection using HyPhy on the clade-specific HGTs (Lysozymes, MurNAc etherases, CFA synthases).
 ```bash
-./markdown_scripts/09_Selection_analyses.md
+./markdown_scripts/08_Selection_analyses.md
 ```
 ### 02. R Scripts (`.Rmd`)
 In this folder, the main analyses for HGT candidates can be found. All scripts have been written in RStudio 4.3.1.

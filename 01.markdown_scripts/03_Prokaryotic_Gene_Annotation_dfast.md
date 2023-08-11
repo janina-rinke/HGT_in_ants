@@ -1,11 +1,71 @@
-## Prokaryotic gene annotation with `dfast` and `prodigal`
+# 1 Prepare fasta files for all HGT candidates to use in a prokaryotic gene annotation with DFAST
+
+A file with all 497 HGT candidates can be found here:
+```bash
+/global/scratch2/j_rink02/master/lgt/0_data/candidatefiles/GAGA.LGTs.allcoordinates.tsv
+```
+
+Structure of the file:
+```bash
+GAGA-0020	Scaffold1	5322877	5323044
+GAGA-0020	Scaffold107	144838	147367
+GAGA-0020	Scaffold17	156258	159230
+GAGA-0020	Scaffold267	55721	56766
+GAGA-0020	Scaffold31	542876	547130
+GAGA-0020	Scaffold31	613867	651311
+GAGA-0020	Scaffold31	704726	708354
+GAGA-0020	Scaffold38	658653	660450          
+```
+## Databases to use:
+- NR                  	Aminoacid 	       -	https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA
+- NT                  	Nucleotide	       -	https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA
+- UniRef90            	Aminoacid 	     yes	https://www.uniprot.org/help/uniref
+
+## Workflow:
+
+1. in bash
+   - loop over the rows. Start with :
+```
+GAGA-0020	Scaffold1	5322877	5323044
+```
+
+2. Find the corresponding genome fasta file:
+```
+id=GAGA-0020
+/0_data/GAGAgenomes/$id.fa
+```
+3. extract the correct region from the genome fasta (`$id.fa`).
+​
+All together with the `parallel` command:
+```bash
+cat /global/scratch2/j_rink02/master/lgt/0_data/candidatefiles/GAGA.LGTs.allcoordinates.tsv | parallel --colsep '\t' "samtools faidx /global/scratch2/j_rink02/master/lgt/0_data/assemblies/{1}*.fasta {2}:{3}-{4} > /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/{1}.{2}.{3}-{4}.fa"
+```
+
+What the above command does:
+1. give out the file `GAGA.LGTs.allcoordinates.tsv`
+2. recognize the file and that it is tab-separated, parallel assigns automatically values to each tab separated column {1},{2} etc...
+3. use samtools to extract the gaga id {1}, scaffold{2} and start-end {3}-{4} from every genome fasta file in the directory containing the assemblies
+4. give as output one file per candidate which is named after id, scaffold, start-end.fa and save it in the directory `candidates.fasta`
+
+The files in the directory `candidates.fasta` now look like the following:
+```bash
+GAGA-0020.Scaffold17.156258-159230.fa			 GAGA-0363.Scaffold10.3446272-3446687.fa
+GAGA-0020.Scaffold267.55721-56766.fa			 GAGA-0363.Scaffold10.7932710-7932924.fa
+GAGA-0020.Scaffold31.542876-547130.fa			 GAGA-0363.Scaffold15.2721767-2721972.fa
+GAGA-0020.Scaffold31.613867-651311.fa			 GAGA-0363.Scaffold15.6376837-6377052.fa
+GAGA-0020.Scaffold31.704726-708354.fa			 GAGA-0363.Scaffold1.837744-837938.fa
+GAGA-0020.Scaffold38.658653-660450.fa			 GAGA-0363.Scaffold2.13656233-13656485.fa
+```
+
+All files in the `candidates.fasta` directory are ready to be used for the prokaryotic gene annotation.
+
+# 2 Prokaryotic gene annotation with `dfast` and `prodigal`
 
 dfast: https://dfast.ddbj.nig.ac.jp/
 
-
-## 1. Prokaryotic gene annotation with `dfast`
+## 2.1 Prokaryotic gene annotation with `dfast`
 DFAST is a flexible and customizable pipeline for prokaryotic genome annotation.
-#### 1.1 Run `dfast` on the website
+#### 2.1.1 Run `dfast` on the website
 
 File with LGT candidates:
 ```bash
@@ -27,7 +87,7 @@ Number of tRNAs:	52
 Number of CRISPRs:	2
 ```
 
-#### 1.2 Run `dfast` on the cluster
+#### 2.1.2 Run `dfast` on the cluster
 The dfast command-line tool is also referred to as dfast-core to differentiate it from its online version.
 ##### Install `dfast` with `conda`:
 ```bash
@@ -201,7 +261,7 @@ find . -name "OUT*" | parallel -I% --max-args 1 qsub -v file="%" batch_dfast_job
 
 After running the script, not all candidates contain all files from the complete pipeline (Possible bug in GridEngine). Files, which do not contain all resulting dfast files need to be identified and the `dfast`pipeline needs to be re-run for them.
 
-####1.3 Debugging of incomplete `dfast` candidates
+##### Debugging of incomplete `dfast` candidates
 
 Find all directories which do not contain a `cds.fna` file and save them into a list:
 ```bash
@@ -226,10 +286,9 @@ find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/cds.fna
 ```
 If all candidates have successfully completed the pipeline, no more candidate directories should be showing up here.
 
--------------------------------------------------------------------------
-## 2. Prokaryotic gene annotation with `prodigal`
+## 2.2 Prokaryotic gene annotation with `prodigal`
 
-####2.1 Run `prodigal` on the cluster
+### 2.2.1 Run `prodigal` on the cluster
 Use the option `-p meta` to annotate sequences with less than 20 kb length.
 
 ##### Load the module for `prodigal`:
@@ -280,7 +339,7 @@ cat protein.faa | grep ">" | wc -l
 #1980
 ```
 
-## 3. Prokaryotic gene annotation with `kraken`
+## 2.3 Prokaryotic gene annotation with `kraken`
 
 Kraken is a system for assigning taxonomic labels to short DNA sequences, usually obtained through metagenomic studies.
 
