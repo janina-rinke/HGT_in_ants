@@ -148,6 +148,9 @@ find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results
 ```
 
 ### 3. Expand the required overlap
+
+To check how we calculated our HGT boundary expansion, please see this script: `r_scripts/03_Distribution_plots_avg_read_length.Rmd`. Based on plots produced by this script, we decided to expand HGT boundaries in PacBio genomes by 1000 bp each side and in stLFR genomes by 25 bp each side.
+
 ##### Slop
 `bedtools slop` will increase the size of each feature in a file by a user-defined number of bases. It will restrict resizing to the size of the chromosome (no end above chromosome size and no start below 0). In order to prevent extension beyond scaffold boundaries, `bedtools slop` requires a genome file, defining the length of each scaffold.
 

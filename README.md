@@ -64,7 +64,7 @@ We checked for selection using HyPhy on the clade-specific HGTs (Lysozymes, MurN
 ./markdown_scripts/08_Selection_analyses.md
 ```
 ### 02. R Scripts (`.Rmd`)
-In this folder, the main analyses for HGT candidates can be found. All scripts have been written in RStudio 4.3.1.
+All scripts have been written in RStudio 4.3.1.
 
 #### GAGA HGT finder analysis
 Identification of HGTs with protein-coding hits and calculation of overview plots for all HGT candidates detected by the automated HGT finder pipeline. These overview plots were used as a starting point for all downstream analyses and to determine HGT quality, as well as filters for the identification of true HGTs.
@@ -78,65 +78,55 @@ This script contains all filtering steps which were used to exclude false-positi
 ./r_scripts/02_LGTfiltering.Rmd
 ```
 
-#### Prepare candidates for BLAST searches
+#### Visualization of average read length in PacBio and stLFR genomes
+We calculated average read lengths for both PacBio and stLFR genomes separately. This was used as a basis to determine HGT boundary expansions in `./markdown_scripts/01_countBoundaryReads.md` script to calculate read overlaps accordingly. 
 ```bash
-./r_scripts/03_Preparation_blast_candidates.Rmd
-```
-#### Visualization plots of HGT candidates
-```bash
-./r_scripts/04_Avg_length_plot.Rmd
-./r_scripts/05_Distribution_plots_avg_read_length.Rmd
+./r_scripts/03_Distribution_plots_avg_read_length.Rmd
 ```
 
 #### Visualize HGT candidates and plot GAGA phylogeny with HGTs
 This script was used to plot all HGTs detected by the automatic HGT finder pipeline, which is visualized in Figure 1. 
 ```bash
-./r_scripts/06_map2phylogeny.Rmd
+./r_scripts/04_map2phylogeny.Rmd
 ```
 
 #### Obtain all information from dfast gffs for candidates
 ```bash
-./r_scripts/07_screenDfastGFFs.Rmd
+./r_scripts/05_screenDfastGFFs.Rmd
 ```
 
 #### Phylogeny creator for single HGT candidates with information from UniProt
 ```bash
-./r_scripts/08_Gene_trees_HGTs.Rmd
+./r_scripts/06_Gene_trees_HGTs.Rmd
 ```
 
 #### Plot RNAseq coverage for all candidates using data from RNAseq mapping
 We used unique read counts as input and added up all read counts for all life stages within each respective HGT candidate.
 
 ```bash
-./r_scripts/09_plotCoverage.Rmd
+./r_scripts/07_plotCoverage.Rmd
 ```
 
 #### Calculate the expression and completeness of Candidates
 Here, we obtained a summary CDS-level table with information for all candidates, as well as a locus-level table with summarized information for all high-quality HGT candidates.
 ```bash
-./r_scripts/10_calculateExpression.Rmd
+./r_scripts/08_calculateExpression.Rmd
 ```
 
 #### Retrieve additional information from UniProt
 We used the package *uniprotR* to obtain additional information for all HGT candidates and integrated this information into our summarized tables.
 ```bash
-./r_scripts/11_retrieveUniprotInfo.Rmd
-```
-
-####Comparison of original annotation and re-reannotation
-We visualized this comparison as a CDS length extension plot.
-```bash
-./r_scripts/12_ReannotationPlots.Rmd
+./r_scripts/09_retrieveUniprotInfo.Rmd
 ```
 
 #### Synteny of clade-specific HGTs
 ```bash
-./r_scripts/13_Synteny.Rmd
+./r_scripts/10_Synteny.Rmd
 ```
 
 #### Detail analyses of unique and species-specific HGTs and creation of plots for global HGTs
 ```bash
-./r_scripts/14_Unique_HGTs.Rmd 
+./r_scripts/11_Unique_HGTs.Rmd 
 ```
 
 ### 03. Perl Scripts (`.pl`)
