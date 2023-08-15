@@ -2,8 +2,7 @@
 
 ## Introduction to the Code Repositories
 
-This repository holds all the code to evaluate HGTs (synonym: LGTs) within ant genomes (subproject of the Global Ant Genomics Alliance).
-In here, you can find five different folders storing all the data to analyse horizontal gene transfers from bacteria to ants.
+This repository holds all the code to evaluate HGTs/LGTs within ant genomes (subproject of the Global Ant Genomics Alliance) deriving from bacteria.
 
 ## Information about Code & Scripts
 
