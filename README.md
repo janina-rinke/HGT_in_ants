@@ -2,7 +2,7 @@
 
 ## Introduction to the Code Repositories
 
-This repository holds all the code to evaluate HGTs/LGTs within ant genomes (subproject of the Global Ant Genomics Alliance) deriving from bacteria.
+This repository holds all the code to evaluate HGTs/LGTs deriving from bacteria in 163 ant genomes (subproject of the Global Ant Genomics Alliance).
 
 ## Information about Code & Scripts
 
