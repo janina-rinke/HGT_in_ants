@@ -1,0 +1,193 @@
+---
+title: "ANK repeat proteins"
+author: "Janina Rinke"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, include = FALSE}
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+   #install.packages("BiocManager")
+
+#BiocManager::install("treeio")
+#install.packages("devtools")
+#devtools::install_github("GuangchuangYu/ggtree")
+library(treeio)
+library(ggtree)
+library(ggplot2)
+library(phytools)
+library(viridisLite)
+library(googlesheets4)
+library(dplyr)
+library(knitr)
+library(tidyverse)
+library(kableExtra)
+library(flextable)
+library(magrittr)
+
+#BiocManager::install("ggstar")
+#BiocManager::install("ggtreeExtra")
+library(ggtreeExtra)
+library(ggnewscale)
+library(tidytree)
+library(ggstar)
+library(viridis)
+```
+
+### Load the LGT table with all high-quality candidates
+```{r}
+library(readxl)
+
+# Read CDS level table to extract all unique HGTs
+LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
+```
+
+### Subset the dataframe to only include ankyrin repeat-domain containing proteins
+```{r}
+colnames(LGTs)
+
+# Only keep ankyrin-repeat proteins
+ANKs<-LGTs %>%
+  dplyr::filter(grepl('Ank|OTU|Tetratricopeptide repeat protein', Protein.names) | grepl('ANKYR', CDS.cogs))
+
+# Rename the uncharacterized proteins
+ANKs$Protein.names<-gsub("Uncharacterized protein","Uncharacterized ANK",ANKs$Protein.names)
+
+# Count number of different ankyrin proteins per species
+Nr.ANKs.per.species2<-ANKs %>% 
+  dplyr::count(species, subfamily, CDS.UniprotIDs,Protein.names, Reannotated.CDS.lengths)
+
+# Rename column
+Nr.ANKs.per.species<- Nr.ANKs.per.species%>%
+  dplyr::rename("count" = "n")
+```
+
+### Ankyrin bubble plot
+```{r}
+# Most basic bubble plot
+ggplot(Nr.ANKs.per.species, aes(x=gdpPercap, y=lifeExp, size = pop)) +
+    geom_point(alpha=0.7)
+
+ANKs %>%
+  mutate(country = factor(country, country)) %>%
+  ggplot(aes(x=gdpPercap, y=lifeExp, size=pop, color=continent)) +
+    geom_point(alpha=0.5) +
+    scale_size(range = c(.1, 24), name="Population (M)")
+```
+
+
+
+### Plot the ankyrin repeats based on the UniProt IDs onto the GAGA ant phylogeny
+
+Load data from google spreadsheet (Already stored in an R object that you can just load)
+```{r}
+#id<-"1e7Hj_BQ8rke5XW7j93YL6QVAGbcvsb2yw7oD86WnPJY"
+#gsheet<-read_sheet(id,sheet="GlobalOverview",skip = 2,na = c(""," ","NA","#DIV/0!"),col_types = "c",trim_ws=T)
+#GlobalOverview<-as.data.frame(gsheet,stringsAsFactors=F)
+#save(GlobalOverview,file="../../misc/data/gsheet.GlobalOverview.21-09-22.Robj")
+load("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/gsheet.GlobalOverview.21-09-22.Robj")
+```
+
+Create a dataframe where the first row is the GAGA id (e.g. GAGA-0002), which are also used as the tip labels in the phylogeny
+```{r}
+data2add<-data.frame(GAGA.id = GlobalOverview$`GAGA ID`, GlobalOverview)
+```
+
+Gather subfamily info for NCBI IDs as well and manually add the subfamily
+```{r}
+colnames(data2add)
+
+subset(data2add,is.na(Subfamily))
+
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0001"]<-"Dorylinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0002"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0003"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0004"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0005"]<-"Formicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0006"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0007"]<-"Ponerinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0008"]<-"Formicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0009"]<-"Ponerinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0010"]<-"Dolichoderinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0011"]<-"Ponerinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0012"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0013"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0014"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0015"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0016"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="NCBI-0017"]<-"Myrmicinae"
+data2add$Subfamily[data2add$GAGA.id=="OUT-0001"]<-"Formicinae"
+data2add$Subfamily[data2add$GAGA.id=="OUT-0002"]<-"Formicinae"
+```
+
+Create a column with clean species IDs for all species.
+
+This has to be done, because the database of all the sequenced species is a bit convoluted.
+The function coalesce() finds the first non-missing value at each position. In this case, the columns "Species" and "Species..from.Assembly.Overview" are collapsed. If the column "Species" does not have an entry, the entry from the column "Species..from.Assembly.Overview" will be taken.
+```{r}
+data2add$cleanSpeciesID<-dplyr::coalesce(data2add$Species,data2add$Species..from.Assembly.Overview.)
+```
+
+
+Load the tree file of all the GAGA genomes.
+```{r}
+tree <- read.iqtree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/hymenoptera_psc98_partition_b1000_40threads_msubnucl.treefile")
+```
+
+Create a very quick and dirty plot of the phylogeny
+```{r}
+plot(tree@phylo,show.node.label = T,show.tip.label = T,cex=.5)
+nodelabels(bg=rgb(0,0,0,0),col="red",frame = "none")
+```
+
+Check the plot to see where the root should be. Here we root the tree at node 166 that separates the outgroups, the honeybee "Amel" (Apis mellifera) and the parasitoid wasp Nasonia (Nvit), from ants.
+```{r}
+#tree.rooted<-treeio::root(tree,node=166)
+tree.rooted <- tree
+tree.rooted.subset<-treeio::drop.tip(tree.rooted,tip=c("NCBI-0018_Amel","NCBI-0019_Nvit"))
+```
+
+Plot basic tree
+```{r}
+tp<-ggtree(tree.rooted.subset, branch.length = "none") #+geom_rootedge(.01)
+```
+
+Add the species identity from `FAS.genes.and.names.tsv`
+```{r}
+tp$data$label[tp$data$isTip==T]<-gsub("_.*","",tp$data$label[tp$data$isTip==T])
+
+tp2<-tp %<+% data2add
+tp2 
+```
+
+```{r}
+#install.packages("ggnewscale")
+library("ggnewscale")
+
+#Make Subfamily as a factor (discrete color scale for factors)
+tp2$data$Subfamily<-as.factor(tp2$data$Subfamily)
+
+# tp2.5 is a less complicated tree without UFboot
+tp2.5<-tp2 +
+  geom_tiplab(aes(label=paste(cleanSpeciesID,sep=" "), color = Subfamily),size=2) # remove GAGAid from label 
+```
+
+# Plot the tree
+```{r}
+tp2.5
+```
+
+### Plot ankyrins onto phylogeny
+```{r}
+tp3 <- tp2.5 %<+% Nr.ANKs.per.species + geom_tippoint(aes(color=Protein.names))
+
+tp3 + geom_facet(panel= "Nr of ANKs", data = Nr.ANKs.per.species, geom = geom_col, 
+                aes(x = count, color = CDS.UniprotIDs, orientation = 'y', width = .6)) +
+                  theme_tree2(legend.position=c(.05, .85)))
+
+tp3
+```
+
