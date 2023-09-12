@@ -35,6 +35,8 @@ library(ggnewscale)
 library(tidytree)
 library(ggstar)
 library(viridis)
+library(ggstance)
+library(reshape2)
 ```
 
 ### Load the LGT table with all high-quality candidates
@@ -44,6 +46,8 @@ library(readxl)
 # Read CDS level table to extract all unique HGTs
 LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
 ```
+
+
 
 ### Subset the dataframe to only include ankyrin repeat-domain containing proteins
 ```{r}
@@ -57,25 +61,22 @@ ANKs<-LGTs %>%
 ANKs$Protein.names<-gsub("Uncharacterized protein","Uncharacterized ANK",ANKs$Protein.names)
 
 # Count number of different ankyrin proteins per species
-Nr.ANKs.per.species2<-ANKs %>% 
-  dplyr::count(species, subfamily, CDS.UniprotIDs,Protein.names, Reannotated.CDS.lengths)
+Nr.ANKs.per.species<-ANKs %>% 
+  dplyr::count(.id,species, subfamily, CDS.UniprotIDs,Protein.names)
 
 # Rename column
 Nr.ANKs.per.species<- Nr.ANKs.per.species%>%
   dplyr::rename("count" = "n")
 ```
 
+
+
 ### Ankyrin bubble plot
 ```{r}
 # Most basic bubble plot
-ggplot(Nr.ANKs.per.species, aes(x=gdpPercap, y=lifeExp, size = pop)) +
-    geom_point(alpha=0.7)
-
-ANKs %>%
-  mutate(country = factor(country, country)) %>%
-  ggplot(aes(x=gdpPercap, y=lifeExp, size=pop, color=continent)) +
-    geom_point(alpha=0.5) +
-    scale_size(range = c(.1, 24), name="Population (M)")
+ggplot(ANKs)+geom_point(aes(size=as.numeric(CDS.lengths),
+                            y=as.numeric(Reannotated.CDS.pids),x=as.numeric(Reannotated.s_covs),
+                            fill=Protein.names,col=subfamily),pch=21,stroke=1)
 ```
 
 
@@ -172,7 +173,7 @@ tp2$data$Subfamily<-as.factor(tp2$data$Subfamily)
 
 # tp2.5 is a less complicated tree without UFboot
 tp2.5<-tp2 +
-  geom_tiplab(aes(label=paste(cleanSpeciesID,sep=" "), color = Subfamily),size=2) # remove GAGAid from label 
+  geom_tiplab(aes(label=paste(cleanSpeciesID,sep=" "), color = Subfamily),size=2) # remove GAGAid from label
 ```
 
 # Plot the tree
@@ -182,12 +183,56 @@ tp2.5
 
 ### Plot ankyrins onto phylogeny
 ```{r}
-tp3 <- tp2.5 %<+% Nr.ANKs.per.species + geom_tippoint(aes(color=Protein.names))
+library(pals)
+library(RColorBrewer)
 
-tp3 + geom_facet(panel= "Nr of ANKs", data = Nr.ANKs.per.species, geom = geom_col, 
-                aes(x = count, color = CDS.UniprotIDs, orientation = 'y', width = .6)) +
-                  theme_tree2(legend.position=c(.05, .85)))
-
+tp3 <- tp2.5 %<+% Nr.ANKs.per.species
 tp3
+
+p2<-facet_plot(tp3,data=Nr.ANKs.per.species, mapping=aes(x=Nr.ANKs.per.species$count, fill=Nr.ANKs.per.species$Protein.names), geom = geom_barh, stat="identity", panel="Nr of ANKs") + hexpand(.2, direction = 1) +
+    theme(legend.position = 'bottom',
+    legend.key = element_blank(), # removes the border
+    legend.key.size = unit(2, 'cm'), # sets overall area/size of the legend
+    legend.text = element_text(size = 20)) +
+  theme_bw()
+
+colourCount = length(unique(Nr.ANKs.per.species$Protein.names))
+getPalette = colorRampPalette(brewer.pal(17, "PuOr"))
+p2
+ 
+
+p3<-p2 +
+  guides(shape = guide_legend(order = 1),col = guide_legend(order = 2), fill=guide_legend(title="Ankyrin type")) +
+     scale_fill_manual(values = getPalette(colourCount)) +
+  theme(legend.key.size=unit(0.5, "cm"),
+        legend.text = element_text(size=10))
+    #scale_fill_viridis(discrete = TRUE)
+
+p3
+
+# Export plot w ggsave
+ggsave(
+  "/Users/Janina/sciebo/HGT_Manuscript/Figures/Anks_Phylo.pdf",
+  plot = p3, 
+  device = "pdf", 
+  dpi=150, 
+  width=65, 
+  height=75, 
+  units = "cm"
+  )
+```
+
+
+## Separate dataframes into different categories
+1: LGTs CDS level (1053 CDS)
+2: HGTs Locus level (497 loci)
+3: Ankyrins (417 CDS)
+4: Species-specific LGTs CDS (101 Loci)
+5: Species-specific newly-filtered (88 loci)
+```{r}
+# Rename columns which are wrongly named
+write.table(ANKs, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/ANKs.tsv', quote=FALSE, sep=',', row.names = F)
+write.table(Unique.LGTs, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/Species-specific_LGTs.newly.filtered.tsv', quote=FALSE, sep=',', row.names = F)
+write.table(Expressed.Unique.LGTs, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/Expressed.Unique.LGTs.tsv', quote=FALSE, sep=',', row.names = F)
 ```
 

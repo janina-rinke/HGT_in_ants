@@ -40,12 +40,13 @@ colnames(LGTs)
 
 # create grouping for protein type
 LGTs$type<-"other"
-LGTs$type[grep("Ank",LGTs$Protein.names)]<-"Ank"
+LGTs$type[grep("Ankyrin|OTU|ankyrin|Tetratricopeptide repeat protein|TPR repeat-containing protein|Reverse transcriptase domain-containing protein|Phosphocholine_transferase_AnkX",LGTs$Protein.names)]<-"Ank"
 LGTs$type[grep("Cyclopropane|EC 2.1.1.79",LGTs$Protein.names)]<-"CFA"
 LGTs$type[grep("N-acetylmuramic",LGTs$Protein.names)]<-"MurNAc"
 LGTs$type[grep("DUF1016|Lysozyme|lysozyme|Lyzozyme",LGTs$Protein.names)]<-"Lys"
 LGTs$type[grep("Uncharacterized|uncharacterized|unknown|Deleted",LGTs$Protein.names)]<-"Unknown"
 LGTs$type[grep("Fragment",LGTs$Protein.names)]<-"Fragmented"
+LGTs$type[grep("Transposase|transposase",LGTs$Protein.names)]<-"Transposase"
 LGTs$type[grep("50S",LGTs$Protein.names)]<-"Ribsomal protein"
 
 # Remove all non-species specific HGTs
@@ -279,7 +280,16 @@ expression
 ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/expression_global_RAW.pdf", expression,width=12, height=10)
 
 LGTs %>% 
-  dplyr::count(Reannotated.CDS.lengths > 6000)
+  dplyr::count(Reannotated.CDS.lengths > 6000) # 58 < 6000 bp length
+
+LGTs %>% 
+  dplyr::count(Reannotated.CDS.totalcounts > 100) # 176 < 6000 bp length
+
+Expressed.Unique.LGTs<-Unique.LGTs %>% 
+  filter(Reannotated.CDS.totalcounts > 100)
+
+Expressed.Unique.LGTs %>% 
+  filter(Reannotated.startCodon=="ATG" | Reannotated.startCodon=="TTG" | Reannotated.startCodon=="GTG")
 #-------------------------------------------------#
 #Reannotated.CDS.totalcounts > 100
 #FALSE	557			
