@@ -63,7 +63,7 @@ echo ${basedir}
 
 # For one locus 
 ## GAGA-0513.Scaffold27.2132518-2132991
-locus=GAGA-0528.Scaffold335.55917-61131
+locus=GAGA-0513.Scaffold27.2132518-2132991
 cd $basedir/${locus}.1000.out
 start=$(cat genome_reannotate_mod_intersect.gff |cut -f 4)
 stop=$(cat genome_reannotate_mod_intersect.gff |cut -f 5)
@@ -83,6 +83,59 @@ grep "$geneID" /global/homes/jg/schradel/projects/GAGA/annotations/${id}_final_a
 ```
 
 ### 2.2.1 For all ANK loci:
+Write a script called `ANKs.GAGA.annotation.sh` to intersect ANK loci with GAGA annotation
+
 ```bash
-# Use bedtools intersect to intersect the reannotation.dfast with GAGA annotation
+#!/bin/bash
+#SBATCH -N intersect.ANKs
+#SBATCH -cwd
+#SBATCH --mem 200M
+#SBATCH -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/ANKs/loci/tmp/ANK.loci.out
+#SBATCH -e /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/ANKs/loci/tmp/ANK.loci.err
+#SBATCH -wd /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/ANKs/loci
+
+basedir=/global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation
+
+# define locus
+locus=${GAGAid}.${scaffold}.${start}-${stop}
+
+
+# locus=GAGA-0020.Scaffold17.156258-159230
+# GAGAid=GAGA-0020
+# scaffold=Scaffold17
+# start=156258
+# stop=159230
+
+
+# Keep only Ankyrin.loci.1000.out files 
+echo -e ${scaffold}"\t"${start}"\t"${stop}"\t"${locus} | cp -r ${basedir}/reannotation.dfast/results/${locus}.1000.out /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/ANKs/loci
+
+# Intersect dfast.extended reannotation with GAGA annotation
+# At the end, you will have a new gff ${locus}.1000.out/GAGA_dfast_ANKs_intersect.gff, which has all predicted CDS that overlap with the ANK reannotation locus.
+
+# find all the entries in the "genome_reannotate_mod_intersect" gff that overlap with the respective GAGA annotations.
+# -a: File A to intersect with B
+# -b: File B to be intersected with A
+bedtools intersect -wb \
+-a /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/ANKs/loci/${locus}.1000.out/genome_reannotate_mod_intersect.gff \
+-b /global/homes/jg/schradel/projects/GAGA/annotations/${GAGAid}_final_annotation_repfilt_addreannot_noparpse_representative.gff3 > /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/ANKs/loci/${locus}.1000.out/GAGA_dfast_ANKs_intersect.gff
+
+```
+
+Submit bash script:
+```bash
+#parallel --dryrun --max-args 1 qsub -v GAGAid=GAGA-0020 -v scaffold=Scaffold17 -v start=156258 -v stop=159230 ANKs.GAGA.annotation.sh
+cat ANKs.loci.txt | parallel --col-sep "\t" --dryrun --max-args 1 qsub -v GAGAid={1} -v scaffold={2} -v start={3} -v stop={4} ANKs.GAGA.annotation.sh
+```
+
+#### Quality check of all files:
+
+Check if all files have completed the dfast re-annotation:
+```bash
+find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/genome_reannotate_mod_intersect.gff ]] && echo "$dir"; done
+```
+
+Grep fasta sequence from newly intersected files:
+```bash
+
 ```

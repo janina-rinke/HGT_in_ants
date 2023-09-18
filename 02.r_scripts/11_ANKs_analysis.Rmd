@@ -223,6 +223,7 @@ ggsave(
 ```
 ## Prepare a tsv file for the ANK metagenomic analysis 
 ```{r}
+## For CDS sequences 
 # Only keep selected columns
 ANKs.df<- ANKs %>%
   select(.id, locus.scaffold, Reannotated.CDS.starts, Reannotated.CDS.ends, CDS.UniprotIDs, Protein.names, Organism)
@@ -231,6 +232,20 @@ ANKs.df<- ANKs %>%
 names(ANKs.df)<-NULL
 
 write.table(ANKs.df, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/GAGA.ANKs.tsv', quote=FALSE, sep='\t', row.names = F)
+
+## For ANK loci
+# Only keep selected columns
+ANKs.loci.df<- ANKs %>%
+  select(.id, locus.scaffold, cand.start, cand.end)
+
+# Only keep distinct rows
+ANKs.loci.df <- ANKs.loci.df %>%
+  distinct()
+
+# Remove column headers
+names(ANKs.loci.df)<-NULL
+
+write.table(ANKs.loci.df, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/GAGA.ANKs.loci.txt', quote=FALSE, sep='\t', row.names = F)
 ```
 
 ## Separate dataframes into different categories
