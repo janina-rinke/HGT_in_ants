@@ -221,7 +221,17 @@ ggsave(
   units = "cm"
   )
 ```
+## Prepare a tsv file for the ANK metagenomic analysis 
+```{r}
+# Only keep selected columns
+ANKs.df<- ANKs %>%
+  select(.id, locus.scaffold, Reannotated.CDS.starts, Reannotated.CDS.ends, CDS.UniprotIDs, Protein.names, Organism)
 
+# Remove column headers
+names(ANKs.df)<-NULL
+
+write.table(ANKs.df, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/GAGA.ANKs.tsv', quote=FALSE, sep='\t', row.names = F)
+```
 
 ## Separate dataframes into different categories
 1: LGTs CDS level (1053 CDS)
