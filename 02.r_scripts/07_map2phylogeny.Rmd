@@ -53,6 +53,8 @@ library(viridisLite)
 library(ggplot2)
 library(googlesheets4)
 library(dplyr)
+require(ape)
+library(tidytree)
 ```
 
 Load data from google spreadsheet (Already stored in an R object that you can just load)
@@ -62,6 +64,8 @@ Load data from google spreadsheet (Already stored in an R object that you can ju
 #GlobalOverview<-as.data.frame(gsheet,stringsAsFactors=F)
 #save(GlobalOverview,file="../../misc/data/gsheet.GlobalOverview.21-09-22.Robj")
 load("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/gsheet.GlobalOverview.21-09-22.Robj")
+
+load("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/GAGA.tree.plot4.Robject")
 ```
 
 Create a dataframe where the first row is the GAGA id (e.g. GAGA-0002), which are also used as the tip labels in the phylogeny
@@ -107,7 +111,9 @@ data2add$cleanSpeciesID<-dplyr::coalesce(data2add$Species,data2add$Species..from
 
 Load the tree file of all the GAGA genomes.
 ```{r}
-tree <- read.iqtree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/hymenoptera_psc98_partition_b1000_40threads_msubnucl.treefile")
+#tree <- read.iqtree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/hymenoptera_psc98_partition_b1000_40threads_msubnucl.treefile")
+
+tree<-read.tree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/GAGA_dated_phylogeny_newick.tre")
 ```
 
 Create a very quick and dirty plot of the phylogeny

@@ -67,6 +67,14 @@ Nr.ANKs.per.species<-ANKs %>%
 # Rename column
 Nr.ANKs.per.species<- Nr.ANKs.per.species%>%
   dplyr::rename("count" = "n")
+
+# Count species with ANKs
+Nr.species.ANKs<-ANKs %>%
+  dplyr::count(.id,species)
+
+# Rename column
+Nr.species.ANKs<- Nr.species.ANKs %>%
+  dplyr::rename("ANK.count" = "n")
 ```
 
 
@@ -255,9 +263,11 @@ write.table(ANKs.loci.df, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/G
 4: Species-specific LGTs CDS (101 Loci)
 5: Species-specific newly-filtered (88 loci)
 ```{r}
-# Rename columns which are wrongly named
+# Save dataframes
 write.table(ANKs, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/ANKs.tsv', quote=FALSE, sep=',', row.names = F)
 write.table(Unique.LGTs, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/Species-specific_LGTs.newly.filtered.tsv', quote=FALSE, sep=',', row.names = F)
 write.table(Expressed.Unique.LGTs, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/Expressed.Unique.LGTs.tsv', quote=FALSE, sep=',', row.names = F)
+
+write.table(Nr.species.ANKs, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/Species_with_ANKs.tsv', quote=FALSE, sep=',', row.names = F)
 ```
 
