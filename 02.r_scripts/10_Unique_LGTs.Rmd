@@ -24,13 +24,14 @@ library(kableExtra)
 library(flextable)
 library(magrittr)
 library(dplyr)
+library(ggplot2)
 ```
 
-### Load the LGT table with all high-quality candidates
+### Load the LGT table with all high-quality CDS candidates
 ```{r}
 library(readxl)
 
-# Read CDS level table to extract all unique HGTs
+# Read CDS level table to extract all unique HGTs later
 LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
 ```
 
@@ -47,14 +48,18 @@ LGTs$type[grep("DUF1016|Lysozyme|lysozyme|Lyzozyme",LGTs$Protein.names)]<-"Lys"
 LGTs$type[grep("Uncharacterized|uncharacterized|unknown|Deleted",LGTs$Protein.names)]<-"Unknown"
 LGTs$type[grep("Fragment",LGTs$Protein.names)]<-"Fragmented"
 LGTs$type[grep("Transposase|transposase",LGTs$Protein.names)]<-"Transposase"
-LGTs$type[grep("50S",LGTs$Protein.names)]<-"Ribsomal protein"
+LGTs$type[grep("50S",LGTs$Protein.names)]<-"Ribosomal protein"
 
 # Remove all non-species specific HGTs
 Unique.LGTs<-LGTs %>%
   dplyr::filter(type=="other") %>%                            # filter out all Anks, Lys, MurNAcs, Uncharacterized LGTs...
   dplyr::distinct(Protein.names, .keep_all = T)  %>%          # Only keep unique Proteins
-  dplyr::distinct(CDS.UniprotIDs, .keep_all = T) %>%          # Make sure that we really only have each UniProt Id once
+  dplyr::distinct(CDS.UniprotIDs, .keep_all = T) %>%          # Make sure that we only have each UniProtID once
   drop_na(Protein.names)                                      # Remove Proteins with NA
+
+# count number of HGT loci
+Unique.loci.count<-Unique.LGTs %>% 
+  dplyr::count(locusID)
 
 # count number of species with unique proteins
 Unique.species.count<-Unique.LGTs %>% 
@@ -85,9 +90,9 @@ Unique.LGTs %>%
 
 
 #---------------------------------#
-#Reannotated.CDS.totalcounts > 5
-#FALSE	65			
-#TRUE	30			
+#Reannotated.CDS.totalcounts > 100
+#FALSE	68			
+#TRUE	13			
 #NA	7	
 #----------------------------------#
 
@@ -109,9 +114,74 @@ Unique.LGTs$funct[grep("metal",Unique.LGTs$Gene.ontology..molecular.function.)]<
 Funct<-Unique.LGTs %>% 
   dplyr::count(funct)
 colnames(Funct)<-c("Function","count")
-
-
 ```
+
+```{r}
+# In depth analysis of expressed unique LGTs
+Unique.expressed.LGTs<-Unique.LGTs %>%
+  dplyr::filter(Reannotated.CDS.totalcounts > 100)
+
+# Plot GO terms for each expressed unique LGT
+library(UniprotR)
+
+####### p1
+prot_info<-GetProteinGOInfo("A0A060Q018")
+p1<-PlotGOAll(GOObj = prot_info, Top = 10, directorypath = getwd(), width = 8, height = 5)
+# Customize the title with the protein ID
+p1 <- p1 + 
+  ggtitle(paste("UDP-N-acetylglucosamine 1-carboxyvinyltransferase"))
+p1
+
+####### p2
+prot_info<-GetProteinGOInfo("W0HVG4")
+p2<-PlotGOAll(GOObj = prot_info, Top = 10, directorypath = getwd(), width = 8, height = 5)
+# Customize the title with the protein ID
+p2 <- p2 + 
+  ggtitle(paste("D-alanine--D-alanine ligase"))
+p2
+
+####### p3
+prot_info<-GetProteinGOInfo("A0A1A9NKN6")
+p3<-PlotGOAll(GOObj = prot_info, Top = 10, directorypath = getwd(), width = 8, height = 5)
+# Customize the title with the protein ID
+p3 <- p3 + 
+  ggtitle(paste("Phosphoribosylformylglycinamidine cyclo-ligase "))
+p3
+
+####### p4
+prot_info<-GetProteinGOInfo("A0A060Q4G1")
+p4<-PlotGOAll(GOObj = prot_info, Top = 10, directorypath = getwd(), width = 8, height = 5)
+# Customize the title with the protein ID
+p4 <- p4 + 
+  ggtitle(paste("DNA mismatch repair protein "))
+p4
+```
+### Make a multi-panel plot
+```{r}
+library(ggpubr) #load in library for multi-panel figures
+library(gridExtra)
+
+p1 <- p1 + theme(plot.margin = unit(c(1, 1, 1, 1), "cm"))
+p2 <- p2 + theme(plot.margin = unit(c(1, 1, 1, 1), "cm"))
+p3 <- p3 + theme(plot.margin = unit(c(1, 1, 1, 1), "cm"))
+p4 <- p4 + theme(plot.margin = unit(c(1, 1, 1, 1), "cm"))
+
+#put all three plots together into one multipanel plot
+multi_plot<- ggarrange(p1,p2,p3,p4, #plots that are going to be included in this multipanel figure
+                       labels = c("A", "B", "C","D"), #labels given each panel 
+                       ncol = 2, nrow = 2, #adjust plot space 
+                       common.legend = T #does the plot have a common legend
+                       )
+#add titles and labels to the multi-panel graph
+multi_plot <- annotate_figure(multi_plot,
+                              top = text_grob("GO terms", color = "black", face = "bold", size = 11))
+multi_plot 
+
+ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Unique.LGTs.4plots.pdf", multi_plot, width=15, height=10)
+```
+
+
+
 
 ### Make different plots to provide an overview of species-specific HGTs
 ```{r}
@@ -192,11 +262,7 @@ bac.plot
 #ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Unique.LGTs.bacteria_RAW.pdf", bac.plot, width=10, height=10)
 ```
 
-
-
-
-
-
+# Plot GO terms for Unique LGTs only
 ```{r}
 library(UniprotR)
 go<-GetProteinGOInfo(Unique.LGTs$CDS.UniprotIDs[!is.na(Unique.LGTs$CDS.UniprotIDs)])
@@ -233,7 +299,6 @@ Funct %>%
 
 
 ## Plot Overview plots for global LGTs
-
 ````{r}
 
 LGTs$Reannotated.CDS.lengths<-as.numeric(LGTs$Reannotated.CDS.lengths)
@@ -250,7 +315,7 @@ s_cov<-LGTs %>%
   xlab("Subject coverage of bacterial reference protein")
 s_cov
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Scov_global_RAW.pdf", s_cov,width=15, height=10)
+#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Scov_global_RAW.pdf", s_cov,width=15, height=10)
 
 # Show q_cov
 q_cov<-LGTs %>%
@@ -259,7 +324,7 @@ q_cov<-LGTs %>%
     theme_minimal()
 q_cov
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/qcov_global_RAW.pdf", q_cov,width=12, height=10)
+#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/qcov_global_RAW.pdf", q_cov,width=12, height=10)
 
 # Show CDS_lengths (Reannotated)
 CDS_lengths<-LGTs %>%
@@ -268,7 +333,7 @@ CDS_lengths<-LGTs %>%
     theme_minimal()
 CDS_lengths
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/CDS_lengths_global_RAW.pdf", CDS_lengths,width=12, height=10)
+#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/CDS_lengths_global_RAW.pdf", CDS_lengths,width=12, height=10)
 
 expression<-LGTs %>%
   filter(Reannotated.CDS.totalcounts<5000 ) %>%
@@ -277,7 +342,7 @@ expression<-LGTs %>%
     theme_minimal()
 expression
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/expression_global_RAW.pdf", expression,width=12, height=10)
+#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/expression_global_RAW.pdf", expression,width=12, height=10)
 
 LGTs %>% 
   dplyr::count(Reannotated.CDS.lengths > 6000) # 58 < 6000 bp length
