@@ -114,12 +114,16 @@ Unique.LGTs$funct[grep("metal",Unique.LGTs$Gene.ontology..molecular.function.)]<
 Funct<-Unique.LGTs %>% 
   dplyr::count(funct)
 colnames(Funct)<-c("Function","count")
+
+Unique.LGTs$Reannotated.s_covs<-as.numeric(Unique.LGTs$Reannotated.s_covs)
 ```
 
 ```{r}
 # In depth analysis of expressed unique LGTs
 Unique.expressed.LGTs<-Unique.LGTs %>%
-  dplyr::filter(Reannotated.CDS.totalcounts > 100)
+  dplyr::filter(Reannotated.CDS.totalcounts > 100) %>%
+  dplyr::filter(!is.na(Gene.ontology.IDs)) %>%
+  dplyr::filter(Reannotated.s_covs >= 25)
 
 # Plot GO terms for each expressed unique LGT
 library(UniprotR)
@@ -155,7 +159,19 @@ p4<-PlotGOAll(GOObj = prot_info, Top = 10, directorypath = getwd(), width = 8, h
 p4 <- p4 + 
   ggtitle(paste("DNA mismatch repair protein "))
 p4
+
+####### p4
+prot_info<-GetProteinGOInfo("A0A7C8GK68")
+p4<-PlotGOAll(GOObj = prot_info, Top = 10, directorypath = getwd(), width = 8, height = 5)
+# Customize the title with the protein ID
+p4 <- p4 + 
+  ggtitle(paste("DNA mismatch repair protein "))
+p4
 ```
+
+
+
+
 ### Make a multi-panel plot
 ```{r}
 library(ggpubr) #load in library for multi-panel figures
