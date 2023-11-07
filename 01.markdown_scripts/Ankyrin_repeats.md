@@ -18,7 +18,7 @@ After that, all proteins [CDS] were extracted and plotted onto the GAGA phylogen
 
 Use the following file to extract FASTA sequences:
 ```bash
-/global/scratch2/j_rink02/master/lgt/0_data/candidatefiles
+/global/scratch2/j_rink02/master/lgt/2_analysis/ANKs/GAGA.ANKs.tsv
 ```
 
 Structure of the file:

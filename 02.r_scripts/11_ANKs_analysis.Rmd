@@ -44,7 +44,7 @@ library(reshape2)
 library(readxl)
 
 # Read CDS level table to extract all unique HGTs
-LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
+LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
 ```
 
 
