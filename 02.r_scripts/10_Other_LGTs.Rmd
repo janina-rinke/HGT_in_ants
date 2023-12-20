@@ -10,8 +10,8 @@ output:
 </STYLE>
 ---
 
-
-This script evaluates species-specific LGTs. 
+This script evaluates all other LGTs which have not previously been identified as ankyrin-repeat related, ancient, or orthologous LGTs occurring in groups. 
+All of these other LGTs are investigated for their occurrence in ant species based on the CDS sequences of LGT loci (1,053 CDS in 497 LGT loci), their expression, and full-length annotation in order to infer LGTs with putative functionality apart from phylogenetic re-occurrence across related taxa in our dataset.
 ```{r global-options, include=FALSE}
 # Define the global chunk options
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
@@ -25,17 +25,21 @@ library(flextable)
 library(magrittr)
 library(dplyr)
 library(ggplot2)
+library(mishMashr)
 ```
 
-### Load the LGT table with all high-quality CDS candidates
+## Load the LGT table with all high-quality CDS candidates
 ```{r}
 library(readxl)
 
-# Read CDS level table to extract all unique HGTs later
+# Read CDS level table to extract all unique LGTs later
 LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
 ```
 
 
+
+## Group all LGTs based on protein type. 
+Exclude all convergently transferred ankyrin-related proteins, as well as ancient, orthologous LGTs which have been analysed elsewhere (Lysozymes, MurNAc etherases & CFA Synthases). Additionally, all uncharacterized & fragmented proteins, and TE-related LGTs are excluded from further in-depth analysis. 
 ```{r}
 colnames(LGTs)
 
@@ -47,56 +51,117 @@ LGTs$type[grep("N-acetylmuramic",LGTs$Protein.names)]<-"MurNAc"
 LGTs$type[grep("DUF1016|Lysozyme|lysozyme|Lyzozyme",LGTs$Protein.names)]<-"Lys"
 LGTs$type[grep("Uncharacterized|uncharacterized|unknown|Deleted",LGTs$Protein.names)]<-"Unknown"
 LGTs$type[grep("Fragment",LGTs$Protein.names)]<-"Fragmented"
-LGTs$type[grep("Transposase|transposase",LGTs$Protein.names)]<-"Transposase"
+LGTs$type[grep("Transposase|transposase|DNA repair protein|Helix-turn-helix transcriptional regulator",LGTs$Protein.names)]<-"TE-related"
 LGTs$type[grep("50S",LGTs$Protein.names)]<-"Ribosomal protein"
 
-# Remove all non-species specific HGTs
-Unique.LGTs<-LGTs %>%
-  dplyr::filter(type=="other") %>%                            # filter out all Anks, Lys, MurNAcs, Uncharacterized LGTs...
-  dplyr::distinct(Protein.names, .keep_all = T)  %>%          # Only keep unique Proteins
-  dplyr::distinct(CDS.UniprotIDs, .keep_all = T) %>%          # Make sure that we only have each UniProtID once
-  drop_na(Protein.names)                                      # Remove Proteins with NA
+# Remove all clade-specific HGTs like ankyrins, lysozymes, MurNAcs, unchacracterized LGTs..
+other.LGTs<-LGTs %>%
+  dplyr::filter(type=="other") %>%     # Only keep LGTs of the catecory "other"
+  dplyr::filter(!is.na(Protein.names)) # Remove all LGTs without a Uniprot annotation
 
-# count number of HGT loci
+CFA.LGTs<-LGTs %>%
+  dplyr::filter(type=="CFA")     # Only keep LGTs of the catecory "other"
+
+library("xlsx")
+write.xlsx(CFA.LGTs,"/Users/Janina/sciebo/HGT_Manuscript/Data/CFA_Synthases/CFA_HQ_HGTs.xlsx")
+```
+Removing all LGTs without a Uniprot annotation, all Ankyrins, Lysozymes, MurNAc etherases, CFA Synthases and TE-related LGTs, as well as uncharacterized and fragmented LGTs, results in 125 remaining LGTs of the category "other".
+
+
+
+## General investigation of "other" LGTs
+```{r}
+# Count the proteins which occur only once in the dataframe both based on the column "Protein.names" and   "CDS.UniprotIDs" to be entirely sure to remove all duplicated entries
+Unique.LGTs<-once_only(other.LGTs, "Protein.names", return_column_only = F)
+Unique.LGTs<-once_only(Unique.LGTs, "CDS.UniprotIDs", return_column_only = F)
+# 61 LGT CDS occurring only once
+
+
+# Count number of HGT loci with unique LGTs
 Unique.loci.count<-Unique.LGTs %>% 
   dplyr::count(locusID)
+# 45 HGT loci with unique LGTs
 
-# count number of species with unique proteins
-Unique.species.count<-Unique.LGTs %>% 
+
+# Count only proteins which occur more than once in the dataframe in at least two species
+multiple.LGTs<-other.LGTs %>%
+  group_by(Protein.names) %>%
+  filter(n_distinct(species) >= 2)
+# 32 occasions of multiple LGTs
+
+# Count number of species with other proteins
+Other.species.count<-other.LGTs %>% 
   dplyr::count(species, subfamily)
+# 43 species from seven subfamilies with other proteins
 
-# count the number of bacterial donors
-Unique.LGTs$donor<-"other"
-Unique.LGTs$donor[grep("Sodalis",Unique.LGTs$Organism)]<-"Sodalis"
-Unique.LGTs$donor[grep("Wolbachia",Unique.LGTs$Organism)]<-"Wolbachia"
-Unique.LGTs$donor[grep("Serratia",Unique.LGTs$Organism)]<-"Serratia"
-Unique.LGTs$donor[grep("Spiroplasma",Unique.LGTs$Organism)]<-"Spiroplasma"
-Unique.LGTs$donor[grep("Yersinia",Unique.LGTs$Organism)]<-"Yersinia"
-Unique.LGTs$donor[grep("Cardinium",Unique.LGTs$Organism)]<-"Cardinium"
-Unique.LGTs$donor[grep("Baumannia|Blochmannia|Candidatus",Unique.LGTs$Organism)]<-"Blochmannia-like"
 
-Unique.bac.count<-Unique.LGTs %>% 
+# Count the number of bacterial donors
+other.LGTs$donor<-"other"
+other.LGTs$donor[grep("Sodalis",other.LGTs$Organism)]<-"Sodalis"
+other.LGTs$donor[grep("Wolbachia",other.LGTs$Organism)]<-"Wolbachia"
+other.LGTs$donor[grep("Serratia",other.LGTs$Organism)]<-"Serratia"
+other.LGTs$donor[grep("Spiroplasma",other.LGTs$Organism)]<-"Spiroplasma"
+other.LGTs$donor[grep("Yersinia",other.LGTs$Organism)]<-"Yersinia"
+other.LGTs$donor[grep("Cardinium",other.LGTs$Organism)]<-"Cardinium"
+other.LGTs$donor[grep("Baumannia|Blochmannia|Candidatus",other.LGTs$Organism)]<-"Blochmannia-like"
+
+Other.bac.count<-other.LGTs %>% 
   dplyr::count(donor)
-colnames(Unique.bac.count)<-c("donor","count")
+colnames(Other.bac.count)<-c("donor","count")
 
-head(Unique.LGTs)
-
-# count the number of expressed proteins
-Unique.LGTs$Reannotated.CDS.totalcounts<-as.numeric(Unique.LGTs$Reannotated.CDS.totalcounts)
-
-Unique.LGTs %>% 
-  dplyr::count(Reannotated.CDS.totalcounts > 100)
+head(other.LGTs)
+```
+Considering only uniquely occurring HGTs results in 61 unqiue CDS in 45 loci. 43 ant species from seven subfamilies contained at least one uniquely occurring LGT. Bacterial donors were most often Wolbachia (n=89), followed by Spiroplasma (n = 13), Sodalis (n=9), Cardinium (n=9), Blochmannia-like (n=6) and other bacteria.
 
 
 
+## In-depth analysis of other LGTs: Only keep expressed proteins (read count > 100)
+```{r}
+# Count the number of expressed "other" LGTs
+other.LGTs$CDS.totalcounts<-as.numeric(other.LGTs$CDS.totalcounts)
+other.LGTs$Reannotated.CDS.totalcounts<-as.numeric(other.LGTs$Reannotated.CDS.totalcounts)
+
+# RNAseq counts first annotation
+other.LGTs %>% 
+  dplyr::count(CDS.totalcounts > 100)
 #---------------------------------#
-#Reannotated.CDS.totalcounts > 100
-#FALSE	68			
-#TRUE	13			
-#NA	7	
+#CDS.totalcounts > 100
+#FALSE	105			
+#TRUE	18			
+#NA	2	
 #----------------------------------#
 
 
+# RNAseq counts re-annotation of candidates
+other.LGTs %>% 
+  dplyr::count(Reannotated.CDS.totalcounts > 100)
+#---------------------------------#
+#Reannotated.CDS.totalcounts > 50
+#FALSE 95				
+#TRUE	17			
+#NA	13
+#----------------------------------#
+
+# In depth analysis of expressed and full-length "other" LGTs
+other.LGTs$CDS.s_covs<-as.numeric(other.LGTs$CDS.s_covs)
+other.LGTs$Reannotated.s_covs<-as.numeric(other.LGTs$Reannotated.s_covs)
+other.LGTs$Reannotated.CDS.pids<-as.numeric(other.LGTs$Reannotated.CDS.pids)
+
+# Filter all of these "other" LGTs for expressed & (almost) full-length genes
+Expressed.full.other.LGTs<-other.LGTs %>%
+  dplyr::filter(CDS.totalcounts > 100 & Reannotated.CDS.totalcounts > 100) %>% 
+  dplyr::filter(Reannotated.s_covs >= 80) %>%
+  dplyr::filter(Reannotated.CDS.pids > 65.0)
+
+# Remove duplicated entry for GAGA-0080, as this is a wrong annotation
+Expressed.full.other.LGTs<-Expressed.full.other.LGTs %>%
+  dplyr::filter(CDS.UniprotIDs != "A0A218KN31")
+```
+Keeping only expressed and close to full-length (subject coverage > 80 %) "other" LGTs resulted in 6 remaining CDS for in-depth analysis.
+
+
+
+```{r}
 # Assign general functions
 Unique.LGTs$funct<-"other"
 Unique.LGTs$funct[grep("transcriptional|Transcription|transcription",Unique.LGTs$Protein.names)]<-"Transcription"
@@ -118,12 +183,10 @@ colnames(Funct)<-c("Function","count")
 Unique.LGTs$Reannotated.s_covs<-as.numeric(Unique.LGTs$Reannotated.s_covs)
 ```
 
+
+
 ```{r}
-# In depth analysis of expressed unique LGTs
-Unique.expressed.LGTs<-Unique.LGTs %>%
-  dplyr::filter(Reannotated.CDS.totalcounts > 100) %>%
-  dplyr::filter(!is.na(Gene.ontology.IDs)) %>%
-  dplyr::filter(Reannotated.s_covs >= 25)
+##### Eight species-specific LGTs remain for in-depth analysis.###########
 
 # Plot GO terms for each expressed unique LGT
 library(UniprotR)
@@ -311,115 +374,3 @@ Funct %>%
 
 #ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Unique.LGTs.function_RAW.pdf", width=12, height=10)
 ```
-
-
-
-## Plot Overview plots for global LGTs
-````{r}
-
-LGTs$Reannotated.CDS.lengths<-as.numeric(LGTs$Reannotated.CDS.lengths)
-LGTs$Reannotated.s_covs<-as.numeric(LGTs$Reannotated.s_covs)
-LGTs$Reannotated.q_covs<-as.numeric(LGTs$Reannotated.q_covs)
-LGTs$Reannotated.CDS.totalcounts<-as.numeric(LGTs$Reannotated.CDS.totalcounts)
-
-
-# Make a density plot to show s_cov
-s_cov<-LGTs %>%
-  ggplot( aes(x=Reannotated.s_covs)) +
-    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
-    theme_minimal()+
-  xlab("Subject coverage of bacterial reference protein")
-s_cov
-
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Scov_global_RAW.pdf", s_cov,width=15, height=10)
-
-# Show q_cov
-q_cov<-LGTs %>%
-  ggplot( aes(x=Reannotated.q_covs)) +
-    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
-    theme_minimal()
-q_cov
-
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/qcov_global_RAW.pdf", q_cov,width=12, height=10)
-
-# Show CDS_lengths (Reannotated)
-CDS_lengths<-LGTs %>%
-  ggplot( aes(x=Reannotated.CDS.lengths)) +
-    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
-    theme_minimal()
-CDS_lengths
-
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/CDS_lengths_global_RAW.pdf", CDS_lengths,width=12, height=10)
-
-expression<-LGTs %>%
-  filter(Reannotated.CDS.totalcounts<5000 ) %>%
-  ggplot( aes(x=Reannotated.CDS.totalcounts)) +
-    geom_density(fill="#69b3a2", color="#e9ecef", alpha=1) +
-    theme_minimal()
-expression
-
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/expression_global_RAW.pdf", expression,width=12, height=10)
-
-LGTs %>% 
-  dplyr::count(Reannotated.CDS.lengths > 6000) # 58 < 6000 bp length
-
-LGTs %>% 
-  dplyr::count(Reannotated.CDS.totalcounts > 100) # 176 < 6000 bp length
-
-Expressed.Unique.LGTs<-Unique.LGTs %>% 
-  filter(Reannotated.CDS.totalcounts > 100)
-
-Expressed.Unique.LGTs %>% 
-  filter(Reannotated.startCodon=="ATG" | Reannotated.startCodon=="TTG" | Reannotated.startCodon=="GTG")
-#-------------------------------------------------#
-#Reannotated.CDS.totalcounts > 100
-#FALSE	557			
-#TRUE	384			
-#NA	112	
-#-------------------------------------------------#
-
-#-------------------------------------------------#
-#Reannotated.CDS.totalcounts > 5000
-#FALSE	884			
-#TRUE	57			
-#NA	112
-#-------------------------------------------------#
-```
-
-
-### Count number of extended and minimized loci after reannotation
-```{r}
-LGTs$Reannotated.CDS.lengths<-as.numeric(LGTs$Reannotated.CDS.lengths)
-LGTs$CDS.lengths<-as.numeric(LGTs$CDS.lengths)
-
-
-head(LGTs)
-LGTs %>% 
-  dplyr::count(Reannotated.CDS.lengths< CDS.lengths)
-
-#--------------------------------------#
-#Reannotated.CDS.lengths > CDS.lengths
-#FALSE	843			
-#TRUE	78			
-#NA	132			
-#---------------------------------------#
-
-LGTs %>% 
-  dplyr::count(CDS.startCodons == "ATG") # without extension 546 ATG start codons
-
-LGTs %>% 
-  dplyr::count(Reannotated.startCodon == "ATG") # after extension 628 ATG start codons 
-
-LGTs %>% 
-  dplyr::count(CDS.stopCodons == "TAA" | CDS.stopCodons == "TAG") # without extension 586 stop codons
-LGTs %>% 
-  dplyr::count(Reannotated.stopCodon == "TAA" | Reannotated.stopCodon == "TAG" ) # with extension 704
-
-
-LGTs %>% 
-  dplyr::count(CDS.startCodons == "ATG" & CDS.stopCodons == "TAA" | CDS.stopCodons =="TAG") # 355 complete candidates
-
-LGTs %>% 
-  dplyr::count(Reannotated.startCodon == "ATG" & Reannotated.stopCodon == "TAA" | Reannotated.stopCodon =="TAG") #525
-
-````

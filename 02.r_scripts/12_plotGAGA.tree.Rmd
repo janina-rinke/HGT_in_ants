@@ -14,17 +14,17 @@ library(dplyr)
 # load tree
 ```{r}
 # Whole tree
-GAGA.tree<-load("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/GAGA.tree.plot4.Robject")
+GAGA.tree<-load("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/trees/GAGA.tree.plot4.Robject")
 GAGA.tree.plot4+geom_tippoint(aes(col=Subfamily))
 
 
 # To plot only subfamilies or selected species
-GAGA2.tree<-read.tree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/GAGA_dated_phylogeny_newick_woutgroup_DatesPeters2017_CurrBio.tre")
+GAGA2.tree<-read.tree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/trees/GAGA_dated_phylogeny_newick_woutgroup_DatesPeters2017_CurrBio.tre")
 
 
 # load id2species table
-GAGA.data<-read.table("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/GAGA.data.tsv",sep="\t",T)
-GAGA.all.data<-read.table("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/all.GAGA.data.tsv",sep="\t",T)
+GAGA.data<-read.table("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/GAGA.data.tsv",sep="\t",T)
+GAGA.all.data<-read.table("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/all.GAGA.data.tsv",sep="\t",T)
 ```
 
 
@@ -44,8 +44,7 @@ Myrmi.selection<-c("GAGA-0082","GAGA-0103","GAGA-0256","GAGA-0098","GAGA-0099","
                    "GAGA-0222","GAGA-0223","GAGA-0512","GAGA-0513","GAGA-0224","GAGA-0511",
                    "GAGA-0288","GAGA-0510","GAGA-0407","GAGA-0165","NCBI-0013","GAGA-0330",
                    "GAGA-0393","GAGA-0395","GAGA-0335","GAGA-0328","GAGA-0382","GAGA-0579",
-                   "GAGA-0331","GAGA-0378","GAGA-0578","GAGA-0533","GAGA-0520","GAGA-0333",
-                   "GAGA-0553","GAGA-0527","GAGA-0085","GAGA-0405","GAGA-0515")
+                   "GAGA-0331","GAGA-0378","GAGA-0578","GAGA-0533","GAGA-0520")
 
 GAGA.tree.Formicinae<-tidytree::keep.tip(GAGA2.tree,Formi.selection)
 
@@ -62,11 +61,11 @@ GAGA.tree.Myrmicinae.plot<-ggtree(GAGA.tree.Myrmicinae,size=.2) %<+% GAGA.data
 # Formicinae: add labels to plot and 
 GAGA.tree.Formicinae.plot<-ggtree(GAGA.tree.Formicinae,size=1) %<+% GAGA.data +
   geom_tiplab(aes(label=paste0(label," ",DisplayName)),
-              size=2,
+              size=3,
               show.legend=F,
               fontface="italic",
               offset=20)+
-  geom_rootedge(.005,size=.2)+
+  geom_rootedge(5,size=.8)+
   xlim_tree(250)
 
 GAGA.tree.Formicinae.plot
@@ -76,12 +75,13 @@ ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/selec
 # Myrmicinae: add labels to plot and 
 GAGA.tree.Myrmicinae.plot<-ggtree(GAGA.tree.Myrmicinae,size=1) %<+% GAGA.data +
   geom_tiplab(aes(label=paste0(label," ",DisplayName)),
-              size=2,
+              size=3,
               show.legend=F,
               fontface="italic",
               offset=20)+
-  geom_rootedge(.005,size=.2)+
+  geom_rootedge(5,size=.8)+
   xlim_tree(250)
+
 
 GAGA.tree.Myrmicinae.plot
 

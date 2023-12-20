@@ -75,6 +75,14 @@ Nr.species.ANKs<-ANKs %>%
 # Rename column
 Nr.species.ANKs<- Nr.species.ANKs %>%
   dplyr::rename("ANK.count" = "n")
+
+# Count ANK proteins
+Nr.UniprotIDs.ANKs<-ANKs %>%
+  dplyr::count(CDS.UniprotIDs,Protein.names)
+
+# Rename column
+Nr.UniprotIDs.ANKs<- Nr.UniprotIDs.ANKs %>%
+  dplyr::rename("ANK.count" = "n")
 ```
 
 

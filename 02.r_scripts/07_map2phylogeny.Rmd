@@ -46,6 +46,9 @@ Load the necessary R libraries
 #BiocManager::install("treeio")
 #install.packages("devtools")
 #devtools::install_github("GuangchuangYu/ggtree")
+
+#BiocManager::install("ggstar")
+#BiocManager::install("ggtreeExtra")
 library(treeio)
 library(ggtree)
 library(phytools)
@@ -55,129 +58,91 @@ library(googlesheets4)
 library(dplyr)
 require(ape)
 library(tidytree)
+library(ggnewscale)
+library(ggtreeExtra)
+library(ggnewscale)
+library(reshape2)
+library(ggstar)
+library(TDbook)
 ```
 
-Load data from google spreadsheet (Already stored in an R object that you can just load)
+## Load data 
+(GAGA_dated_phylogeny_newick_woutgroup_DatesPeters2017_CurrBio.tre)
 ```{r}
-#id<-"1e7Hj_BQ8rke5XW7j93YL6QVAGbcvsb2yw7oD86WnPJY"
-#gsheet<-read_sheet(id,sheet="GlobalOverview",skip = 2,na = c(""," ","NA","#DIV/0!"),col_types = "c",trim_ws=T)
-#GlobalOverview<-as.data.frame(gsheet,stringsAsFactors=F)
-#save(GlobalOverview,file="../../misc/data/gsheet.GlobalOverview.21-09-22.Robj")
-load("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/gsheet.GlobalOverview.21-09-22.Robj")
+# Load the id2species table
+GAGA.data<-read.table("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/all.GAGA.data.tsv",sep="\t",T)
 
-load("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/GAGA.tree.plot4.Robject")
+# Load tree itself
+GAGA2.tree<-read.tree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/trees/GAGA_dated_phylogeny_newick_woutgroup_DatesPeters2017_CurrBio.tre")
 ```
 
-Create a dataframe where the first row is the GAGA id (e.g. GAGA-0002), which are also used as the tip labels in the phylogeny
+## Subset tree with treeio
 ```{r}
-data2add<-data.frame(GAGA.id = GlobalOverview$`GAGA ID`, GlobalOverview)
+# Remove Outgroup tips from the tree
+tips_to_remove<-c("OUTG-0008", "OUTG-0007", "OUTG-0006", "OUTG-0005", "OUTG-0004", "OUTG-0003","OUTG-0002", "OUTG-0001")
+
+subset_tree<-drop.tip(GAGA2.tree, tips_to_remove)
+
+# Remove Outgroups from GAGA.data
+GAGA2.data<-GAGA.data %>%
+  dplyr::filter(!grepl("OUTG", GAGA.data$label))
+
+# Rename the label column to GAGAid to avoid confusion
+GAGA2.data<-rename(GAGA2.data, GAGAid = label)
 ```
 
-Gather subfamily info for NCBI IDs as well and manually add the subfamily
+
+# Define variables for tree plotting
 ```{r}
-colnames(data2add)
-
-subset(data2add,is.na(Subfamily))
-
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0001"]<-"Dorylinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0002"]<-"Myrmicinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0003"]<-"Myrmicinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0004"]<-"Myrmicinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0005"]<-"Formicinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0006"]<-"Myrmicinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0007"]<-"Ponerinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0008"]<-"Formicinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0009"]<-"Ponerinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0010"]<-"Dolichoderinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0011"]<-"Ponerinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0012"]<-"Myrmicinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0013"]<-"Myrmicinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0014"]<-"Myrmicinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0015"]<-"Myrmicinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0016"]<-"Myrmicinae"
-data2add$Subfamily[data2add$GAGA.id=="NCBI-0017"]<-"Myrmicinae"
-data2add$Subfamily[data2add$GAGA.id=="OUT-0001"]<-"Formicinae"
-data2add$Subfamily[data2add$GAGA.id=="OUT-0002"]<-"Formicinae"
+offset1<-48 #Define how far away the species names should be from the main tree
+hex1<-178 # presence/absence
+hex2<-160 # donor
 ```
 
-Create a column with clean species IDs for all species.
-
-This has to be done, because the database of all the sequenced species is a bit convoluted.
-The function coalesce() finds the first non-missing value at each position. In this case, the columns "Species" and "Species..from.Assembly.Overview" are collapsed. If the column "Species" does not have an entry, the entry from the column "Species..from.Assembly.Overview" will be taken.
+## Plot tree
 ```{r}
-data2add$cleanSpeciesID<-dplyr::coalesce(data2add$Species,data2add$Species..from.Assembly.Overview.)
+# Add species labels to tree and replace GAGAids
+df <- data.frame(label = GAGA2.data$GAGAid, 
+                Species = GAGA2.data$DisplayName,
+                Subfamily = GAGA2.data$Subfamily,
+                node=GAGA2.data$node)
+
+# Nodes need to be replaced accordingly
+df$node <- seq(1, 163)
+
+subset_tree2 <- full_join(subset_tree, df, by = "label")
+subset_tree2
+
+p0<-ggtree(subset_tree, layout='circular')
+p1 <- p0 + geom_tiplab()
+p1
+
+p2<-p0 %<+% df +
+  geom_tiplab(aes(label=Species),
+  offset=offset1,
+  size=3) +
+  theme(legend.position="bottom")
+p2
+
+# Plot node labels to color subfamilies accordingly
+p2 + geom_text(aes(label=node))
+
+
+# Define nodes to color subfamilies based on
+nodes <- data.frame(node=c(250,1, 167, 188,192, 30, 195, 200, 206, 207, 210, 249), type = c("Myrmicinae", "Leptanillinae", "Ponerinae", "Proceratiinae", "Amblyoponinae", "Paraponerinae", "Dorylinae", "Dolichoderinae", "Pseudomyrmecinae", "Myrmeciinae", "Formicinae", "Ectatomminae"))
+
+# Highlight subfamilies by color
+p3 <- p2 +
+  geom_hilight(data=nodes, aes(node=node, fill=type), type = "gradient", alpha = .3) +
+  scale_color_gradient()
+p3
 ```
-
-
-Load the tree file of all the GAGA genomes.
-```{r}
-#tree <- read.iqtree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/hymenoptera_psc98_partition_b1000_40threads_msubnucl.treefile")
-
-tree<-read.tree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/GAGA_dated_phylogeny_newick.tre")
-```
-
-Create a very quick and dirty plot of the phylogeny
-```{r}
-plot(tree@phylo,show.node.label = T,show.tip.label = T,cex=.5)
-nodelabels(bg=rgb(0,0,0,0),col="red",frame = "none")
-```
-
-Check the plot to see where the root should be. Here we root the tree at node 166 that separates the outgroups, the honeybee "Amel" (Apis mellifera) and the parasitoid wasp Nasonia (Nvit), from ants.
-```{r}
-#tree.rooted<-treeio::root(tree,node=166)
-tree.rooted <- tree
-tree.rooted.subset<-treeio::drop.tip(tree.rooted,tip=c("NCBI-0018_Amel","NCBI-0019_Nvit"))
-```
-
-Plot basic tree
-```{r}
-tp<-ggtree(tree.rooted.subset,ladderize = T, layout = "circular")+geom_rootedge(.01)
-```
-
-Add the species identity from `FAS.genes.and.names.tsv`
-```{r}
-tp$data$label[tp$data$isTip==T]<-gsub("_.*","",tp$data$label[tp$data$isTip==T])
-
-tp2<-tp %<+% data2add
-tp2 
-```
-
-# A) Make complex tree with the subfamilies highlighted by color
-```{r}
-#install.packages("ggnewscale")
-library("ggnewscale")
-
-#Make Subfamily as a factor (discrete color scale for factors)
-tp2$data$Subfamily<-as.factor(tp2$data$Subfamily)
-
-tp3<-tp2 +
-  geom_tiplab2(aes(label=paste(label,cleanSpeciesID,sep=" "), color = Subfamily),size=2,align = T,linesize = .1)+    #add the tip labels
-  geom_nodepoint(aes(fill=UFboot),stroke=0.5,pch=21,size=2)+       #add the info about bootstrapping success as points of different colors to the nodes
- scale_fill_viridis_c()+  #change the color of the UFboot node points to a viridis color scale
-  theme(legend.position = "left",
-        legend.title=element_text(size=11), # the title size of legend.
-        legend.text=element_text(size=10)
-        )
-
-# tp2.5 is a less complicated tree without UFboot
-tp2.5<-tp2 +
-  geom_tiplab2(aes(label=paste(cleanSpeciesID,sep=" "), color = Subfamily),size=2,align = T,linesize = .1) # remove GAGAid from label 
-```
-
-```{r}
-tp3 #plot the tree
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/Subfamilies.pdf",
-#width = 15,height=30) #save the tree in a pdf
-
-tp2.5
-```
-
 
 # A.1) LGT data: Include the LGT data in the circular phylogeny
 ```{r}
 library(readxl)
 
-LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.UniProt.Info.Reannotated.xlsx")
+LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/LGTs.LocusLevel.UniProt.Info.Reannotated.xlsx")
 ```
 
 
@@ -189,29 +154,16 @@ LGT.tally<-as.data.frame(table(select(LGTs,.id)))
 colnames(LGT.tally)<-c("GAGAid","LGT.count")
 
 #Add the LGT.tally dataframe to the phylogeny object as additional data.
-tp4<-tp3 %<+% LGT.tally
-#see tp4$data$LGT.count
+p5<-p3 %<+% LGT.tally
 
 #Plot the phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified LGTs
-tp5<-tp4+geom_tippoint(aes(size=LGT.count),col="red", alpha=.5)
-tp5
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.LGTs.pdf",width = 12,height=24) #save the tree in a pdf
+p6<-p5+geom_tippoint(aes(size=LGT.count),col="red", alpha=.5)
+p6
+#ggsave(p6,file="/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_dated_phylogenies/GAGA.phylogeny.LGTs.dots.pdf",width = 12,height=24) #save the tree in a pdf
 
 #write.table(LGT.tally, file="GAGAspecies_with_lgts.tsv", sep=",", col.names = NA)
 ```
 
-
-```{r}
-#BiocManager::install("ggstar")
-#BiocManager::install("ggtreeExtra")
-library(ggtree)
-library(ggtreeExtra)
-library(ggplot2)
-library(ggnewscale)
-library(dplyr)
-library(tidytree)
-library(ggstar)
-```
 
 # A.3) Plot all predicted proteins onto the phylogeny
 ```{r}
@@ -223,6 +175,7 @@ LGTs$type[grep("Ank",LGTs$Protein.names)]<-"Ank"
 LGTs$type[grep("Cyclopropane|EC 2.1.1.79",LGTs$Protein.names)]<-"CFA"
 LGTs$type[grep("N-acetylmuramic",LGTs$Protein.names)]<-"MurNAc"
 LGTs$type[grep("DUF1016|Lysozyme|lysozyme",LGTs$Protein.names)]<-"Lys"
+LGTs$type[grep("Ribosomal RNA",LGTs$Protein.names)]<-"metA"
 
 # count the number of proteins per species
 LGT.proteins<-select(LGTs,c("type",".id"))
@@ -235,17 +188,20 @@ head(LGT.proteins)
 
 ```{r}
 library("viridis")
+
+#switch to a simple presence/absence visualization
+LGT.proteins$count[LGT.proteins$count>1]<-1
 # For the protein bar layer outside of the tree
-tp5.5 <- tp2.5 +
+tp1 <- p3 +
   new_scale_fill() +
   geom_fruit(
           data=LGT.proteins,
           geom=geom_bar,
           mapping=aes(y=GAGAid, x=count,fill=protein), #The count will be mapped to x
-          pwidth=.4,      # Width of the external layer
+          pwidth=0.2,      # Width of the external layer
           stat="identity",
           orientation="y", #The orientation of the axis
-          position=position_stackx(hexpand=.45),   #Adjust the position of the geom_layer
+          position=position_stackx(hexpand=hex1),   #Adjust the position of the geom_layer
           axis.params =list(
                          axis="x",       # add axis text of the layer.
                          vjust=0.2,
@@ -256,10 +212,10 @@ tp5.5 <- tp2.5 +
                            ),
          grid.params=list(alpha=.2)      # Parameter to adjust gridlines around the tree
       ) +
-      scale_fill_discrete(     #color of the external geom_layer
-       name="HGT-encoded protein",        #name of the legend for the external geom_layer
-       guide=guide_legend(keywidth=1,keyheight=1,order=6, ncol=6)
-      ) +
+    #  scale_fill_discrete(     #color of the external geom_layer
+    #   name="HGT-encoded protein",        #name of the legend for the external geom_layer
+    #   guide=guide_legend(keywidth=1,keyheight=1,order=6, ncol=6)
+    #  ) +
       theme(legend.position="bottom", # the position of legend.
             legend.box="vertical", legend.margin = margin(0,0,0,0), #change the spacing between the legend and the plot
             legend.box.margin=margin(10,10,10,10),
@@ -268,12 +224,14 @@ tp5.5 <- tp2.5 +
           legend.text=element_text(size=10) # the text size of legend.
           #legend.spacing.y = unit(0.01, "cm")
       )
-tp5.5
+tp1<-tp1+scale_fill_manual(values=c("steelblue","red","#EF7F9A","firebrick", "darkorange","steelblue2"))
+
+tp1
 ```
 
 # A.5) Make a dataframe for the bacteria and subset the LGT count into Wolbachia and Blochmannia origin
 ```{r}
-LGT.bacteria<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.xlsx")[,c(15,2)]
+LGT.bacteria<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/LGTs.LocusLevel.Expression.xlsx")[,c(15,2)]
 
 # Make categories for all bacteria
 LGT.bacteria$bac.type<-"other"
@@ -299,7 +257,7 @@ LGT.bac$relative<-LGT.bac$count/LGT.bac$totalCount
 
 # A.6) Add the bacterial origin
 ```{r}
-tp6 <- tp5.5 +
+tp2 <- tp1 +
   new_scale_fill() +
   geom_fruit(
           data=LGT.bac,
@@ -308,7 +266,7 @@ tp6 <- tp5.5 +
           pwidth=.1,      # Width of the external layer
           stat="identity",
           orientation="y", #The orientation of the axis
-          position=position_stackx(hexpand=.4),   #Adjust the position of the geom_layer
+          position=position_stackx(hexpand=hex2),   #Adjust the position of the geom_layer
           axis.params =list(
                           axis="x",       # add axis text of the layer.
                           vjust=0.2,
@@ -332,34 +290,11 @@ tp6 <- tp5.5 +
           legend.text=element_text(size=10) # the text size of legend.
          # legend.spacing.y = unit(0.01, "cm")
       )
-tp6
+tp2<-tp2+scale_fill_manual(values=c("grey20","grey60","grey80","grey90"))
 
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacteria_RAW.pdf", width=20, height=25)
+tp2
+
+ggsave("/Users/Janina/sciebo/HGT_Manuscript/Figures/GAGA.new.phylo.HGTs.pdf", width=20, height=25)
 #ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/try.pdf",width=13,height=26) #save the tree in a pdf
 ```
 
-# A.7) Separating the legend from the tree to position it below the tree
-```{r}
-tp_bacteria <- tp6
-tp_protein <- tp5.5
-
-require(cowplot)
-leg1 <- get_legend(tp_bacteria)
-
-tp7 <- tp6 + theme(legend.position="none")
-plot_grid(tp7, leg1, ncol=1, rel_widths=c(0.07, 0.5))
-```
-
-```{r}
-tp7 <- tp6 +
-      theme(legend.position="bottom", # the position of legend.
-          legend.background=element_rect(), # the background of legend.
-          legend.title=element_text(size=11), # the title size of legend.
-          legend.text=element_text(size=9), # the text size of legend.
-          legend.spacing.y = unit(0.02, "cm")
-      )
-tp7
-
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacterialorigin.pdf",width=15,height=30) #save the tree in a pdf
-#graph2ppt(file="/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/GAGA.phylogeny.proteins.bacterialorigin.ppt", width=12, height=12)
-```
