@@ -1,21 +1,16 @@
-# HGT in Ants
+# Horizontal Gene Acquisition in Ants
 
 ## Introduction to the Code Repositories
 
-This repository holds all the code to evaluate HGTs/LGTs deriving from bacteria in 163 ant genomes (subproject of the Global Ant Genomics Alliance).
+This repository holds all the code to evaluate horizontally acquired genes (HGAs) deriving from bacteria in 163 ant genomes, previously identified by an automated Horizontal Gene Transfer (HGT) finder pipeline. All the code for the automated detection of HGTs/LGTs in ant genomes can be found [HERE](https://github.com/dinhe878/GAGA-Metagenome-LGT).
+
+
+This project is a part of the Global Ant Genomics Alliance (GAGA).
 
 ## Information about Code & Scripts
 
-Local and remote copies of files and folders: 
-
-```bash
-# mac
-macbase=/Users/Janina/sciebo/MASTER/Masterarbeit/lgt
-# cluster
-cluster=/global/scratch2/j_rink02/master/HGT
-```
 ### 01. Markdown Scripts (`.md`)
-This folder holds all markdown scripts for different analyses within the Linux environment.
+This folder holds all markdown scripts for different analyses to be conducted within a Linux bash coding environment.
 
 #### Calculation of reads overlapping HGT boundaries
 `bedtools` and `samtools` were used to map raw sequencing reads to the respective genomes and to calculate reads overlapping the start, end, and total sequence length of HGT candidates.
@@ -58,7 +53,7 @@ We ran gene trees on the clade-specific prokaryotic protein HGT sequences (Lysoz
 ```
 
 #### Checking for selection among clade-specific HGTs
-We checked for selection using HyPhy on the clade-specific HGTs (Lysozymes, MurNAc etherases, CFA synthases).
+We checked for selection using `HyPhy` on the clade-specific HGTs (Lysozymes, MurNAc etherases, CFA synthases).
 ```bash
 ./markdown_scripts/08_Selection_analyses.md
 ```
@@ -66,7 +61,7 @@ We checked for selection using HyPhy on the clade-specific HGTs (Lysozymes, MurN
 All scripts have been written in RStudio 4.3.1.
 
 #### GAGA HGT finder analysis
-Identification of HGTs with protein-coding hits and calculation of overview plots for all HGT candidates detected by the automated HGT finder pipeline. These overview plots were used as a starting point for all downstream analyses and to determine HGT quality, as well as filters for the identification of true HGTs.
+Identification of HGTs with protein-coding hits and calculation of overview plots for all HGT candidates detected by the automated HGT finder pipeline (`https://github.com/dinhe878/GAGA-Metagenome-LGT`). These overview plots were used as a starting point for all downstream analyses and to determine HGT quality, as well as filters, for the identification of true HGTs.
 ```bash
 ./r_scripts/01_analyseLGTs.Rmd
 ```
@@ -78,7 +73,7 @@ This script contains all filtering steps which were used to exclude false-positi
 ```
 
 #### Visualization of average read length in PacBio and stLFR genomes
-We calculated average read lengths for both PacBio and stLFR genomes separately. This was used as a basis to determine HGT boundary expansions in `./markdown_scripts/01_countBoundaryReads.md` script to calculate read overlaps accordingly. 
+We calculated average read lengths for both PacBio and stLFR genomes separately. This was used as a basis to determine HGT boundary expansions in the `./markdown_scripts/01_countBoundaryReads.md` script to calculate read overlaps accordingly. 
 ```bash
 ./r_scripts/03_Distribution_plots_avg_read_length.Rmd
 ```
@@ -103,7 +98,7 @@ Query coverage and subject coverage were added as additional information for eve
 ```
 
 #### Visualize HGT candidates and plot GAGA phylogeny with HGTs
-This script was used to plot all HGTs detected by the automatic HGT finder pipeline, which is visualized in Figure 1. 
+This script was used to plot all HGTs detected by the automatic HGT finder pipeline, which is visualized in **Figure 1**. 
 ```bash
 ./r_scripts/07_map2phylogeny.Rmd
 ```
@@ -115,13 +110,13 @@ We used the package *uniprotR* to obtain additional information for all HGT cand
 ```
 
 #### Synteny of clade-specific HGTs
-All clade-specific LGT regions were extended by 50 kb up- and downstream to infer synteny of genes.
+All clade-specific HGT regions were extended by 40 kb up- and downstream to infer synteny of genes.
 ```bash
 ./r_scripts/09_Synteny.Rmd
 ```
 
 #### Detail analyses of unique and species-specific HGTs and creation of plots for global HGTs
-This script was used to investigate unique and species-specific HGTs which is visualized in Figure 6.
+This script was used to investigate unique and species-specific HGTs.
 ```bash
 ./r_scripts/10_Unique_HGTs.Rmd 
 ```
@@ -139,7 +134,7 @@ Code to analyse RNAseq reads obtained from GAGA and conduct the RNAseq mapping f
 ./perl_scripts/2_run_rna_mapping_wholegenome.pl
 ```
 ### 04. Python Scripts (`.py`)
-Script used to create a donut plot of the bacterial donors of HGTs, which is visualized in Figure 2. 
+Script used to create a pie chart visualization of the bacterial donors of HGTs. 
 ```bash
 ./python_scripts/1_Bacterial_distribution_piechart.ipynb
 ```
