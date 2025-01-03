@@ -12,12 +12,10 @@ library(plyr)
 library(dplyr)
 ```
 
-setwd("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data")
-
 # Load the data
 ```{r}
-PacBio <- read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGT_avg_reads_boundary_region.csv")
-stLFR <- read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGT_avg_reads_boundary_region_stLFR.csv")
+PacBio <- read.csv2("./0_data/LGT_avg_reads_boundary_region.csv")
+stLFR <- read.csv2("./0_data/LGT_avg_reads_boundary_region_stLFR.csv")
 ```
 
 ```{r}

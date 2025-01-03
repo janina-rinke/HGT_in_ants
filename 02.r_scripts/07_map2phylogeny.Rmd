@@ -38,6 +38,7 @@ output:
 # Define the global chunk options
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
+
 Load the necessary R libraries
 ```{r libraries}
 #if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -70,10 +71,10 @@ library(TDbook)
 (GAGA_dated_phylogeny_newick_woutgroup_DatesPeters2017_CurrBio.tre)
 ```{r}
 # Load the id2species table
-GAGA.data<-read.table("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/all.GAGA.data.tsv",sep="\t",T)
+GAGA.data<-read.table("./0_data/Tables/all.GAGA.data.tsv",sep="\t",T)
 
 # Load tree itself
-GAGA2.tree<-read.tree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/trees/GAGA_dated_phylogeny_newick_woutgroup_DatesPeters2017_CurrBio.tre")
+GAGA2.tree<-read.tree("./0_data/trees/GAGA_dated_phylogeny_newick_woutgroup_DatesPeters2017_CurrBio.tre")
 ```
 
 ## Subset tree with treeio
@@ -143,7 +144,7 @@ p3
 library(readxl)
 library(openxlsx)
 
-LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/LGTs.LocusLevel.UniProt.Info.Reannotated.xlsx")
+LGTs<-read_excel("./0_data/Tables/LGTs.LocusLevel.UniProt.Info.Reannotated.xlsx")
 ```
 
 
@@ -160,7 +161,7 @@ p5<-p3 %<+% LGT.tally
 #Plot the phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified LGTs
 p6<-p5+geom_tippoint(aes(size=LGT.count),col="red", alpha=.5)
 p6
-#ggsave(p6,file="/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_dated_phylogenies/GAGA.phylogeny.LGTs.dots.pdf",width = 12,height=24) #save the tree in a pdf
+#ggsave(p6,file="./plots/GAGA_dated_phylogenies/GAGA.phylogeny.LGTs.dots.pdf",width = 12,height=24) #save the tree in a pdf
 
 #write.table(LGT.tally, file="GAGAspecies_with_lgts.tsv", sep=",", col.names = NA)
 ```
@@ -232,7 +233,7 @@ tp1
 
 # A.5) Make a dataframe for the bacteria and subset the LGT count into Wolbachia and Blochmannia origin
 ```{r}
-LGT.bacteria<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/LGTs.LocusLevel.Expression.xlsx")[,c(1,2,17,16,15,12,13)]
+LGT.bacteria<-read_excel("./0_data/Tables/LGTs.LocusLevel.Expression.xlsx")[,c(1,2,17,16,15,12,13)]
 
 # Make categories for all bacteria
 LGT.bacteria$bac.type<-"other"
@@ -296,9 +297,10 @@ tp2<-tp2+scale_fill_manual(values=c("grey20","lightgreen","grey80","grey90","gre
 
 tp2
 
-ggsave("/Users/Janina/sciebo/HGT_Manuscript/Figures/GAGA.new.phylo.HGTs.pdf", width=20, height=25)
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/try.pdf",width=13,height=26) #save the tree in a pdf
+ggsave("./plots/GAGA.new.phylo.HGTs.pdf", width=20, height=25)
 ```
+
+
 ```{r}
 # Join dataframes for LGT representation
 LGT.complete<-LGTs %>% 
@@ -309,8 +311,8 @@ LGT.complete<-LGT.complete %>%
   relocate(species, subfamily, Protein.names,prokaryote_origin,order_prokaryote_origin,class_prokaryote_origin, .after = .id)
 
 # Save dataframe as supplementary table
-write.csv(LGT.complete, "/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/497_HQ_LGTs_all_info.csv", row.names=FALSE)
-write.xlsx(LGT.complete,"/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/497_HQ_LGTs_all_info.xlsx")
+write.csv(LGT.complete, "./0_data/Tables/497_HQ_LGTs_all_info.csv", row.names=FALSE)
+write.xlsx(LGT.complete,"./0_data/Tables/497_HQ_LGTs_all_info.xlsx")
 ```
 
 
@@ -318,7 +320,7 @@ write.xlsx(LGT.complete,"/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tab
 After automated filtering of all 13,664 predicted LGT candidates, 1,148 HGT candidates across XY genomes remained for further manual curation and prokaryotic gene annotation, including also the stLFR genomes.
 ```{r}
 # Load data
-preCurated.LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Master.LGTs/0_data/Tables/GAGA.HGTs.afterFiltering.all.genomes.xlsx")
+preCurated.LGTs<-read_excel("./0_data/Tables/GAGA.HGTs.afterFiltering.all.genomes.xlsx")
 
 # Fit data format to 497 HQ-HGT table
 ## add GAGA-id in locusID column
@@ -335,7 +337,7 @@ HGT_CDS_sum <- sum(preCurated.LGTs$nr_predicted_loci)
 preCurated.LGTs$species<-as.factor(preCurated.LGTs$species)
 HGT_species <- levels(preCurated.LGTs$species)
 
-write.xlsx(preCurated.LGTs,"/Users/Janina/sciebo/HGT_Manuscript/Supplementary Data/Supplementary Tables/GAGA.HGTs.afterFiltering.all.genomes.xlsx")
+write.xlsx(preCurated.LGTs,"./Supplementary_Tables/GAGA.HGTs.afterFiltering.all.genomes.xlsx")
 ```
 
 # B.2) Pre-curated LGT data: Add the LGT candidate numbers per genome to the phylogeny
@@ -374,6 +376,6 @@ plot1<-pl2 %<+% preCurated.LGT.tally
 plot2<-plot1+geom_tippoint(aes(size=LGT.count),col="red", alpha=.5)
 plot2
 
-ggsave("/Users/Janina/sciebo/HGT_Manuscript/Supplementary Data/Supplementary Figures/GAGA.preCurated.HGTs.pdf")
+ggsave("./Supplementary_Figures/GAGA.preCurated.HGTs.pdf")
 ````
 

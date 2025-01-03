@@ -55,7 +55,7 @@ library(stringr)
 
 Load all tsv files for the different GAGA ids in a list of data frames.
 ```{r}
-tsv2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.*.lgt.good.candidates.tsv" #provides the path to all files matching the pattern
+tsv2load<-"./0_data/*/results/*.*.lgt.good.candidates.tsv" #provides the path to all files matching the pattern
 dataFiles <- lapply(Sys.glob(tsv2load), read.delim2,sep="\t")                                       # creates a large list out of all files
 ```
 
@@ -90,9 +90,7 @@ head(df)
 2. Create a large dataframe with scaffold length information for every genome called "dscf"
 3. Merge the scaffold information together with the information for the LGTs
 ```{r}
-#data2load<-"/Users/lukas/sciebo/Projects/LGT/results/GAGA.LGT/*/results/genome.file"
-#data2load<-"/Users/Janina/sciebo/GAGA.LGT/*/results/genome.file"  # load data from all genome.files
-data2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/genome.file"  # load data from all genome.files
+data2load<-"./0_data/*/results/genome.file"  # load data from all genome.files
 genomeFiles <- lapply(Sys.glob(data2load), read.csv,sep="\t",header=F) # create large list of all genome.files
 
 # Create a large df with information on scaffold number and length for every genome
@@ -137,10 +135,10 @@ df$cand.length<-df$cand.end-df$cand.start
 1. Load the .tsv files into R with all good PacBio overlaps (GAGA-id.LGTboundaries.1000bp.good.PacBio.overlap.tsv) in a list of dataframes
 ```{r}
 #For PacBio assembled genomes only:
-#reads2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.LGTboundaries.1000bp.good.PacBio.overlap.tsv"
+#reads2load<-"./0_data/*/results/*.LGTboundaries.1000bp.good.PacBio.overlap.tsv"
 
 # For all genomes:
-reads2load<-"/global/scratch2/j_rink02/master/lgt/0_data/*/results/*.LGTboundaries.*.good.*.overlap.tsv"
+reads2load<-"./0_data/*/results/*.LGTboundaries.*.good.*.overlap.tsv"
 readFiles <- lapply(Sys.glob(reads2load), read.csv,sep="\t",header=F) # create large list of all read .tsv files
 ```
 
@@ -290,7 +288,7 @@ dfFilter1<-subset(dfFilter,cand.start > 1000)
 
 df_outfiltered_scaffold_start<-subset(dfFilter, cand.start < 1000)
 
-#write.table(df_outfiltered_scaffold_start,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.scaffold_start.outfiltered.tsv",sep="\t",quote = F,row.names = F)
+#write.table(df_outfiltered_scaffold_start,"./2_analysis/lgt_filtering/GAGA.LGT.scaffold_start.outfiltered.tsv",sep="\t",quote = F,row.names = F)
 ```
 
 Filtering by the above criteria reduces the number of candidates further to 5173 candidates (dfFilter1 dataframe).
@@ -304,7 +302,7 @@ dfFilter2<-subset(dfFilter1, cand.end < scaffold.length-1000)
 
 df_outfiltered_scaffold_end<-subset(dfFilter1, cand.end > scaffold.length-1000)
 
-#write.table(df_outfiltered_scaffold_end,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.scaffold_end.outfiltered.tsv",sep="\t",quote = F,row.names = F)
+#write.table(df_outfiltered_scaffold_end,"./2_analysis/lgt_filtering/GAGA.LGT.scaffold_end.outfiltered.tsv",sep="\t",quote = F,row.names = F)
 ```
 This further reduces the number of candidates to 5081 possible LGTs (dfFilter2 dataframe).
 
@@ -316,7 +314,7 @@ dfFilter3<-subset(dfFilter2, reads_start > 1 & reads_end > 1 | is.na(reads_start
 
 df_outfiltered_reads<-subset(dfFilter2, reads_start < 2 & reads_end < 2)
 
-write.table(df_outfiltered_reads,"/global/scratch2/j_rink02/master/lgt/2_analysis/lgt_filtering/GAGA.LGT.reads.outfiltered.tsv",sep="\t",quote = F,row.names = F)
+write.table(df_outfiltered_reads,"./2_analysis/lgt_filtering/GAGA.LGT.reads.outfiltered.tsv",sep="\t",quote = F,row.names = F)
 ```
 
 This further reduces the number of candidates to 4785 possible LGTs (dfFilter3 dataframe).
@@ -334,7 +332,6 @@ library(ggrepel)
 ```{r}
 # keep one row per larger locus and paste together all the info for the different LGT candidates contained in this locus
 
-## https://stackoverflow.com/questions/40033625/concatenating-all-rows-within-a-group-using-dplyr/40033725
 dfC <- dplyr::group_by(df, locus) %>%
        dplyr::summarise_each(funs(paste(unique(.), collapse = ";")))
 
@@ -405,7 +402,7 @@ list.of.plots<-lapply(dfSplit.filtered,FUN=plotLGTlocus)
 #  })
 
 lapply(1:length(list.of.plots), function(i){
-      ggsave(filename=paste0("/global/scratch2/j_rink02/master/lgt/2_analysis/LGT.filtered/",gsub(":","-",names(list.of.plots)[i]),".pdf"), plot=list.of.plots[[i]])
+      ggsave(filename=paste0("./2_analysis/LGT.filtered/",gsub(":","-",names(list.of.plots)[i]),".pdf"), plot=list.of.plots[[i]])
   })
 ```
 
@@ -497,7 +494,7 @@ complete_df$gcs.y <- NULL
 complete_df$ce.y <- NULL
 complete_df$.id.y <- NULL
 
-write.table(complete_df,"/global/scratch2/j_rink02/master/lgt/2_analysis/GAGA.LGT.162.evaluation.tsv",sep="\t",quote = F,row.names = F)
+write.table(complete_df,"./2_analysis/GAGA.LGT.162.evaluation.tsv",sep="\t",quote = F,row.names = F)
 ```
 
 
@@ -542,12 +539,9 @@ p1 <- ggplot(filtering_df, aes(x =reorder(Filtering_step, Nr_candidates), y = Nr
   theme(plot.margin = unit(c(2, 2, 3, 3), "cm"))
 p1
 ```
+
+
 ```{r}
-
-ggsave("LGT_filtering.pdf",path="/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots", width=10,height=8)
-```
-
-
 # Plot the number of predicted candidates vs number of high-quality remaining candidates (497 LGTs) separated by species
 ```{r plot candidates}
 # Count the number of unfiltered predicted candidates per genome
@@ -578,11 +572,7 @@ head(df.new)
 
 df.new$outfiltered_candidates<-(df.new$total_LGT_count - df.new$high_quality_LGT_count)
 
-# Save the dataframe to fill in missing species names 
-write_xlsx(df.new,"/home/j/j_rink02/Documents/Numbers_of_LGT_candidates_per_species.xlsx")
-
-# Reload the table
-LGT_candidates<-read_xlsx("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/Numbers_of_LGT_candidates_per_species.xlsx")
+LGT_candidates<-read_xlsx("./0_data/Numbers_of_LGT_candidates_per_species.xlsx")
 
 # Make stacked bar plot to compare the number of good candidates vs number of predicted candidates
 p<-LGT_candidates %>% 
@@ -610,7 +600,7 @@ names(myPalette) <- levels(LGT_candidates$subfamily) # Give every color an appro
 p1 <- p + theme(axis.text.y = element_text(colour=myPalette[LGT_candidates$subfamily]))
 p1
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/Candidates_good_vs_outfiltered.pdf",p1,width=8,height=15)
+ggsave("./plots/Candidates_good_vs_outfiltered.pdf",p1,width=8,height=15)
 
 
 # Make a bar plot to show the number of automatically predicted candidates per species
@@ -640,12 +630,12 @@ p0<-ggplot(LGT2, aes(x = species, y = total_LGT_count,
   theme(legend.title.align=0.5)
 p0
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/Nr_predicted_candidates.pdf",p0,width=10,height=15)
+ggsave("./plots/Nr_predicted_candidates.pdf",p0,width=10,height=15)
 ``` 
 
 ### Plot the number of initally predicted candidates vs candidates remaining after filtering as a dotplot
 ```{r}
-LGT_candidates<-read_xlsx("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/Numbers_of_LGT_candidates_per_species.xlsx")
+LGT_candidates<-read_xlsx("Numbers_of_LGT_candidates_per_species.xlsx")
 
 sum(LGT_candidates$total_LGT_count) #13821 candidates in total before filtering
 sum(LGT_candidates$high_quality_LGT_count) #489 candidates in total after filtering
@@ -670,7 +660,7 @@ p1<-ggplot(LGT_candidates, aes(x = high_quality_LGT_count, y = total_LGT_count))
 
 p1
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Nr_predicted_candidates_vs_filtered_RAW.pdf",p1, width=10, height=7)
+ggsave("./plots/Nr_predicted_candidates_vs_filtered_RAW.pdf",p1, width=10, height=7)
 ```
 
 

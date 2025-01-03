@@ -44,7 +44,7 @@ library(reshape2)
 library(readxl)
 
 # Read CDS level table to extract all unique HGTs
-LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
+LGTs<-read_excel("./0_data/Tables/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
 ```
 
 
@@ -146,7 +146,7 @@ p.ANKs <- ggplot(data = ANKs, aes(x = CDS.pids, y = Reannotated.CDS.totalcounts)
 # Display the plot
 p.ANKs
 
-ggsave("/Users/Janina/sciebo/Publications/HGT_Manuscript/ANKs.expression.pid.correlation.pdf",plot=p.ANKs, width=10, height=6)
+ggsave("./plots/ANKs.expression.pid.correlation.pdf",plot=p.ANKs, width=10, height=6)
 ```
 
 
@@ -162,13 +162,13 @@ ggplot(ANKs)+geom_point(aes(size=as.numeric(CDS.lengths),
 
 ### Plot the ankyrin repeats based on the UniProt IDs onto the GAGA ant phylogeny
 
-Load data from google spreadsheet (Already stored in an R object that you can just load)
+Load data from google spreadsheet
 ```{r}
 #id<-"1e7Hj_BQ8rke5XW7j93YL6QVAGbcvsb2yw7oD86WnPJY"
 #gsheet<-read_sheet(id,sheet="GlobalOverview",skip = 2,na = c(""," ","NA","#DIV/0!"),col_types = "c",trim_ws=T)
 #GlobalOverview<-as.data.frame(gsheet,stringsAsFactors=F)
 #save(GlobalOverview,file="../../misc/data/gsheet.GlobalOverview.21-09-22.Robj")
-load("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/gsheet.GlobalOverview.21-09-22.Robj")
+load("./0_data/gsheet.GlobalOverview.21-09-22.Robj")
 ```
 
 Create a dataframe where the first row is the GAGA id (e.g. GAGA-0002), which are also used as the tip labels in the phylogeny
@@ -214,7 +214,7 @@ data2add$cleanSpeciesID<-dplyr::coalesce(data2add$Species,data2add$Species..from
 
 Load the tree file of all the GAGA genomes.
 ```{r}
-tree <- read.iqtree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/hymenoptera_psc98_partition_b1000_40threads_msubnucl.treefile")
+tree <- read.iqtree("./0_data/hymenoptera_psc98_partition_b1000_40threads_msubnucl.treefile")
 ```
 
 Create a very quick and dirty plot of the phylogeny
@@ -310,7 +310,7 @@ ANKs.df<- ANKs %>%
 # Remove column headers
 names(ANKs.df)<-NULL
 
-write.table(ANKs.df, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/GAGA.ANKs.tsv', quote=FALSE, sep='\t', row.names = F)
+write.table(ANKs.df, file='./GAGA.ANKs.tsv', quote=FALSE, sep='\t', row.names = F)
 
 ## For ANK loci
 # Only keep selected columns
@@ -324,7 +324,7 @@ ANKs.loci.df <- ANKs.loci.df %>%
 # Remove column headers
 names(ANKs.loci.df)<-NULL
 
-write.table(ANKs.loci.df, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/GAGA.ANKs.loci.txt', quote=FALSE, sep='\t', row.names = F)
+write.table(ANKs.loci.df, file='./GAGA.ANKs.loci.txt', quote=FALSE, sep='\t', row.names = F)
 ```
 
 ## Separate dataframes into different categories
@@ -335,10 +335,10 @@ write.table(ANKs.loci.df, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/G
 5: Species-specific newly-filtered (88 loci)
 ```{r}
 # Save dataframes
-write.table(ANKs, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/ANKs.tsv', quote=FALSE, sep=',', row.names = F)
-write.table(Unique.LGTs, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/Species-specific_LGTs.newly.filtered.tsv', quote=FALSE, sep=',', row.names = F)
-write.table(Expressed.Unique.LGTs, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/Expressed.Unique.LGTs.tsv', quote=FALSE, sep=',', row.names = F)
+write.table(ANKs, file='./Dataframes/ANKs.tsv', quote=FALSE, sep=',', row.names = F)
+write.table(Unique.LGTs, file='./Dataframes/Species-specific_LGTs.newly.filtered.tsv', quote=FALSE, sep=',', row.names = F)
+write.table(Expressed.Unique.LGTs, file='./Dataframes/Expressed.Unique.LGTs.tsv', quote=FALSE, sep=',', row.names = F)
 
-write.table(Nr.species.ANKs, file='/Users/Janina/sciebo/HGT_Manuscript/Dataframes/Species_with_ANKs.tsv', quote=FALSE, sep=',', row.names = F)
+write.table(Nr.species.ANKs, file='./Dataframes/Species_with_ANKs.tsv', quote=FALSE, sep=',', row.names = F)
 ```
 

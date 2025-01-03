@@ -31,7 +31,7 @@ library(dplyr)
 library(readxl)
 
 # Read CDS level table to extract all unique HGTs
-LGTs<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
+LGTs<-read_excel("./0_data/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
 ```
 
 
@@ -87,8 +87,7 @@ Other.LGT.loci <- Unique.LGTs %>%
   group_by(locusID) %>%
   summarize(across(everything(), ~ paste(unique(.), collapse = ";")))
 
-#write_xlsx(Other.LGT.loci, path= "/Users/Janina/sciebo/Publications/HGT_Manuscript/Data/Other_HGTs/Other.75.HGA.loci.xlsx")
-write_xlsx(LGTs, path="/Users/Janina/sciebo/Publications/HGT_Manuscript/Data/LGTs.CDS.loci.types.xlsx")
+write_xlsx(LGTs, path="./Data/LGTs.CDS.loci.types.xlsx")
 
 head(Unique.LGTs)
 
@@ -205,7 +204,7 @@ bac.plot<-ggplot(Unique.bac.count, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fil
   theme(legend.position = "none")
 bac.plot
 
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Unique.LGTs.bacteria_RAW.pdf", bac.plot, width=10, height=10)
+#ggsave("./plots/Unique.LGTs.bacteria_RAW.pdf", bac.plot, width=10, height=10)
 ```
 
 
@@ -240,7 +239,7 @@ Funct %>%
     xlab("") +
     theme_minimal()
 
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Unique.LGTs.function_RAW.pdf", width=12, height=10)
+#ggsave("./plots/Unique.LGTs.function_RAW.pdf", width=12, height=10)
 ```
 
 
@@ -272,7 +271,7 @@ q_cov<-LGTs %>%
     theme_minimal()
 q_cov
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/qcov_global_RAW.pdf", q_cov,width=12, height=10)
+ggsave("./plots/qcov_global_RAW.pdf", q_cov,width=12, height=10)
 
 # Show CDS_lengths (Reannotated)
 CDS_lengths<-LGTs %>%
@@ -281,7 +280,7 @@ CDS_lengths<-LGTs %>%
     theme_minimal()
 CDS_lengths
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/CDS_lengths_global_RAW.pdf", CDS_lengths,width=12, height=10)
+ggsave("./plots/CDS_lengths_global_RAW.pdf", CDS_lengths,width=12, height=10)
 
 expression<-LGTs %>%
   filter(Reannotated.CDS.totalcounts<5000 ) %>%
@@ -290,7 +289,7 @@ expression<-LGTs %>%
     theme_minimal()
 expression
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/expression_global_RAW.pdf", expression,width=12, height=10)
+ggsave("./plots/expression_global_RAW.pdf", expression,width=12, height=10)
 
 LGTs %>% 
   dplyr::count(Reannotated.CDS.lengths > 6000)

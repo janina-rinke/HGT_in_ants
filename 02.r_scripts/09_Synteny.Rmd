@@ -13,17 +13,16 @@ What you need:
 
 ```{bash}
 #collect input
-cd /home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/0_data/genome
+cd ./GAGA/LGT_analysis/0_data/genome
 # reference genomes 
-ln -s /home/projects/ku_00039/people/joeviz/GAGA_genomes/Genome_assemblies/GAGA_all_final_assemblies_softmasked/* .
+ln -s ./GAGA_all_final_assemblies_softmasked/* .
 
 # gene annotations gff and protein fasta
-cd /home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/0_data/gene_annotations/
-ln -s /home/projects/ku_00039/people/joeviz/GAGA_annotations/Final_GAGA_annotations/*/*_final_annotation_repfilt_addreannot_noparpse_representative.gff3 .
-ln -s /home/projects/ku_00039/people/joeviz/GAGA_annotations/Final_GAGA_annotations/*/*_final_annotation_repfilt_addreannot_noparpse_representative.pep.fasta .
+ln -s ./GAGA_annotations/Final_GAGA_annotations/*/*_final_annotation_repfilt_addreannot_noparpse_representative.gff3 .
+ln -s ./GAGA_annotations/Final_GAGA_annotations/*/*_final_annotation_repfilt_addreannot_noparpse_representative.pep.fasta .
 
 # LGT reannotations
-#from  /global/homes/jg/schradel/data/GAGA/candidate_LGTs/reannotation.dfast.results.tar.gz
+#from  ./data/GAGA/candidate_LGTs/reannotation.dfast.results.tar.gz
 
 ```
 
@@ -37,9 +36,9 @@ ln -s /home/projects/ku_00039/people/joeviz/GAGA_annotations/Final_GAGA_annotati
 # the function takes 5 variables:
 # $1 = LGT locus as "GAGA-0098.Scaffold31.1152742-1153911"
 # $2 = shift size as "10000" (how much should the LGT region be expanded to check the synteny)
-# $3 = Folder containing ant gene annotations (gff and peptide fasta) as "/home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/0_data/gene_annotations"
-# $4 = lgt Folder containing dfast output folders as ""/home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/0_data/results"
-# $5 = Folder containing genome fastas as "/home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/0_data/genome"
+# $3 = Folder containing ant gene annotations (gff and peptide fasta) as "./GAGA/LGT_analysis/0_data/gene_annotations"
+# $4 = lgt Folder containing dfast output folders as "./GAGA/LGT_analysis/0_data/results"
+# $5 = Folder containing genome fastas as "./GAGA/LGT_analysis/0_data/genome"
 
 function prepareData {
   #locus="GAGA-0098.Scaffold31.1152742-1153911"
@@ -125,9 +124,8 @@ function processData {
 
 ```{bash lysozyme}
 
-cd /home/projects/ku_00039/people/luksch/GAGA/LGT_analysis
 targetLGT="lysozyme"
-outFolder="/home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/2_pipeline/${targetLGT}"
+outFolder="./2_pipeline/${targetLGT}"
 annotationFolder="0_data/gene_annotations"
 lgtFolder="0_data/results"
 genomeFolder="0_data/genome"
@@ -166,9 +164,8 @@ processData $outFolder
 ```
 
 ```{bash cfa}
-cd /home/projects/ku_00039/people/luksch/GAGA/LGT_analysis
 targetLGT="cfa1"
-outFolder="/home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/2_pipeline/${targetLGT}"
+outFolder="./GAGA/LGT_analysis/2_pipeline/${targetLGT}"
 annotationFolder="0_data/gene_annotations"
 lgtFolder="0_data/results"
 genomeFolder="0_data/genome"
@@ -218,9 +215,9 @@ processData $outFolder
 
 
 ```{bash etherase}
-cd /home/projects/ku_00039/people/luksch/GAGA/LGT_analysis
+
 targetLGT="etherase1"
-outFolder="/home/projects/ku_00039/people/luksch/GAGA/LGT_analysis/2_pipeline/${targetLGT}"
+outFolder="./GAGA/LGT_analysis/2_pipeline/${targetLGT}"
 annotationFolder="0_data/gene_annotations"
 lgtFolder="0_data/results"
 genomeFolder="0_data/genome"

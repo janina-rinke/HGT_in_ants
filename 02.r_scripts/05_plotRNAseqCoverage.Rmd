@@ -95,7 +95,7 @@ plotCoverage <- function(bamfile, dfast.gff, lgt.bed, outfolder, id, expand) {
 # prepare vectors for ids, bamfiles, dfasts and beds for all the LGT canidates you want to plot. This can come from a tsv file or an excel file or whatever.
 
 # Upload a file with the file names
-LGT_df<-read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/Tables/LGT_filenames.csv")
+LGT_df<-read.csv2("./0_data/Tables/LGT_filenames.csv")
 
 # Vector for the ids
 ids<-c(LGT_df$id)
@@ -118,7 +118,7 @@ plotCoverage(
   bamfile=LGT_df$bam[i],
   dfast.gff=LGT_df$gff[i],
   lgt.bed=LGT_df$bed[i],
-  outfolder="/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/RNAseq_plots/UniqueReads/",
+  outfolder="./RNAseqmapping/RNAseq_plots/UniqueReads/",
   expand=100  #how far should the plot expanded around the LGT
 )
 }
@@ -126,7 +126,7 @@ plotCoverage(
 
 ## Plot the unique read counts of the reannotated LGT candidates
 ```{r}
-Unique_reannotated_LGTs<-read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/Tables/LGT_filenames_reannotated.csv")
+Unique_reannotated_LGTs<-read.csv2("./0_data/Tables/LGT_filenames_reannotated.csv")
 
 # Vector for the ids
 ids<-c(Unique_reannotated_LGTs$id)
@@ -143,31 +143,8 @@ plotCoverage(
   bamfile=Unique_reannotated_LGTs$bam[i],
   dfast.gff=Unique_reannotated_LGTs$gff[i],
   lgt.bed=Unique_reannotated_LGTs$bed[i],
-  outfolder="/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/RNAseq_plots/UniqueReads_reannotated/",
+  outfolder="./RNAseqmapping/RNAseq_plots/UniqueReads_reannotated/",
   expand=200  #how far should the plot expanded around the LGT
-)
-}
-```
-
-```{r debugging}
-ids<-c("GAGA-0099")
-bamfiles<-c("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping/GAGA-0099/GAGA-0099.Scaffold15.2285014-2297549.1000.out/uniquely_mapped.LGTregion.sorted.bam")
-dfasts<-c("/Users/Janina/sciebo/Master.LGTs/reannotation.dfast/GAGA-0099.Scaffold15.2285014-2297549.1000.out/genome_reannotate_mod_intersect_modified.gff")
-beds<-c("/Users/Janina/sciebo/Master.LGTs/dfast/GAGA-0099.Scaffold15.2285014-2297549.fa/genome.gff.bed")
-
-# Debug code from function
-bam1<-readGAlignments("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping/GAGA-0099/GAGA-0099.Scaffold15.2285014-2297549.1000.out/uniquely_mapped.LGTregion.sorted.bam")      #load bam file
-gffCDS<-readGFFAsGRanges("/Users/Janina/sciebo/Master.LGTs/reannotation.dfast/GAGA-0099.Scaffold15.2285014-2297549.1000.out/genome_reannotate_mod_intersect.gff") #load dfast annotation
-gffLGT<-toGRanges("/Users/Janina/sciebo/Master.LGTs/dfast/GAGA-0099.Scaffold15.2285014-2297549.fa/genome.gff.bed")  
-
-for (i in 1:length(ids)){
-plotCoverage(
-  id=ids[i],
-  bamfile=bamfiles[i],
-  dfast.gff=dfasts[i],
-  lgt.bed=beds[i],
-  outfolder="/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/RNAseq_plots/UniqueReads_reannotated/",
-  expand=100  #how far should the plot expanded around the LGT
 )
 }
 ```

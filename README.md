@@ -129,10 +129,29 @@ All clade-specific HGT regions were extended by 40 kb up- and downstream to infe
 ./r_scripts/09_Synteny.Rmd
 ```
 
-#### Detail analyses of unique and species-specific HGTs and creation of plots for global HGTs
-This script was used to investigate unique and species-specific HGTs.
+#### Detail analyses of other HGTs
+This script was used to investigate HGTs other than ankyrin repeats and clade-specific HGAs.
 ```bash
-./r_scripts/10_Unique_HGTs.Rmd 
+./r_scripts/10_Other_LGTs.Rmd 
+```
+
+#### Detail analyses of Ankyrin repeat HGAs
+This script was used to investigate in detail the ankyrin-repeat HGAs in ants including plotting of ankyrin repeats onto the GAGA phylogeny.
+```bash
+./r_scripts/11_ANKs_analysis.Rmd 
+```
+
+#### Plot a subset of branches of the GAGA phylogeny
+This script was used to plot only a subset of relevant branches of the inferred GAGA ant phylogeny.
+```bash
+./r_scripts/12_plotGAGA.tree.Rmd 
+```
+
+#### Overview of species-specific LGTs
+This script produces some summarized overview plots related to putatively uniquely-occurring HGAs in ants.
+
+```bash
+./r_scripts/13_Unique_LGTs.Rmd 
 ```
 
 ### 03. Perl Scripts (`.pl`)

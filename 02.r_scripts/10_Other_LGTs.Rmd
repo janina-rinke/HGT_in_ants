@@ -1,5 +1,5 @@
 ---
-title: "Species-specific LGTs"
+title: "Other HGAs"
 author: "Janina Rinke"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
@@ -10,8 +10,8 @@ output:
 </STYLE>
 ---
 
-This script evaluates all other LGTs which have not previously been identified as ankyrin-repeat related, ancient, or orthologous LGTs occurring in groups. 
-All of these other LGTs are investigated for their occurrence in ant species based on the CDS sequences of LGT loci (1,053 CDS in 497 LGT loci), their expression, and full-length annotation in order to infer LGTs with putative functionality apart from phylogenetic re-occurrence across related taxa in our dataset.
+This script evaluates all other HGAs which have not previously been identified as ankyrin-repeat related, ancient, or orthologous HGAs occurring in groups. 
+All of these other HGAs are investigated for their occurrence in ant species based on the CDS sequences of HGA loci (1,053 CDS in 497 HGA loci), their expression, and full-length annotation in order to infer HGAs with putative functionality apart from phylogenetic re-occurrence across related taxa in our dataset.
 ```{r global-options, include=FALSE}
 # Define the global chunk options
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
@@ -33,7 +33,7 @@ library(mishMashr)
 library(readxl)
 
 # Read CDS level table to extract all unique LGTs later
-LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
+LGTs<-read_excel("./0_data/Tables/LGTs.CDSLevel.UniProt.Info.Reannotated.xlsx")
 ```
 
 
@@ -60,10 +60,10 @@ other.LGTs<-LGTs %>%
   dplyr::filter(!is.na(Protein.names)) # Remove all LGTs without a Uniprot annotation
 
 CFA.LGTs<-LGTs %>%
-  dplyr::filter(type=="CFA")     # Only keep LGTs of the catecory "other"
+  dplyr::filter(type=="CFA")     # Only keep LGTs of the category "other"
 
 library("xlsx")
-write.xlsx(CFA.LGTs,"/Users/Janina/sciebo/HGT_Manuscript/Data/CFA_Synthases/CFA_HQ_HGTs.xlsx")
+write.xlsx(CFA.LGTs,"./Data/CFA_Synthases/CFA_HQ_HGTs.xlsx")
 ```
 Removing all LGTs without a Uniprot annotation, all Ankyrins, Lysozymes, MurNAc etherases, CFA Synthases and TE-related LGTs, as well as uncharacterized and fragmented LGTs, results in 125 remaining LGTs of the category "other".
 
@@ -111,7 +111,7 @@ colnames(Other.bac.count)<-c("donor","count")
 
 head(other.LGTs)
 ```
-Considering only uniquely occurring HGTs results in 61 unqiue CDS in 45 loci. 43 ant species from seven subfamilies contained at least one uniquely occurring LGT. Bacterial donors were most often Wolbachia (n=89), followed by Spiroplasma (n = 13), Sodalis (n=9), Cardinium (n=9), Blochmannia-like (n=6) and other bacteria.
+Considering only uniquely occurring HGTs results in 61 unique CDS in 45 loci. 43 ant species from seven subfamilies contained at least one uniquely occurring LGT. Bacterial donors were most often Wolbachia (n=89), followed by Spiroplasma (n = 13), Sodalis (n=9), Cardinium (n=9), Blochmannia-like (n=6) and other bacteria.
 
 
 
@@ -256,7 +256,7 @@ multi_plot <- annotate_figure(multi_plot,
                               top = text_grob("GO terms", color = "black", face = "bold", size = 11))
 multi_plot 
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Unique.LGTs.4plots.pdf", multi_plot, width=15, height=10)
+ggsave("./plots/Unique.LGTs.4plots.pdf", multi_plot, width=15, height=10)
 ```
 
 
@@ -338,7 +338,7 @@ bac.plot<-ggplot(Unique.bac.count, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fil
   theme(legend.position = "none")
 bac.plot
 
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Unique.LGTs.bacteria_RAW.pdf", bac.plot, width=10, height=10)
+#ggsave("./plots/Unique.LGTs.bacteria_RAW.pdf", bac.plot, width=10, height=10)
 ```
 
 # Plot GO terms for Unique LGTs only
@@ -372,5 +372,5 @@ Funct %>%
     xlab("") +
     theme_minimal()
 
-#ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/Thesis_Plots/Unique.LGTs.function_RAW.pdf", width=12, height=10)
+#ggsave("./plots/Unique.LGTs.function_RAW.pdf", width=12, height=10)
 ```

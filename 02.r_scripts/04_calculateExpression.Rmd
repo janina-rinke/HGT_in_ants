@@ -61,10 +61,7 @@ library(readxl)
 
 #### Load the RNAseq mapping files for every LGT candidate into R.
 ```{r load files}
-#Mac Computer:
-txt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/dfast_RNAseq_mapping/*/*/RNAseq_mapping_count_summary.txt"
-#Linux Computer
-#txt2load<-"/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+txt2load<-"./RNAseqmapping/dfast_RNAseq_mapping/*/*/RNAseq_mapping_count_summary.txt"
 files.to.load<-Sys.glob(txt2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
 head(files.to.load)
 ```
@@ -74,10 +71,7 @@ Here, `r length(files.to.load)` RNAseq mapping files were loaded. Some candidate
 Save all file paths in a list called dataFiles and re-name the list elements
 ```{r load files 2}
 dataFiles <- lapply(files.to.load,read.delim2,sep = "\t") #lapply function to read all files and save them as dataframes
-#MacComputer
-names(dataFiles)<-gsub("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/dfast_RNAseq_mapping/*/.*/(.*?)\\.fa.*","\\1",files.to.load) # gsub() selectively replaces multiple occurrences of a text within an R string ("search term", "replacement term",string searched) 
-#Linux Computer
-#names(dataFiles)<-gsub("/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/(.*?)\\.fa.*","\\1",files.to.load)
+names(dataFiles)<-gsub("./RNAseqmapping/dfast_RNAseq_mapping/*/.*/(.*?)\\.fa.*","\\1",files.to.load) # gsub() selectively replaces multiple occurrences of a text within an R string ("search term", "replacement term",string searched) 
 ```
 
 To check, whether all dataframes have been imported correctly, you can view any element from the list:
@@ -153,7 +147,7 @@ for (i in seq_along(dataFiles3)) {
 ## Combine information from dfast with RNAseq mapping data
 ```{r add dfast single file}
 # For a single file
-df.dfast<-read.csv("/Users/Janina/sciebo/Master.LGTs/dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/genome.gff_mod.gff",sep="\t",header=F)
+df.dfast<-read.csv("./dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/genome.gff_mod.gff",sep="\t",header=F)
 df.new<-merge(df, df.dfast,by.x=c("locus.scaffold","CDS.start","CDS.end"),by.y=c("V1","V4","V5"),all.x=T,all.y=T)
 
 df.new<-df.new %>%
@@ -173,13 +167,12 @@ head(df.new)
 
 ```{r add dfast all}
 # For all files
-#gff2load<-"/home/j/j_rink02/sciebo/Master.LGTs/dfast/*/genome.gff_mod.gff"
-gff2load<-"/Users/Janina/sciebo/Master.LGTs/dfast/*/genome.gff_mod.gff"
+gff2load<-"./dfast/*/genome.gff_mod.gff"
 gff.files.to.load<-Sys.glob(gff2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
 head(gff.files.to.load)
 
 gffs <- lapply(gff.files.to.load,read_tsv,col_names=F,col_types = cols(.default = "c")) #lapply function to read all files and save them as dataframes
-names(gffs)<-gsub("/Users/Janina/sciebo/Master.LGTs/dfast/*/(.*?)\\.fa.*","\\1",gff.files.to.load)
+names(gffs)<-gsub("./dfast/*/(.*?)\\.fa.*","\\1",gff.files.to.load)
 
 # Make a large dataframe (dataFiles3.df) from all GAGA LGTs and their respective CDS in the large list element ("dataFiles3")
 dataFiles3.df<-bind_rows(dataFiles3,.id="locusID") #The .id option names the first column ("locusID") after the names of the list elements
@@ -216,7 +209,7 @@ This can be used to filter for candidates which contain a correct Start and a co
 df4$CDSid<-gsub("ID=(.*?)\\;.*","\\1",df4$X9)
 
 # Upload the file including the codons and change it to merge it accordingly
-CodonsDF<-read.csv("/Users/Janina/sciebo/Master.LGTs/all.start.stop.codons.tsv", sep=";", header=F)
+CodonsDF<-read.csv("./all.start.stop.codons.tsv", sep=";", header=F)
 CodonsDF$locusID<-gsub("(.*?)\\.fa","\\1",CodonsDF$V1) #make column locusID to group on
 CodonsDF$CDSid<-gsub("(.*?) .*","\\1",CodonsDF$V2) #make column CDSid to group on
 
@@ -284,7 +277,7 @@ head(df6)
 ```{r load lgts-combined table}
 library(readxl)
 # Load the LGT table without expression into R
-LGTs<-read_excel("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/GAGA.LGT.LocusLevel.withoutExpression.xlsx")
+LGTs<-read_excel("./0_data/GAGA.LGT.LocusLevel.withoutExpression.xlsx")
 head(LGTs)
 
 # Add new column locus.position to LGTs df to group based on the locus
@@ -299,14 +292,15 @@ LGTs.final.df<-LGTs.locuslevel.df %>%
   dplyr::select(-cand.scaffold,-Expression,-Status,-Complete_CDS)
 
 # Save the LGT locus level table including expression and dfast results 
-#write_xlsx(LGTs.final.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.xlsx")
+#write_xlsx(LGTs.final.df,"./0_data/LGTs.LocusLevel.Expression.xlsx")
 
 ### To extract the CDS-level dataframe
 CDS.final.df<-separate_rows(LGTs.final.df, "CDS.starts", "CDS.ends", "CDS.lengths", "CDS.totalcounts", "CDS.products", "CDS.UniprotIDs", "CDS.cogs", "CDS.tigrs", "CDS.pids", "CDS.q_covs", "CDS.s_covs", "CDS.Eval", "CDS.startCodons","CDS.stopCodons",sep= ";")
 
 # Save the CDS level table including expression and dfast results 
-write_xlsx(CDS.final.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.xlsx")
+write_xlsx(CDS.final.df,"./0_data/LGTs.CDSLevel.Expression.xlsx")
 ```
+
 `r nrow(CDS.final.df)` CDS sequences were predicted for the 497 candidates in total.
 
 
@@ -368,8 +362,8 @@ df.prot<-df.prot %>%
   dplyr::filter(proteins !="hypothetical protein")
 
  
-write.table(df.prot,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.proteins.tsv", sep="\t", quote=F)
-write_xlsx(df.Complete.LGTs,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.complete.before.reAnnotation.xlsx")
+write.table(df.prot,file="./0_data/LGTs.proteins.tsv", sep="\t", quote=F)
+write_xlsx(df.Complete.LGTs,"./0_data/LGTs.complete.before.reAnnotation.xlsx")
 head(df.Complete.LGTs)
 ```
 
@@ -419,9 +413,6 @@ G515.expression<-G515.expression %>%
   dplyr::relocate("CDS.start","CDS.end","stage","totalcountPerStage","n","avg", .after = "locus.position")
 
 G515.expression
-
-# Save output as a table
-#write.table(G515.expression,"/home/j/j_rink02/sciebo/Master.LGTs/dfast/GAGA-0515.Scaffold8.1760778-1761241.fa/G515.expression.tsv",sep="\t",quote = F,row.names = F)
 ```
 
 
@@ -430,16 +421,13 @@ G515.expression
 
 #### Load the RNAseq mapping files for every LGT candidate into R.
 ```{r load reannotated files}
-#Mac Computer:
-reannotatedtxt2load<-"/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping/*/*/RNAseq_mapping_count_summary.txt"
-#Linux Computer
-#txt2load<-"/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/*/RNAseq_mapping_count_summary.txt"
+reannotatedtxt2load<-"./RNAseqmapping/reannotation.dfast_RNAseq_mapping/*/*/RNAseq_mapping_count_summary.txt"
 reannotated.files.to.load<-Sys.glob(reannotatedtxt2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
 head(reannotated.files.to.load)
 
 reannotated.dataFiles <- lapply(reannotated.files.to.load,read.delim2,sep = "\t") #lapply function to read all files and save them as dataframes
-#MacComputer
-names(reannotated.dataFiles)<-gsub("/Users/Janina/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping/*/.*/(.*?)\\.1000.out.*","\\1",reannotated.files.to.load) # gsub() selectively replaces multiple occurrences of a text within an R string ("search term", "replacement term",string searched) 
+
+names(reannotated.dataFiles)<-gsub("./RNAseqmapping/reannotation.dfast_RNAseq_mapping/*/.*/(.*?)\\.1000.out.*","\\1",reannotated.files.to.load) # gsub() selectively replaces multiple occurrences of a text within an R string ("search term", "replacement term",string searched) 
 ```
 For the reannotated candidates, `r length(reannotated.files.to.load)` RNAseq mapping files were loaded. Some candidates did not have RNAseq data, therefore some files are missing. Additionally, all candidates which did not have a gff file after the dfast reannotation, were not used for the second RNAseq mapping. Thus, less candidates had an RNAseq mapping file than for the first annotation.
 
@@ -509,7 +497,7 @@ for (i in seq_along(reannotated.dataFiles3)) {
 ## Combine information from the dfast reannotation with reannotated RNAseq mapping data
 ```{r add reannotated dfast single file}
 # For a single file
-df.dfast.reannotated<-read.csv("/Users/Janina/sciebo/Master.LGTs/reannotation.dfast/GAGA-0515.Scaffold8.1760778-1761241.1000.out/genome_reannotate_mod_intersect.gff",sep="\t",header=F)
+df.dfast.reannotated<-read.csv("./reannotation.dfast/GAGA-0515.Scaffold8.1760778-1761241.1000.out/genome_reannotate_mod_intersect.gff",sep="\t",header=F)
 df.new.reannotated<-merge(re.df, df.dfast.reannotated,
                           by.x=c("locus.scaffold","reannotated.CDS.start","reannotated.CDS.end"),
                           by.y=c("V1","V4","V5"),all.x=T,all.y=T)
@@ -530,12 +518,12 @@ head(df.new.reannotated)
 
 ```{r add reannotated dfast all}
 # For all files
-reannotated.gff2load<-"/Users/Janina/sciebo/Master.LGTs/reannotation.dfast/*/genome_reannotate_mod_intersect.gff"
+reannotated.gff2load<-"./reannotation.dfast/*/genome_reannotate_mod_intersect.gff"
 reannotated.gff.files.to.load<-Sys.glob(reannotated.gff2load) #Sys.glob() returns all paths to the files based on a wildcard pattern in our file paths
 head(reannotated.gff.files.to.load)
 
 reannotated.gffs <- lapply(reannotated.gff.files.to.load,read_tsv,col_names=F,col_types = cols(.default = "c")) #lapply function to read all files and save them as dataframes
-names(reannotated.gffs)<-gsub("/Users/Janina/sciebo/Master.LGTs/reannotation.dfast/*/(.*?)\\.1000.out.*","\\1",reannotated.gff.files.to.load)
+names(reannotated.gffs)<-gsub("./reannotation.dfast/*/(.*?)\\.1000.out.*","\\1",reannotated.gff.files.to.load)
 
 # Make a large dataframe (dataFiles3.df) from all GAGA LGTs and their respective CDS in the large list element ("dataFiles3")
 reannotated.dataFiles3.df<-bind_rows(reannotated.dataFiles3,.id="locusID") #The .id option names the first column ("locusID") after the names of the list elements
@@ -572,7 +560,7 @@ From dfast, `r length(reannotated.gffs)` gff files were loaded. In total, `r len
 df.Reannotation$CDSid<-gsub("ID=(.*?)\\;.*","\\1",df.Reannotation$X9)
 
 # Upload the file including the codons and change it to merge it accordingly
-reannotatedCodonsDF<-read.csv("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/all.reannotated.start.stop.codons.tsv", sep=";", header=F)
+reannotatedCodonsDF<-read.csv("./0_data/all.reannotated.start.stop.codons.tsv", sep=";", header=F)
 reannotatedCodonsDF$locusID<-gsub("(.*?)\\.1000.out.*","\\1",reannotatedCodonsDF$V1) #make column locusID to group on
 reannotatedCodonsDF$CDSid<-gsub("(.*?) .*","\\1",reannotatedCodonsDF$V2) #make column CDSid to group on
 
@@ -649,13 +637,13 @@ Final.Locuslevel.df<- Final.Locuslevel.df %>%
   dplyr::relocate("Reannotated.stopCodon",.after="CDS.stopCodons") %>%
   dplyr::relocate("Reannotated.Eval",.after="CDS.Eval")
 
-write_xlsx(Final.Locuslevel.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.Reannotation.xlsx")
+write_xlsx(Final.Locuslevel.df,"./0_data/LGTs.LocusLevel.Expression.Reannotation.xlsx")
 ```
 
 
 ```{r}
 ### Add reannotation to CDS level final df
-Final.Locuslevel.df<-read_xlsx("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.Expression.Reannotation.xlsx")
+Final.Locuslevel.df<-read_xlsx("./0_data/LGTs.LocusLevel.Expression.Reannotation.xlsx")
 
 Final.CDSlevel.df<-separate_rows(Final.Locuslevel.df, "CDS.starts","Reannotated.CDS.starts","CDS.ends", "Reannotated.CDS.ends","CDS.lengths","Reannotated.CDS.lengths","CDS.totalcounts", "Reannotated.CDS.totalcounts","CDS.products","CDS.UniprotIDs","CDS.cogs","CDS.tigrs","CDS.pids","Reannotated.CDS.pids","CDS.q_covs","Reannotated.q_covs","CDS.s_covs","Reannotated.s_covs","CDS.Eval","Reannotated.Eval","CDS.startCodons","Reannotated.startCodon","CDS.stopCodons","Reannotated.stopCodon",sep= ";") %>%
   dplyr::mutate(across(where(is.character), ~na_if(., "NA")))
@@ -663,7 +651,7 @@ Final.CDSlevel.df<-separate_rows(Final.Locuslevel.df, "CDS.starts","Reannotated.
 
 head(Final.CDSlevel.df)
 # Save the CDS level table including expression and dfast results 
-write_xlsx(Final.CDSlevel.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.Reannotation.xlsx")
+write_xlsx(Final.CDSlevel.df,"./0_data/LGTs.CDSLevel.Expression.Reannotation.xlsx")
 
-write.table(Final.CDSlevel.df,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.Reannotation.tsv",sep="\t",quote = F,row.names = F)
+write.table(Final.CDSlevel.df,"./0_data/LGTs.CDSLevel.Expression.Reannotation.tsv",sep="\t",quote = F,row.names = F)
 ```

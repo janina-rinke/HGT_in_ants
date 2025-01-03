@@ -57,7 +57,7 @@ library(viridis)
 ## Load your data
 ```{r load data}
 library(readxl)
-df<-read_xlsx("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.xlsx")
+df<-read_xlsx("./0_data/LGTs.CDSLevel.Expression.xlsx")
 ```
 
 
@@ -98,7 +98,7 @@ df.final$Uniprot_tax_order<-
   gsub(".*?, .*?, .*?,.*?, (.*?), .*","\\1",df.final$Taxonomic.lineage..ALL)
 df.final$Uniprot_tax_class<-gsub(".*?, .*?, .*?, (.*?), .*","\\1",df.final$Taxonomic.lineage..ALL)
 
-#write.table(df.final,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.tsv",sep='\t',quote=F,row.names=F)
+#write.table(df.final,file="./0_data/LGTs.CDSLevel.UniProt.Info.tsv",sep='\t',quote=F,row.names=F)
 ```
 
 ```{r}
@@ -242,7 +242,7 @@ protein.table2$COGS<-gsub("(.*?)\\[.*","\\1", protein.table2$COGS)
 
 head(protein.table2)
 
-#write.table(protein.table2,file="/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.Proteins_Species_Expression.tsv",sep='\t',quote=F,row.names=F)
+#write.table(protein.table2,file="./0_data/LGTs.Proteins_Species_Expression.tsv",sep='\t',quote=F,row.names=F)
 ```
 
 
@@ -267,7 +267,7 @@ p1<-ggplot(protein.table2, aes(fill=subfamilies, y=Protein.names, x=Nr_GAGA_spec
   theme(axis.text.y= element_text(size=8))
 p1
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/LGTs.Number.Species.per.Protein.pdf", p1, width=10, height=15)
+ggsave("./plots/LGTs.Number.Species.per.Protein.pdf", p1, width=10, height=15)
 
 ###############################################################################
 # Plot the number of LGTs per species and all prokaryote donors
@@ -301,7 +301,7 @@ p3
 #### Analysis: Plot q_cov vs s_cov to check for protein completeness and patterns
 ```{r}
 library(readxl)
-df_analysis<-read.csv2("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.tsv", sep="\t")
+df_analysis<-read.csv2("./0_data/LGTs.CDSLevel.UniProt.Info.tsv", sep="\t")
 
 df_analysis$CDS.q_covs<-as.numeric(df_analysis$CDS.q_covs)
 df_analysis$CDS.s_covs<-as.numeric(df_analysis$CDS.s_covs)
@@ -377,7 +377,7 @@ p <- ggplot(df_analysis, aes(CDS.q_covs, CDS.s_covs))+
   xlab("Query coverage")
 p
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/q_cov_vs_s_cov.pdf", p, width=20, height=10)
+ggsave("./plots/q_cov_vs_s_cov.pdf", p, width=20, height=10)
 ```
 It does not make much sense to plot q_cov against s_cov, as q_cov is almost aways > 90 %. 
 Thus we will try to plot s_cov with pid.
@@ -396,7 +396,7 @@ p0.1 <- ggplot(df_analysis, aes(CDS.s_covs, CDS.pids))+
   xlab("Pids")
 p0.1
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/s_cov_vs_pid.pdf", p0.1, width=20, height=10)
+ggsave("./plots/s_cov_vs_pid.pdf", p0.1, width=20, height=10)
 
 ```
 
@@ -404,7 +404,7 @@ ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/self_produced/s_cov_vs
 ## Load your data
 ```{r load reannotated data}
 library(readxl)
-Reannotated.df<-read_xlsx("/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.Expression.Reannotation.xlsx")
+Reannotated.df<-read_xlsx("./0_data/LGTs.CDSLevel.Expression.Reannotation.xlsx")
 ```
 
 ```{r}
@@ -448,7 +448,7 @@ df.re.final<-df.re.final%>%
 df.re.final<-df.re.final%>%
   dplyr::select(-predicted_protein)
 
-write.table(df.re.final,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.CDSLevel.UniProt.Info.Reannotated.tsv", sep="\t", quote = FALSE,row.names=FALSE)
+write.table(df.re.final,"./0_data/LGTs.CDSLevel.UniProt.Info.Reannotated.tsv", sep="\t", quote = FALSE,row.names=FALSE)
 ```
 
 
@@ -462,5 +462,5 @@ df.re.locuslevel<-df.re.final %>%
   dplyr::mutate(across(where(is.character), ~na_if(., "NA")))
 
 
-write.table(df.re.locuslevel,"/Users/Janina/Documents/MASTER/Masterarbeit/lgt/0_data/LGTs.LocusLevel.UniProt.Info.Reannotated.tsv", sep="\t", quote = FALSE,row.names=FALSE)
+write.table(df.re.locuslevel,"./0_data/LGTs.LocusLevel.UniProt.Info.Reannotated.tsv", sep="\t", quote = FALSE,row.names=FALSE)
 ```

@@ -14,17 +14,17 @@ library(dplyr)
 # load tree
 ```{r}
 # Whole tree
-GAGA.tree<-load("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/trees/GAGA.tree.plot4.Robject")
+GAGA.tree<-load("./0_data/trees/GAGA.tree.plot4.Robject")
 GAGA.tree.plot4+geom_tippoint(aes(col=Subfamily))
 
 
 # To plot only subfamilies or selected species
-GAGA2.tree<-read.tree("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/trees/GAGA_dated_phylogeny_newick_woutgroup_DatesPeters2017_CurrBio.tre")
+GAGA2.tree<-read.tree("./0_data/trees/GAGA_dated_phylogeny_newick_woutgroup_DatesPeters2017_CurrBio.tre")
 
 
 # load id2species table
-GAGA.data<-read.table("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/GAGA.data.tsv",sep="\t",T)
-GAGA.all.data<-read.table("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/all.GAGA.data.tsv",sep="\t",T)
+GAGA.data<-read.table("./0_data/Tables/GAGA.data.tsv",sep="\t",T)
+GAGA.all.data<-read.table("./0_data/Tables/all.GAGA.data.tsv",sep="\t",T)
 ```
 
 
@@ -70,7 +70,7 @@ GAGA.tree.Formicinae.plot<-ggtree(GAGA.tree.Formicinae,size=1) %<+% GAGA.data +
 
 GAGA.tree.Formicinae.plot
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/selected_Formicinae_only.pdf",width=10,height=15) #save the tree in a pdf
+ggsave("./plots/GAGA_phylogenies/selected_Formicinae_only.pdf",width=10,height=15) #save the tree in a pdf
 
 # Myrmicinae: add labels to plot and 
 GAGA.tree.Myrmicinae.plot<-ggtree(GAGA.tree.Myrmicinae,size=1) %<+% GAGA.data +
@@ -85,7 +85,7 @@ GAGA.tree.Myrmicinae.plot<-ggtree(GAGA.tree.Myrmicinae,size=1) %<+% GAGA.data +
 
 GAGA.tree.Myrmicinae.plot
 
-ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/selected_Myrmicinae_only.pdf",width=10,height=15) #save the tree in a pdf
+ggsave("./plots/GAGA_phylogenies/selected_Myrmicinae_only.pdf",width=10,height=15) #save the tree in a pdf
 ```
 ```
 
