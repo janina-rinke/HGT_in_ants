@@ -141,6 +141,7 @@ p3
 # A.1) LGT data: Include the LGT data in the circular phylogeny
 ```{r}
 library(readxl)
+library(openxlsx)
 
 LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/LGTs.LocusLevel.UniProt.Info.Reannotated.xlsx")
 ```
@@ -207,7 +208,7 @@ tp1 <- p3 +
                          vjust=0.2,
                          text.angle=0,   # the text size of axis.
                          text.size=1.8,
-                         hjust=1,        # adjust the horizontal position of text of axis
+                         hjust=1.5,        # adjust the horizontal position of text of axis
                          nbreak=1,       # number of lines within geom_layer,
                            ),
          grid.params=list(alpha=.2)      # Parameter to adjust gridlines around the tree
@@ -231,13 +232,14 @@ tp1
 
 # A.5) Make a dataframe for the bacteria and subset the LGT count into Wolbachia and Blochmannia origin
 ```{r}
-LGT.bacteria<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/LGTs.LocusLevel.Expression.xlsx")[,c(15,2)]
+LGT.bacteria<-read_excel("/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/LGTs.LocusLevel.Expression.xlsx")[,c(1,2,17,16,15,12,13)]
 
 # Make categories for all bacteria
 LGT.bacteria$bac.type<-"other"
-LGT.bacteria$bac.type[grep("Blochmannia|Baumannia|Yersinia|Sodalis|Hamilton|Cardinium|Buchnera|Westeberhardia|Pantoea|Shigella",LGT.bacteria$prokaryote_origin)]<-"Blochmannia-like"
-LGT.bacteria$bac.type[grep("Spiroplasma",LGT.bacteria$prokaryote_origin)]<-"Spiroplasma"
-LGT.bacteria$bac.type[grep("Wolbachia",LGT.bacteria$prokaryote_origin)]<-"Wolbachia"
+LGT.bacteria$bac.type[grep("Enterobacterales",LGT.bacteria$order_prokaryote_origin)]<-"Blochmannia-like (Gammaproteobacteria)"
+LGT.bacteria$bac.type[grep("Spiroplasma|Mycoplasma",LGT.bacteria$prokaryote_origin)]<-"Spiroplasma/Mycoplasma (Mollicutes)"
+LGT.bacteria$bac.type[grep("Cardinium",LGT.bacteria$prokaryote_origin)]<-"Cardinium (Sphingobacteriia)"
+LGT.bacteria$bac.type[grep("Wolbachia",LGT.bacteria$prokaryote_origin)]<-"Wolbachia (Alphaproteobacteria)"
 
 # Count the number of each different bacterium per species
 LGT.bac <- LGT.bacteria %>% count(.id,bac.type, sort = T)
@@ -290,11 +292,88 @@ tp2 <- tp1 +
           legend.text=element_text(size=10) # the text size of legend.
          # legend.spacing.y = unit(0.01, "cm")
       )
-tp2<-tp2+scale_fill_manual(values=c("grey20","grey60","grey80","grey90"))
+tp2<-tp2+scale_fill_manual(values=c("grey20","lightgreen","grey80","grey90","grey60"))
 
 tp2
 
 ggsave("/Users/Janina/sciebo/HGT_Manuscript/Figures/GAGA.new.phylo.HGTs.pdf", width=20, height=25)
 #ggsave("/Users/Janina/Documents/MASTER/Masterarbeit/plots/GAGA_phylogenies/try.pdf",width=13,height=26) #save the tree in a pdf
 ```
+```{r}
+# Join dataframes for LGT representation
+LGT.complete<-LGTs %>% 
+  full_join(y=LGT.bacteria, by=c("locusID",".id","species","subfamily"))
+
+# Change order
+LGT.complete<-LGT.complete %>% 
+  relocate(species, subfamily, Protein.names,prokaryote_origin,order_prokaryote_origin,class_prokaryote_origin, .after = .id)
+
+# Save dataframe as supplementary table
+write.csv(LGT.complete, "/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/497_HQ_LGTs_all_info.csv", row.names=FALSE)
+write.xlsx(LGT.complete,"/Users/Janina/sciebo/MASTER/Masterarbeit/lgt/0_data/Tables/497_HQ_LGTs_all_info.xlsx")
+```
+
+
+# B.1) Pre-curated LGT data: LGT candidates after automated filtering and before manual curation & prokaryotic gene annotation
+After automated filtering of all 13,664 predicted LGT candidates, 1,148 HGT candidates across XY genomes remained for further manual curation and prokaryotic gene annotation, including also the stLFR genomes.
+```{r}
+# Load data
+preCurated.LGTs<-read_excel("/Users/Janina/sciebo/MASTER/Master.LGTs/0_data/Tables/GAGA.HGTs.afterFiltering.all.genomes.xlsx")
+
+# Fit data format to 497 HQ-HGT table
+## add GAGA-id in locusID column
+preCurated.LGTs$locusID<-paste(preCurated.LGTs$.id, preCurated.LGTs$locusID, sep = ".")
+
+## bring column locusID into the following format: GAGA-id.Scaffold.start-end
+preCurated.LGTs$locusID <- gsub(":", ".", preCurated.LGTs$locusID)
+
+## Count number of HGT CDS sequences per HGT locus
+preCurated.LGTs$nr_predicted_loci <- str_count(preCurated.LGTs$cand.start, ";") + 1
+
+## For Analysis: Count total number of HGT candidates and species across 1,148 pre-curated HGT loci
+HGT_CDS_sum <- sum(preCurated.LGTs$nr_predicted_loci)
+preCurated.LGTs$species<-as.factor(preCurated.LGTs$species)
+HGT_species <- levels(preCurated.LGTs$species)
+
+write.xlsx(preCurated.LGTs,"/Users/Janina/sciebo/HGT_Manuscript/Supplementary Data/Supplementary Tables/GAGA.HGTs.afterFiltering.all.genomes.xlsx")
+```
+
+# B.2) Pre-curated LGT data: Add the LGT candidate numbers per genome to the phylogeny
+Plot the circular phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified pre-curated LGTs.
+```{r}
+#Create a tally dataframe that counts how many LGT candidates we have per species.
+preCurated.LGT.tally<-as.data.frame(table(select(preCurated.LGTs,.id)))
+colnames(preCurated.LGT.tally)<-c("GAGAid","LGT.count")
+
+#Add the LGT.tally dataframe to the phylogeny object as additional data.
+
+pl1<-p0 %<+% df +
+  geom_tiplab(aes(label=Species),
+  offset=10,
+  size=3) +
+  theme(legend.position="bottom")
+pl1
+
+# Plot node labels to color subfamilies accordingly
+pl1 + geom_text(aes(label=node))
+
+
+# Define nodes to color subfamilies based on
+nodes <- data.frame(node=c(250,1, 167, 188,192, 30, 195, 200, 206, 207, 210, 249), type = c("Myrmicinae", "Leptanillinae", "Ponerinae", "Proceratiinae", "Amblyoponinae", "Paraponerinae", "Dorylinae", "Dolichoderinae", "Pseudomyrmecinae", "Myrmeciinae", "Formicinae", "Ectatomminae"))
+
+# Highlight subfamilies by color
+pl2 <- pl1 +
+  geom_hilight(data=nodes, aes(node=node, fill=type), type = "gradient", alpha = .3) +
+  scale_color_gradient()
+pl2
+
+
+plot1<-pl2 %<+% preCurated.LGT.tally
+
+#Plot the phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified LGTs
+plot2<-plot1+geom_tippoint(aes(size=LGT.count),col="red", alpha=.5)
+plot2
+
+ggsave("/Users/Janina/sciebo/HGT_Manuscript/Supplementary Data/Supplementary Figures/GAGA.preCurated.HGTs.pdf")
+````
 

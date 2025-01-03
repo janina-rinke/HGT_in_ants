@@ -78,13 +78,76 @@ Nr.species.ANKs<- Nr.species.ANKs %>%
 
 # Count ANK proteins
 Nr.UniprotIDs.ANKs<-ANKs %>%
-  dplyr::count(CDS.UniprotIDs,Protein.names)
+  dplyr::count(CDS.UniprotIDs,Protein.names, Organism)
 
 # Rename column
 Nr.UniprotIDs.ANKs<- Nr.UniprotIDs.ANKs %>%
   dplyr::rename("ANK.count" = "n")
+
+# Count nr of predicted Wolbachia donors
+Nr.donors.ANKs<-ANKs %>%
+  dplyr::count(Organism)
+
+# Rename column
+Nr.donors.ANKs<- Nr.donors.ANKs %>%
+  dplyr::rename("ANK.count" = "n")
 ```
 
+### Calculate how many ANKs are expressed
+```{r}
+ANKs$CDS.totalcounts<-as.numeric(ANKs$CDS.totalcounts)
+
+# Expression of ANKs
+ANKs.expressed<-ANKs %>%
+  dplyr::filter(CDS.totalcounts > 100)
+
+ANKs.not.expressed<-ANKs %>%
+  dplyr::filter(CDS.totalcounts < 10)
+
+# Count species with expressed ANKs
+Species.expressed.ANKs<-ANKs.expressed %>%
+  dplyr::count(.id,species,subfamily)
+
+# Check if expressed ANKs are less degraded than non-functional ANKs by comparing the mean CDS.pid (% identity with bacterial reference protein)
+ANKs.expressed$CDS.pids<-as.numeric(ANKs.expressed$CDS.pids)
+ANKs.not.expressed$CDS.pids<-as.numeric(ANKs.not.expressed$CDS.pids)
+
+mean(ANKs.expressed$CDS.pids) # 59.55
+mean(ANKs.not.expressed$CDS.pids) # 65.32
+
+median(ANKs.expressed$CDS.pids) # 62.4
+median(ANKs.not.expressed$CDS.pids) # 66.85
+
+# Create a scatter plot with a correlation line to see if ANKs with higher CDs.pids also have higher expression
+ANKs$CDS.pids<-as.numeric(ANKs$CDS.pids)
+ANKs$Reannotated.CDS.totalcounts<-as.numeric(ANKs$Reannotated.CDS.totalcounts)
+
+# Calculate correlation and p-value
+cor_test <- cor.test(ANKs$CDS.pids, ANKs$Reannotated.CDS.totalcounts, use = "complete.obs")
+
+# Extract the values
+cor_value <- round(cor_test$estimate, 3)  # Correlation coefficient
+p_value <- signif(cor_test$p.value, 2)    # P-value
+
+# Create the plot
+p.ANKs <- ggplot(data = ANKs, aes(x = CDS.pids, y = Reannotated.CDS.totalcounts)) +
+  geom_point(color = "blue", alpha = 0.7) +  # Add points
+  geom_smooth(method = "lm", color = "red", se = TRUE) +  # Add regression line
+  ylim(0, 1000) +
+  xlim(25, 100) +
+  labs(
+    x = "Identity of ANK HGAs with their bacterial reference proteins (%)",
+    y = "ANK expression (total counts)") +
+  annotate("text", x = 30, y = 900,  # Adjust position of text
+           label = paste0("R = ", cor_value, "\nP-value = ", p_value),
+           color = "black", size = 5) +
+  theme_minimal()
+
+# Display the plot
+p.ANKs
+
+ggsave("/Users/Janina/sciebo/Publications/HGT_Manuscript/ANKs.expression.pid.correlation.pdf",plot=p.ANKs, width=10, height=6)
+```
 
 
 ### Ankyrin bubble plot
