@@ -1,12 +1,8 @@
-# Check LGT candidates for completeness
+# Check HGT candidates for completeness
 
 
 ## 1. Extract for every candidate the best uniprot hit from `dfast`.
 
-Working directory:
-```bash
-/global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast
-```
 `dfast` file to use: `genome.gff`.
 
 Example file from `GAGA-0020.Scaffold107.144838-147367.fa`:
@@ -45,7 +41,7 @@ GAGA-0020	Scaffold107:144838-147367	uniprot_bacteria-0.9.ref:UniRef90_A0A1Q3WAM0
 
 ### 1.1 Extract best uniprot hit for all candidates:
 ```bash
-cd /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast
+cd ./2_analysis/gene_annotation/dfast
 ```
 
 `nano extractUniProt.sh`
@@ -106,19 +102,13 @@ Moreover, the expression of every CDS from every LGT candidate was calculated an
 
 ## 4. Extract only the unique reads from every bam file
 
-Path where all `mergedRNAseqbamfiles`can be found:
-```bash
-/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/run_final_keepingbam_pergagaid/GAGA-genome/LGT_locus
-```
-Before you extract any reads from bam files, make sure that you do not have any other bam files.
-
 To extract only unique read counts:
 ```bash
 # For one candidate only:
 sambamba view -h -F [NH]==1 mergedRNAseq.LGTregion.bam > uniquely_mapped.LGTregion.bam
 
 # For all candidates:
-cd /home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/run_final_keepingbam_pergagaid
+cd ./RNAseqmapping/run_final_keepingbam_pergagaid
 
 for i in */*; do sambamba view -h -F [NH]==1 $i/mergedRNAseq.LGTregion.bam > $i/uniquely_mapped.LGTregion.bam; done
 ```

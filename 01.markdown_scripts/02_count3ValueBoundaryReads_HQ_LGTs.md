@@ -1,15 +1,11 @@
 Calculate reads for remaining filtered candidates.
 
-In this script, we want to get reads only for the filtered, remaining 497 candidates.
+In this script, we want to get reads only for the filtered, remaining 497 high-quality HGA candidates.
 We would like to get reads, which
-A) overlap the start of the LGT by +- 1000 bp on each side (or 25 bp for stLFR assembled genomes)
-B) overlap the end of the LGT by +- 1000bp on each side (or 25bp for stLFR assembled genomes)
-C) completely overlap the whole LGT from start to end +- 1000 bp.
+A) overlap the start of the HGT by +- 1000 bp on each side (or 25 bp for stLFR assembled genomes)
+B) overlap the end of the HGT by +- 1000bp on each side (or 25bp for stLFR assembled genomes)
+C) completely overlap the whole HGT from start to end +- 1000 bp.
 
-Change to where you want to work:
-```bash
-cd /global/scratch2/j_rink02/master/lgt/2_analysis/countReads
-```
 
 # For one candidate:
 Start with one candidate to try it out (file: `GAGA_example.tsv`):

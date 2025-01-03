@@ -1,13 +1,11 @@
-# Selection analysis of selected LGTs using HyPhy
+# Selection analysis of selected HGTs using HyPhy
 
-Test for signatures of selection acting at different branches among gene trees of LGTs derived from bacteria.
+Test for signatures of selection acting at different branches among gene trees of HGTs derived from bacteria.
 
 ## Etherases in eight different Camponotini species
 #### Calculate selection for Etherase LGTs
 
 Compare the etherases from all ant species and test for signatures of positive selection across different branches in the phylogeny. 
-
-Our working hypothesis is that etherases were adapted in the respective ants and allowed them to use the bacterially-derived gene.
 
 #### 1. Make a FASTA file of the coding sequence (nucleotide sequence) of the ant etherase genes.
 
@@ -26,7 +24,7 @@ GAGA-0360	Scaffold16	5909052	5909960
 ```
 
 ```bash
-samtools faidx genome Scaffold:start-stop > /global/scratch2/j_rink02/master/lgt/2_analysis/selection_analysis/Etherases/etherases.cds.fa
+samtools faidx genome Scaffold:start-stop > ./2_analysis/selection_analysis/Etherases/etherases.cds.fa
 ```
 
 After extracting all sequences, the FASTA file with the nucleotide sequences should look like this:

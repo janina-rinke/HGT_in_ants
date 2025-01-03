@@ -1,11 +1,6 @@
 # 1 Prepare fasta files for all HGT candidates to use in a prokaryotic gene annotation with DFAST
 
-A file with all 497 HGT candidates can be found here:
-```bash
-/global/scratch2/j_rink02/master/lgt/0_data/candidatefiles/GAGA.LGTs.allcoordinates.tsv
-```
-
-Structure of the file:
+Structure of the file with coordinates of all 497 high-quality HGT candidates `GAGA.LGTs.allcoordinates.tsv`:
 ```bash
 GAGA-0020	Scaffold1	5322877	5323044
 GAGA-0020	Scaffold107	144838	147367
@@ -38,7 +33,7 @@ id=GAGA-0020
 ​
 All together with the `parallel` command:
 ```bash
-cat /global/scratch2/j_rink02/master/lgt/0_data/candidatefiles/GAGA.LGTs.allcoordinates.tsv | parallel --colsep '\t' "samtools faidx /global/scratch2/j_rink02/master/lgt/0_data/assemblies/{1}*.fasta {2}:{3}-{4} > /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/{1}.{2}.{3}-{4}.fa"
+cat GAGA.LGTs.allcoordinates.tsv | parallel --colsep '\t' "samtools faidx {1}*.fasta {2}:{3}-{4} > ./2_analysis/candidates.fasta/{1}.{2}.{3}-{4}.fa"
 ```
 
 What the above command does:
@@ -69,7 +64,7 @@ DFAST is a flexible and customizable pipeline for prokaryotic genome annotation.
 
 File with LGT candidates:
 ```bash
-/global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/all.candidates.fa
+all.candidates.fa
 ```
 Result of `dfast`run on the website:
 ```bash
@@ -106,12 +101,12 @@ conda install -c bioconda dfast=1.2.14
 dfast_file_downloader.py --protein dfast
 dfast_file_downloader.py --cdd Cog --hmm TIGR
 ```
-Files are written into `/global/homes/jg/j_rink02/anaconda3/envs/dfast/opt/dfast-1.2.14/db/protein`
+
 How to install databases for `dfast`: https://github.com/nigyta/dfast_core/#installation
 
 ##### Run `dfast`:
 ```bash
-dfast --genome all.candidates.fa  --force --minimum_length 100 --metagenome -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast
+dfast --genome all.candidates.fa  --force --minimum_length 100 --metagenome -o ./2_analysis/gene_annotation/dfast
 ```
 
 ##### Output files from first `dfast-core`run:
@@ -199,13 +194,10 @@ For one candidate only to test if script is working:
 #$ -cwd
 #$ -pe smp 50
 #$ -l h_vmem=1G
-#$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.onecandidate.out
-#$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.onecandidate.err
-#$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta
 
 conda activate dfast
 
-dfast -g GAGA-0020.Scaffold107.144838-147367.fa --force --cpu 50 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/one.candidate.uniprot.bacteria --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
+dfast -g GAGA-0020.Scaffold107.144838-147367.fa --force --cpu 50 --debug --use_original_name t --minimum_length 100 --database ./databases/dfast/uniprot_bacteria-0.9.ref -o ./2_analysis/gene_annotation/dfast/one.candidate.uniprot.bacteria --config custom_config.py
 ```
 For another candidate with slightly different options:
 ```bash
@@ -214,18 +206,15 @@ For another candidate with slightly different options:
 #$ -cwd
 #$ -pe smp 20
 #$ -l h_vmem=6G
-#$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.GAGA-0024.Scaffold1.16539177-16545088.out
-#$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/dfast.bacteria.GAGA-0024.Scaffold1.16539177-16545088.err
-#$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta
 
 conda activate dfast
 
-dfast -g GAGA-0024.Scaffold1.16539177-16545088.fa --force --metagenome --cpu 20 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/GAGA-0024.Scaffold1.16539177-16545088.uniprot.bacteria --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
+dfast -g GAGA-0024.Scaffold1.16539177-16545088.fa --force --metagenome --cpu 20 --debug --use_original_name t --minimum_length 100 --database ./databases/dfast/uniprot_bacteria-0.9.ref -o ./2_analysis/gene_annotation/dfast/GAGA-0024.Scaffold1.16539177-16545088.uniprot.bacteria --config custom_config.py
 ```
 
 For all candidates together:
 
-Write a GridEngine Script to run the process:
+Write a Script to run the process:
 
 nano `batch_dfast_job.sh`:
 
@@ -237,15 +226,12 @@ nano `batch_dfast_job.sh`:
 #$ -V
 #$ -pe smp 20
 #$ -l h_vmem=6G
-#$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/$file.out
-#$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/$file.err
-#$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/by.genome
 
 conda activate dfast
 
 echo "Running on file: $file"
 
-dfast -g $file --force --metagenome --cpu 20 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast/$file --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
+dfast -g $file --force --metagenome --cpu 20 --debug --use_original_name t --minimum_length 100 --database ./databases/dfast/uniprot_bacteria-0.9.ref -o ./2_analysis/gene_annotation/dfast/$file --config custom_config.py
 ```
 
 Submit the script and parse bash variables to the script using `-v file="file1.fa"`
@@ -259,28 +245,9 @@ find . -name "NCBI*" | parallel -I% --max-args 1 qsub -v file="%" batch_dfast_jo
 find . -name "OUT*" | parallel -I% --max-args 1 qsub -v file="%" batch_dfast_job.sh
 ```
 
-After running the script, not all candidates contain all files from the complete pipeline (Possible bug in GridEngine). Files, which do not contain all resulting dfast files need to be identified and the `dfast`pipeline needs to be re-run for them.
-
-##### Debugging of incomplete `dfast` candidates
-
-Find all directories which do not contain a `cds.fna` file and save them into a list:
-```bash
-cd /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast
-
-find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/cds.fna ]] && echo "$dir"; done > ../dfast2repeat.lst
-```
-
-Re-run the `dfast_batch_job.sh` script on all genomes in the `candidates.fasta` folder based on the elements given by the `dfast2repeat.lst`:
-
-```bash
-cd /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta
-
-cat ../gene_annotation/dfast2repeat.lst| cut -f 2 -d "/"| parallel -I% --max-args 1 qsub -v file="%" batch_dfast_job.sh -o /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/%.out -e /global/scratch2/j_rink02/master/lgt/2_analysis/candidates.fasta/tmp/%.err
-```
-
 Control, that all candidates have a completed pipeline:
 ```bash
-cd /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/dfast
+cd ./2_analysis/gene_annotation/dfast
 
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/cds.fna ]] && echo "$dir"; done | wc -l
 ```
@@ -301,7 +268,8 @@ module load annotation/prodigal/2.6.3
 
 Run the gene annotation with:
 ```bash
-prodigal -p meta -i all.candidates.fa -a protein.translations.faa -d annotated_genes_prodigal.cds -w prodigal.statistics -f gff -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/prodigal/prodigal_annotated_genes.gff
+prodigal -p meta -i all.candidates.fa -a protein.translations.faa -d annotated_genes_prodigal.cds -w prodigal.statistics -f gff -o \
+./2_analysis/gene_annotation/prodigal/prodigal_annotated_genes.gff
 ```
 
 By default, `prodigal`produces one output file, which consists of gene coordinates and some metadata associated with each gene.
@@ -328,15 +296,13 @@ gc_cont: % GC content of the sequence.
 transl_table: The genetic code used to analyze the sequence.
 uses_sd: Set to 1 if Prodigal used its default RBS finder, 0 if it scanned for other motifs.
 
-Number of predicted LGTs which have an annotation with `prodigal` and `dfast`:
+Number of predicted HGTs which have an annotation with `prodigal` and `dfast`:
 ```bash
 # prodigal
 cat protein.translations.faa | grep ">" | wc -l
-#2182
 
 #dfast
 cat protein.faa | grep ">" | wc -l
-#1980
 ```
 
 ## 2.3 Prokaryotic gene annotation with `kraken`

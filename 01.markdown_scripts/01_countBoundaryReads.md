@@ -1,20 +1,13 @@
-# Calculate the number of reads overlapping LGT boundaries
+# Calculate the number of reads overlapping HGT boundaries
 
-```bash
-# change to where you want to work
-#cd /global/scratch2/j_rink02/master/lgt/0_data
-```
+To start, we need 2 files: One `bam` file holding the PacBio reads and one `bed` file containing the HGT start and stop coordinates (`LGTs.candidateloci.loose.bed`).
 
-To start, we need 2 files: One `bam` file holding the PacBio reads and one `bed` file containing the LGT start and stop coordinates (`LGTs.candidateloci.loose.bed`).
-
-We start with the file containing the LGT candidates you want to screen to create a `bed` file with the start and stop positions as separate entries.
+We start with the file containing the HGT candidates you want to screen to create a `bed` file with the start and stop positions as separate entries.
 
 ### 1. Use the file `LGTs.candidateloci.loose.bed` to create a bed file with start+stop coordinates of the LGT as separate entries.
 
 #### 1.1 For one genome only, with `GAGA-0515` as example:
 ```bash
-cd /global/scratch2/j_rink02/master/lgt/0_data
-
 cat GAGA-0515/results/LGTs.candidateloci.loose.bed | parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' > GAGA-0515/results/GAGA-0515.LGTboundaries.bed
 ```
 The above command creates a new file called `GAGA-0515.LGTboundaries.bed` which now contains only the start and stop coordinates of each LGT as a separate entry.
@@ -51,7 +44,7 @@ Scaffold8       1761241 1761241 Scaffold8-1760778:1761241.end
 
 #### 1.2 For all LGT candidates:
 
-Write a GridEngine Script to produce this file for all GAGA genomes:
+Write a Script to produce this file for all GAGA genomes:
 `nano makeLGTboundaryfile.sh`
 ```bash
 #$ -S /bin/bash
@@ -59,9 +52,6 @@ Write a GridEngine Script to produce this file for all GAGA genomes:
 #$ -cwd
 #$ -pe smp 10
 #$ -l h_vmem=1G
-#$ -o /global/scratch2/j_rink02/master/lgt/0_data/tmp/bedfile.out
-#$ -e /global/scratch2/j_rink02/master/lgt/0_data/tmp/bedfile.err
-#$ -wd /global/scratch2/j_rink02/master/lgt/0_data
 
 cat $file | parallel --colsep "\t"  echo -e '{1}"\t"{2}"\t"{2}"\t"{1}"-"{2}":"{3}.start"\n"{1}"\t"{3}"\t"{3}"\t"{1}"-"{2}":"{3}.end' > $file.LGTboundaries.bed
 ```
@@ -89,15 +79,16 @@ find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results
 ```
 
 If all GAGA genomes contain this file, no GAGA genome folder should appear here.
+
 ### 2. Extract all reads overlapping these boundaries.
 
-#### 2.1 Merge the bam files for nAo and other
+#### 2.1 Merge the bam files for nA and other
 ```bash
 #command: samtools merge <outfile.bam> <infile1.bam> <infile2.bam>
 #for one file (GAGA-0515 as example file):
 samtools merge GAGA-0515/results/merged.candidateloci.loose.bam GAGA-0515/results/LGTs.nAo.candidateloci.loose.PacBio.bam GAGA-0515/results/LGTs.candidateloci.loose.PacBio.bam
 
-#for all files:
+# For all files:
 for i in * ; do samtools merge $i/results/merged.candidateloci.loose.bam $i/result
 s/LGTs.nAo.candidateloci.loose.PacBio.bam $i/results/LGTs.candidateloci.loose.PacBio.bam; done
 ```
@@ -133,7 +124,7 @@ Check if all genomes have the file:
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/results/$dir.LGTboundaries.PacBio.overlap.bam ]] && echo "$dir"; done
 ```
 
-For all nAo genomes:
+For all nA genomes:
 ```bash
 # calculate overlap with bedtools intersect
 for i in * ; do bedtools intersect -abam $i/results/merged.candidateloci.loose.bam -b $i/results/LGTs.nAo.candidateloci.loose.bed.LGTboundaries.bed > $i/results/$i.nAo.LGTboundaries.PacBio.overlap.bam; done

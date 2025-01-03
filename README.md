@@ -57,6 +57,20 @@ We checked for selection using `HyPhy` on the clade-specific HGTs (Lysozymes, Mu
 ```bash
 ./markdown_scripts/08_Selection_analyses.md
 ```
+
+#### Predict gene models for selected HGTs
+We reconstructed gene models for specific HGTs, such as Lysozymes using `StringTie`.
+```bash
+./markdown_scripts/09_run.stringtie.md
+```
+
+#### Additional analysis for Ankyrin repeat HGAs in ants
+This script deals with ankyrin repeat HGAs detected in ants and extracts ANK nucleotide sequences. 
+```bash
+./markdown_scripts/10_Ankyrin_repeats.md
+```
+
+
 ### 02. R Scripts (`.Rmd`)
 All scripts have been written in RStudio 4.3.1.
 

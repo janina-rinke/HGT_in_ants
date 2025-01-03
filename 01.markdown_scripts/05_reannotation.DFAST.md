@@ -1,13 +1,8 @@
 # Reannotation with DFAST
 
-This script only needs a GAGA genome as a FASTA file (path: `/global/scratch2/j_rink02/master/lgt/0_data/assemblies`) and the extended LGT locus by user-defined size.
+This script only needs a GAGA genome as a FASTA file (path: `/global/scratch2/j_rink02/master/lgt/0_data/assemblies`) and the extended HGT locus by user-defined size.
 
-### 1) Setup environment
-```bash
-cd /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/loci
-```
-
-### 2) Extend the locus by 1000 bp on each side.
+### 1) Extend the locus by 1000 bp on each side.
 
 Submit the job as a script called `rerun.dfast.sh` to GridEngine and loop over each row in the file `locus.txt`.
 
@@ -19,9 +14,6 @@ Submit the job as a script called `rerun.dfast.sh` to GridEngine and loop over e
 #$ -V
 #$ -pe smp 30
 #$ -l h_vmem=6G
-#$ -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/loci/tmp/locus.out
-#$ -e /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/loci/tmp/locus.err
-#$ -wd /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/loci
 
 # define size of the extension around LGT locus to use for the annotation
 shiftSize="1000"
@@ -30,10 +22,10 @@ shiftSize="1000"
 locus=${GAGAid}.${scaffold}.${start}-${stop}
 
 # create a softlink in the current working directory that links to the fasta index for the current GAGAid
-ln -s /global/scratch2/j_rink02/master/lgt/0_data/assemblies/${GAGAid}*.fasta .
+ln -s ./0_data/assemblies/${GAGAid}*.fasta .
 
 # create a softlink in the current working directory that links to the fasta index for the current GAGAid
-ln -s /global/scratch2/j_rink02/master/lgt/0_data/assemblies/${GAGAid}*fasta.fai .
+ln -s ./0_data/assemblies/${GAGAid}*fasta.fai .
 
 # define ${genome} to point to the (soft-link) genome fasta in the current directory
 genome=$(ls ${GAGAid}*.fasta)
@@ -55,7 +47,7 @@ source /usr/share/modules/init/bash  # enables the module package
 module use /global/projects/programs/modules/
 module load seq-search/mmseqs/sse2-13-45111
 
-dfast -g ${locus}.${shiftSize}.fa --force --metagenome --cpu 30 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/results/${locus}.1000.out --config /global/scratch2/j_rink02/master/lgt/0_data/custom_config.py
+dfast -g ${locus}.${shiftSize}.fa --force --metagenome --cpu 30 --debug --use_original_name t --minimum_length 100 --database ./databases/dfast/uniprot_bacteria-0.9.ref -o ./2_analysis/gene_annotation/reannotation.dfast/results/${locus}.1000.out --config ./0_data/custom_config.py
 
 ### Update the coordinates to genome level
 
@@ -64,11 +56,11 @@ dfast -g ${locus}.${shiftSize}.fa --force --metagenome --cpu 30 --debug --use_or
 # shift by original start coordinate
 #shift by -n kb
 
-sed '/^##FASTA$/,$d' /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/results/${locus}.1000.out/genome.gff| \
+sed '/^##FASTA$/,$d' ./2_analysis/gene_annotation/reannotation.dfast/results/${locus}.1000.out/genome.gff| \
 perl -pe 's/^('${scaffold}').*?\t/$1\t/g' | \
 bedtools shift -i - -g ${genome}.genome -s ${start} -header | \
 bedtools shift -i - -g ${genome}.genome -s -${shiftSize} -header \
-> /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/results/${locus}.1000.out/genome_reannotate_mod.gff
+> ./2_analysis/gene_annotation/reannotation.dfast/results/${locus}.1000.out/genome_reannotate_mod.gff
 
 ## check if extraction is right
 #bedtools getfasta  -fi ${genome} -bed ${locus}/genome_reannotate_mod.gff -s
@@ -77,7 +69,7 @@ bedtools shift -i - -g ${genome}.genome -s -${shiftSize} -header \
 # At the end, you will have a new gff ${locus}.1000.out/genome_reannotate_mod_intersect.gff, which has all predicted CDS that overlap with the LGT locus.
 
 # find all the entries in the "expanded" gff that overlap with the LGT locus.
-echo -e ${scaffold}"\t"${start}"\t"${stop}"\t"${locus} | bedtools intersect -wa -b stdin -a /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/results/${locus}.1000.out/genome_reannotate_mod.gff > /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/results/${locus}.1000.out/genome_reannotate_mod_intersect.gff
+echo -e ${scaffold}"\t"${start}"\t"${stop}"\t"${locus} | bedtools intersect -wa -b stdin -a ./2_analysis/gene_annotation/reannotation.dfast/results/${locus}.1000.out/genome_reannotate_mod.gff > ./2_analysis/gene_annotation/reannotation.dfast/results/${locus}.1000.out/genome_reannotate_mod_intersect.gff
 ```
 
 Submit the script `rerun.dfast.sh` to GridEngine:
@@ -88,9 +80,9 @@ cat locus.txt | parallel --col-sep "\t" --dryrun --max-args 1 qsub -v GAGAid={1}
 In the first version of the script, bedtools intersect did not actualize the coordinates for the re-annotated CDS  `genome_reannotate_mod_intersect.gff` correctly. After completing all dfast jobs, the `bedtools intersect` command was run again.
 
 ```bash
-cd /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/results
+cd ./2_analysis/gene_annotation/reannotation.dfast/results
 
-cat locus2.txt | parallel --col-sep "\t" --max-args 1 "echo -e '{2}\t{3}\t{4}\t{5}' | bedtools intersect -wa -b stdin -a /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/results/{5}.1000.out/genome_reannotate_mod.gff > /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/results/{5}.1000.out/genome_reannotate_mod_intersect.gff"
+cat locus2.txt | parallel --col-sep "\t" --max-args 1 "echo -e '{2}\t{3}\t{4}\t{5}' | bedtools intersect -wa -b stdin -a ./2_analysis/gene_annotation/reannotation.dfast/results/{5}.1000.out/genome_reannotate_mod.gff > ./2_analysis/gene_annotation/reannotation.dfast/results/{5}.1000.out/genome_reannotate_mod_intersect.gff"
 ```
 
 Quality check of all files:
@@ -150,22 +142,14 @@ GAGA-0579.Scaffold13.389277-389689.1000.out/genome_reannotate_mod_intersect.gff
 OUT-0001.CM020815.1.6441834-6442103.1000.out/genome_reannotate_mod_intersect.gff
 OUT-0002.Scaffold14.831336-831605.1000.out/genome_reannotate_mod_intersect.gff
 ```
-The whole folder `reannotate.dfast` was used to run the RNAseq mapping again. The reannotated RNAseqmapping folder is called  `run_final_keepingbam_pergagaid_latest` and can be found here:
-```bash
-/Users/Janina/sciebo/Master.LGTs/reannotation.dfast/run_final_keepingbam_pergagaid_latest
-```
+The whole folder `reannotate.dfast` was used to run the RNAseq mapping again. The reannotated RNAseqmapping folder is called  `run_final_keepingbam_pergagaid_latest`.
 
-# Re-Run commands to update summary table
+##### Re-Run commands to update summary table
 
-## 1) Re-calculate start and stop codons from the dfast reannotation.
+### 2) Re-calculate start and stop codons from the dfast reannotation.
 
 The first codon (`start codon`) should usually be ATG (theoretically: GTG or rarely TTG, see https://en.wikipedia.org/wiki/Start_codon).
 The last codon (`stop-codon`) should be TAA , TAG , or TGA.
-
-Filepath:
-```bash
-/Users/Janina/sciebo/Master.LGTs/reannotation.dfast
-```
 
 ```bash
 seqkit fx2tab cds.fna |awk -F '\t' '{print $1,substr($2,1,3),substr($2,length($2)-2,length($2))}'
@@ -192,15 +176,11 @@ GAGA-0020.Scaffold31.648280-651311.fa	MGA_1 LOCUS_10 hypothetical_protein ATG TG
 GAGA-0020.Scaffold31.648280-651311.fa	MGA_2 LOCUS_20 hypothetical_protein ATG TAA
 ```
 
-## 2) Merge all reannotated bam files and extract unique read counts
-Path where all reannotatedRNAseqbamfiles can be found:
-```bash
-/home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping/GAGA_genome/locus
-```
+### 3) Merge all reannotated bam files and extract unique read counts
 
 Merge all reannotatedRNAseqbamfiles:
 ```bash
-cd /Users/Janina/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping
+cd ./RNAseqmapping/reannotation.dfast_RNAseq_mapping
 for i in */*.1000.out; do samtools merge  $i/mergedRNAseq.bam $i/*LGTregion.bam; done
 ```
 
@@ -216,7 +196,7 @@ Extract only the unique read counts out of every `mergedRNAseq.bam` file. `Samba
 sambamba view -h -F [NH]==1 mergedRNAseq.bam > uniquely_mapped.LGTregion.bam
 
 # For all candidates:
-cd /home/j/j_rink02/sciebo/Master.LGTs/RNAseqmapping/reannotation.dfast_RNAseq_mapping
+cd ./RNAseqmapping/reannotation.dfast_RNAseq_mapping
 
 for i in */*; do sambamba view -h -F [NH]==1 $i/mergedRNAseq.bam > $i/uniquely_mapped.LGTregion.bam; done
 # -F: filter

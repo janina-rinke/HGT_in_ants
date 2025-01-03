@@ -32,7 +32,7 @@ GAGA-0463       Scaffold11      1830581 1833058 A0A176Q8J2      Uncharacterized 
 
 Find the corresponding genome sequences:
 ```bash
-cat /global/scratch2/j_rink02/master/lgt/2_analysis/ANKs/GAGA.ANKs.tsv | parallel --colsep '\t' "samtools faidx /global/scratch2/j_rink02/master/lgt/0_data/assemblies/{1}*.fasta {2}:{3}-{4} > /global/scratch2/j_rink02/master/lgt/2_analysis/ANKs/{1}.{2}.{3}-{4}.{5}.{6}.{7}.fa"
+cat ./2_analysis/ANKs/GAGA.ANKs.tsv | parallel --colsep '\t' "samtools faidx ./0_data/assemblies/{1}*.fasta {2}:{3}-{4} > ./2_analysis/ANKs/{1}.{2}.{3}-{4}.{5}.{6}.{7}.fa"
 ```
 
 ### Concatenate all ANK fasta candidate files to obtain one FASTA file for all ANK loci
@@ -57,22 +57,18 @@ cat *.fa >> ANKs.DFAST.annotation.fa
 ```
 
 ## 2.2 Metagenomic analysis based on GAGA gene annotation 
-```bash
-basedir=/global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/results
-echo ${basedir}
-```
 
 ### 2.2.1 For one locus 
 ```bash
 locus=GAGA-0335.Scaffold10.5598799-5599854;
 GAGAid=GAGA-0335; 
-cp -r /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/reannotation.dfast/results/${locus}.1000.out \
-/global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/ANKs/loci/;
+cp -r ./2_analysis/gene_annotation/reannotation.dfast/results/${locus}.1000.out \
+./2_analysis/gene_annotation/ANKs/loci/;
 bedtools intersect -wa \
 -a /global/homes/jg/schradel/projects/GAGA/annotations/GAGA-0335_final_annotation_repfilt_addreannot_noparpse_representative.gff3 \
--b /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/ANKs/loci/${locus}.1000.out/genome_reannotate_mod_intersect.gff \
-> /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/ANKs/loci/${locus}.1000.out/GAGA_dfast_ANKs_intersect.gff;
-id=$(cat /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/ANKs/loci/${locus}.1000.out/GAGA_dfast_ANKs_intersect.gff|awk '{if ($3=="mRNA") print $0}'|perl -pe 's/.*ID=(.*?)\;.*/$1/g');
+-b ./2_analysis/gene_annotation/ANKs/loci/${locus}.1000.out/genome_reannotate_mod_intersect.gff \
+> ./2_analysis/gene_annotation/ANKs/loci/${locus}.1000.out/GAGA_dfast_ANKs_intersect.gff;
+id=$(cat ./2_analysis/gene_annotation/ANKs/loci/${locus}.1000.out/GAGA_dfast_ANKs_intersect.gff|awk '{if ($3=="mRNA") print $0}'|perl -pe 's/.*ID=(.*?)\;.*/$1/g');
 # id Mbic_g01422
 echo ${id} > ids.txt;
 seqkit grep -nrif ids.txt /global/homes/jg/schradel/projects/GAGA/annotations/${GAGAid}_final_annotation_repfilt_addreannot_noparpse_representative.cds.fasta > ${locus}.out.fa
@@ -81,16 +77,13 @@ seqkit grep -nrif ids.txt /global/homes/jg/schradel/projects/GAGA/annotations/${
 ### 2.2.2 For all ANK loci:
 
 ```bash
-basedir=/global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation
-echo ${basedir}
-
 # ANKs.loci.txt file structure:
 # GAGA-0028       Scaffold283     299552  303004
 
 # Parallel --dryrun
 cat ANKs.loci.txt | parallel --col-sep "\t" --dryrun \
 "locus={1}.{2}.{3}-{4}; 
-cp -r ${basedir}/reannotation.dfast/results/{1}.{2}.{3}-{4}.1000.out /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/ANKs/loci;
+cp -r ${basedir}/reannotation.dfast/results/{1}.{2}.{3}-{4}.1000.out ./2_analysis/gene_annotation/ANKs/loci;
 bedtools intersect -wa \
 -a /global/homes/jg/schradel/projects/GAGA/annotations/{1}_final_annotation_repfilt_addreannot_noparpse_representative.gff3 \
 -b ${basedir}/ANKs/loci/{1}.{2}.{3}-{4}.1000.out/genome_reannotate_mod_intersect.gff \
@@ -101,7 +94,7 @@ seqkit grep -nrif ids.txt /global/homes/jg/schradel/projects/GAGA/annotations/{1
 
 # Use Parallel on all ankyrin files
 cat ANKs.loci.txt | parallel --col-sep "\t" "locus={1}.{2}.{3}-{4}; 
-cp -r ${basedir}/reannotation.dfast/results/{1}.{2}.{3}-{4}.1000.out /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/ANKs/loci;
+cp -r ${basedir}/reannotation.dfast/results/{1}.{2}.{3}-{4}.1000.out ./2_analysis/gene_annotation/ANKs/loci;
 bedtools intersect -wa \
 -a /global/homes/jg/schradel/projects/GAGA/annotations/{1}_final_annotation_repfilt_addreannot_noparpse_representative.gff3 \
 -b ${basedir}/ANKs/loci/{1}.{2}.{3}-{4}.1000.out/genome_reannotate_mod_intersect.gff \
@@ -127,9 +120,4 @@ cat *out.fa >> ANKs.GAGA.annotation.fa
 
 ```bash
 find . -maxdepth 1 -mindepth 1 -type d | while read dir; do [[ ! -f $dir/genome_reannotate_mod_intersect.gff ]] && echo "$dir"; done
-```
-
-Grep fasta sequence from newly intersected files:
-```bash
-
 ```

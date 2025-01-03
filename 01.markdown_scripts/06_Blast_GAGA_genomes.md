@@ -1,16 +1,14 @@
 # BLAST sequence against GAGA genomes
 
-This script describes the process how LGT sequences can be blasted against all GAGA genomes to possibly identify more LGTs that were previously filtered out as being a good candidate.
+This script describes the process how HGT sequences can be blasted against all GAGA genomes to possibly identify more HGTs that were previously filtered out as being a good candidate.
 
-In case of additional LGT sequences being identified as good LGT candidates, these candidates will be intersected with all initially predicted LGT loci of the LGT finder pipeline within the respective genome and run again with the dfast prokaryotic gene annotation.
+In case of additional HGT sequences being identified as good HGT candidates, these candidates will be intersected with all initially predicted HGT loci of the HGT finder pipeline within the respective genome and run again with the dfast prokaryotic gene annotation.
 
 
 ### 1 Prepare the GAGA genomes as a database
 ##### 1.1 Add GAGAid to fasta headers:
 Copy genomes to another folder to work on them, e.g. in `assemblies_copy` folder:
 ```bash
-cd /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy
-
 # Remove everything after the GAGAid
 # e.g. GAGA-0001_SLR-superscaffolder_final_dupsrm_filt.fasta turns into GAGA-0001
 
@@ -46,18 +44,15 @@ Make a local BLAST search to detect whether a query sequence exists in any of th
 
 GridEngine Script to make `GAGA_genomes_database` a BLAST db:
 
-`cd /global/scratch2/j_rink02/master/lgt/0_data`
 ```bash
 #$ -S /bin/bash
 #$ -N makeGAGAdb
 #$ -cwd
 #$ -pe smp 20
 #$ -l h_vmem=3G
-#$ -o /global/scratch2/j_rink02/master/lgt/0_data/local_blast/tmp/makeblastdb.out
-#$ -e /global/scratch2/j_rink02/master/lgt/0_data/local_blast/tmp/makeblastdb.err
-#$ -wd /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy
 
-makeblastdb -dbtype nucl -in /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy/GAGA_genomes_database
+
+makeblastdb -dbtype nucl -in ./0_data/assemblies_copy/GAGA_genomes_database
 ```
 
 Blast any sequence of interest against the GAGA genomes:
@@ -87,9 +82,9 @@ GAGA-0098.LGT	GAGA-0511_Scaffold84	91.790	609	50	0	1	609	595715	596323	0.0	848	6
 GAGA-0098.LGT	GAGA-0512_Scaffold4	91.954	609	49	0	1	609	5228196	5227588	0.0	854	624
 GAGA-0098.LGT	GAGA-0513_Scaffold6	91.790	609	50	0	1	609	3023405	3022797	0.0	848	624
 ```
-This BLAST search did not result in any other species than the ones detected before which were predicted to incorporate a Lyzozyme. However, the three Carebara spezies with a predicted Lyzozyme did not appear here.
+This BLAST search did not result in any other species than the ones detected before which were predicted to incorporate a Lyzozyme. However, the three *Carebara* species with a predicted Lyzozyme did not appear here.
 
-##### 2.2 Sequence search with the Lyzozyme sequence from GAGA-0328 (Carebara)
+##### 2.2 Sequence search with the Lyzozyme sequence from GAGA-0328 (*Carebara diversa*)
 
 Input file: `Lyzozyme_sequence_GAGA-0328.txt`
 Output file: `blast_Lyzozyme_GAGA-0328.out`
@@ -103,9 +98,9 @@ GAGA-0328.LGT	GAGA-0533_Scaffold25	83.359	637	76	11	1	616	1172729	1173356	1.33e-
 GAGA-0328.LGT	GAGA-0578_Scaffold3	90.792	619	56	1	1	618	7430847	7430229	0.0	826	618
 GAGA-0328.LGT	GAGA-0579_Scaffold2	93.861	619	36	2	1	618	762894	763511	0.0	931	618
 ```
-Here, all Carebara species occurred as hits showing that these are two independent and separate LGT events.
+Here, all *Carebara* species occurred as hits showing that these are two independent and separate LGT events.
 
-##### 2.3 Sequence search with the Etherase sequence from GAGA-0221 (Camponotus fellah).
+##### 2.3 Sequence search with the Etherase sequence from GAGA-0221 (*Camponotus fellah*).
 
 Input file:`Etherase_sequence.txt`
 
@@ -128,8 +123,6 @@ In the BLAST search with GAGA-0221 Etherase sequence as input, in total eight sp
 Take the `LGTs.candidateloci.loose.bed` file and intersect this file with the coordinates from the BLAST search. Use those intersected hits and re-run dfast with the coordinates of these LGT loci.
 
 #### 3.1 For one file only (GAGA-0331 as example):
-
-`cd /global/scratch2/j_rink02/master/lgt/0_data/GAGA-0331/results`
 
 ##### 3.1.1 Convert BLAST output file into a bed file
 
@@ -232,7 +225,7 @@ GAGA-0331_Scaffold2506	5741	6367	CP003883.1;614723;615361;3.441E-116;427;639;74.
 ##### 3.1.4 Extract Fasta sequence for resulting overlapping coordinates
 
 ```bash
-bedtools getfasta -fi /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy/GAGA-0331 -bed results.blast.GAGA-0328.bed -fo results.blast.GAGA-0328.fa
+bedtools getfasta -fi ./0_data/assemblies_copy/GAGA-0331 -bed results.blast.GAGA-0328.bed -fo results.blast.GAGA-0328.fa
 
 # -fi: <input FASTA>
 # -bed BED input file with coordinates
@@ -257,8 +250,6 @@ Now, `dfast` can be run with the extracted FASTA sequence.
 The pipeline produces two bed files: one file called `LGTs.candidateloci.loose.bed` which consists of candidates blasted against the prokaryotic database and another file `LGTs.nA.candidateloci.loose.bed` consisting of candidates without any ant genomes. We need to change both bed files and run the code against each file separately to identify additional candidates.
 
 ```bash
-cd /global/scratch2/j_rink02/master/lgt/0_data
-
 # Copy file to work on it
 for i in */*; do cp $i/LGTs.candidateloci.loose.bed $i/LGTs.candidateloci2.loose.bed; done
 
@@ -311,10 +302,10 @@ Input file: `blast_Lyzozyme_GAGA-0328.bed` (BLAST output)
 
 ```bash
 # Run on LGTs.candidateloci.GAGAid.bed
-for i in */results; do bedtools intersect -wa -a $i/LGTs.candidateloci.GAGAid.bed -b /global/scratch2/j_rink02/master/lgt/0_data/local_blast/blast_Lyzozyme_GAGA-0328.bed >> /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Lyzozymes.bed; done
+for i in */results; do bedtools intersect -wa -a $i/LGTs.candidateloci.GAGAid.bed -b ./0_data/local_blast/blast_Lyzozyme_GAGA-0328.bed >> ./0_data/local_blast/results_Lyzozymes.bed; done
 
 # Run on LGTs.nA.candidateloci.GAGAid.bed
-for i in */results; do bedtools intersect -wa -a $i/LGTs.nA.candidateloci.GAGAid.bed -b /global/scratch2/j_rink02/master/lgt/0_data/local_blast/blast_Lyzozyme_GAGA-0328.bed >> /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Lyzozymes_nA.bed; done
+for i in */results; do bedtools intersect -wa -a $i/LGTs.nA.candidateloci.GAGAid.bed -b ./0_data/local_blast/blast_Lyzozyme_GAGA-0328.bed >> ./0_data/local_blast/results_Lyzozymes_nA.bed; done
 
 # -b: BAM/BED/GFF file to compare to
 # -wa: write the original entry in A for each overlap
@@ -349,13 +340,13 @@ GAGA-0579_Scaffold2     762893  763897  CP003883.1;614723;615361;2.392E-101;378;
 Input file: `blast_Etherase_GAGAgenomes.bed` (BLAST output)
 
 ```bash
-cd /global/scratch2/j_rink02/master/lgt/0_data
+cd ./0_data
 
 # Run on LGTs.candidateloci.GAGAid.bed
-for i in */results; do bedtools intersect -wa -a $i/LGTs.candidateloci.GAGAid.bed -b /global/scratch2/j_rink02/master/lgt/0_data/local_blast/blast_Etherase_GAGAgenomes.bed >> /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Etherase.bed; done
+for i in */results; do bedtools intersect -wa -a $i/LGTs.candidateloci.GAGAid.bed -b ./0_data/local_blast/blast_Etherase_GAGAgenomes.bed >> ./0_data/local_blast/results_Etherase.bed; done
 
 # Run on LGTs.nA.candidateloci.GAGAid.bed
-for i in */results; do bedtools intersect -wa -a $i/LGTs.nA.candidateloci.GAGAid.bed -b /global/scratch2/j_rink02/master/lgt/0_data/local_blast/blast_Etherase_GAGAgenomes.bed >> /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Etherase_nA.bed; done
+for i in */results; do bedtools intersect -wa -a $i/LGTs.nA.candidateloci.GAGAid.bed -b ./0_data/local_blast/blast_Etherase_GAGAgenomes.bed >> ./0_data/local_blast/results_Etherase_nA.bed; done
 
 # -b: BAM/BED/GFF file to compare to
 # -wa: write the original entry in A for each overlap
@@ -384,22 +375,22 @@ In this step, only three out of the originally eight detected hits appeared in t
 
 ##### 3.2.3 Extract FASTA sequence for resulting coordinates
 ```bash
-cd /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy
+cd ./0_data/assemblies_copy
 
 # For the Lysozymes
 # prokaryotic database candidates
-for i in *; do bedtools getfasta -fi /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy/$i -bed /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Lyzozymes.bed -fo /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/$i.Lyzozyme.fa; done
+for i in *; do bedtools getfasta -fi ./0_data/assemblies_copy/$i -bed ./0_data/local_blast/results_Lyzozymes.bed -fo ./0_data/local_blast/dfast_candidates/$i.Lyzozyme.fa; done
 
 # noAnt database candidates
-for i in *; do bedtools getfasta -fi /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy/$i -bed /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Lyzozymes_nA.bed -fo /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/$i.Lyzozyme.nA.fa; done
+for i in *; do bedtools getfasta -fi ./0_data/assemblies_copy/$i -bed ./0_data/local_blast/results_Lyzozymes_nA.bed -fo ./0_data/local_blast/dfast_candidates/$i.Lyzozyme.nA.fa; done
 
 
 # For the Etherases
 #prokaryotic database candidates
-for i in *; do bedtools getfasta -fi /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy/$i -bed /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Etherase.bed -fo /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/$i.Etherase.fa; done
+for i in *; do bedtools getfasta -fi ./0_data/assemblies_copy/$i -bed ./0_data/local_blast/results_Etherase.bed -fo ./0_data/local_blast/dfast_candidates/$i.Etherase.fa; done
 
 #noAnt database candidates
-for i in *; do bedtools getfasta -fi /global/scratch2/j_rink02/master/lgt/0_data/assemblies_copy/$i -bed /global/scratch2/j_rink02/master/lgt/0_data/local_blast/results_Etherase_nA.bed -fo /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/$i.Etherase.nA.fa; done
+for i in *; do bedtools getfasta -fi ./0_data/assemblies_copy/$i -bed ./0_data/local_blast/results_Etherase_nA.bed -fo ./0_data/local_blast/dfast_candidates/$i.Etherase.nA.fa; done
 
 # -fi: <input FASTA>
 # -bed BED input file with coordinates
@@ -407,7 +398,7 @@ for i in *; do bedtools getfasta -fi /global/scratch2/j_rink02/master/lgt/0_data
 ```
 `bedtools getfasta` searches for matching sequences according to the coordinates in the `results.bed` file in every genome. After that, all results can be found in the `dfast_candidates` folder separated by genome.
 
-`cd /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates`
+`cd ./0_data/local_blast/dfast_candidates`
 
 `ls`:
 ```bash
@@ -505,11 +496,9 @@ Now, dfast can be run on all remaining files in this directory and all informati
 #### 3.3 Run dfast on additionally identified LGT candidates
 
 ##### 3.3.1 Write a dfast job script
-
-`cd /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates`
-
 nano `run_dfast_BLAST_candidates.sh`
-```
+
+```bash
 #$ -S /bin/bash
 #$ -N batchdfastjob
 #$ -cwd
@@ -517,21 +506,18 @@ nano `run_dfast_BLAST_candidates.sh`
 #$ -V
 #$ -pe smp 20
 #$ -l h_vmem=6G
-#$ -o /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/tmp/batch.dfast.job.out
-#$ -e global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/tmp/batch.dfast.job.err
-#$ -wd /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates
 
 conda activate dfast
 
 echo "Running on file: $file"
 
-dfast -g $file --force --metagenome --cpu 20 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/blast_output_dfast/$file --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
+dfast -g $file --force --metagenome --cpu 20 --debug --use_original_name t --minimum_length 100 --database /global/scratch2/databases/dfast/uniprot_bacteria-0.9.ref -o ./2_analysis/gene_annotation/blast_output_dfast/$file --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
 ```
 
 Submit the script and parse bash variables to the script using `-v file="file1.fa"``
 
 To submit jobs more easily, use parallel:
-```
+```bash
 find . -name "GAGA*" | parallel -I% --max-args 1 qsub -v file="%" run_dfast_BLAST_candidates.sh
 
 find . -name "NCBI*" | parallel -I% --max-args 1 qsub -v file="%" run_dfast_BLAST_candidates.sh
@@ -548,7 +534,7 @@ The dfast jobs would take too long for all additionally identified candidates to
 cd /global/scratch2/databases/dfast
 
 # Extract relevant bacteria
-seqkit grep -n -r -p "Wolbachia|Sodalis|Serratia|Yersinia|Rahnella|Escherichia|Spiroplasma|Mycoplasma" /global/scratch2/databases/dfast/uniprot_bacteria-0.9.fasta > ~/relevant.bacteria.uni90.fa
+seqkit grep -n -r -p "Wolbachia|Sodalis|Serratia|Yersinia|Rahnella|Escherichia|Spiroplasma|Mycoplasma" ./databases/dfast/uniprot_bacteria-0.9.fasta > ~/relevant.bacteria.uni90.fa
 
 cd ~
 
@@ -569,10 +555,8 @@ module list
 
  Slightly change the dfast script and use less memory with the smaller database for our bacteria of interest:
 
- `cd /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates`
-
  nano `run_dfast_additional_candidates.sh`
- ```
+ ```bash
  #$ -S /bin/bash
  #$ -N plusLGTs
  #$ -cwd
@@ -580,15 +564,12 @@ module list
  #$ -V
  #$ -pe smp 10
  #$ -l h_vmem=2G
- #$ -o /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/tmp/batch.dfast.job.out
- #$ -e /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates/tmp/batch.dfast.job.err
- #$ -wd /global/scratch2/j_rink02/master/lgt/0_data/local_blast/dfast_candidates
 
  conda activate dfast
 
  echo "Running on file: $file"
 
- dfast -g $file --force --cpu 10 --debug --use_original_name t --minimum_length 100 --database ~/relevant.bacteria.uni90.ref -o /global/scratch2/j_rink02/master/lgt/2_analysis/gene_annotation/blast_output_dfast/$file --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
+ dfast -g $file --force --cpu 10 --debug --use_original_name t --minimum_length 100 --database ~/relevant.bacteria.uni90.ref -o ./2_analysis/gene_annotation/blast_output_dfast/$file --config /home/j/j_rink02/anaconda3/envs/dfast/bin/custom_config.py
  ```
 
  Submit the jobs:
