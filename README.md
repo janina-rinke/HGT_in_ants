@@ -2,7 +2,7 @@
 
 ## Introduction to the Code Repositories
 
-This repository holds all the code to evaluate horizontally acquired genes (HGAs) deriving from bacteria in 163 ant genomes, previously identified by an automated Horizontal Gene Transfer (HGT) finder pipeline. All the code for the automated detection of HGTs/LGTs in ant genomes can be found [HERE](https://github.com/dinhe878/GAGA-Metagenome-LGT).
+This repository holds all the code to evaluate horizontally acquired genes (HGAs) deriving from bacteria in 163 ant genomes, previously identified by an automated Horizontal Gene Transfer (HGT) finder pipeline. All the code for the previous, automated detection of potential HGTs/LGTs in ant genomes can be found [HERE](https://github.com/dinhe878/GAGA-Metagenome-LGT).
 
 
 This project is a part of the Global Ant Genomics Alliance (GAGA).
