@@ -1,5 +1,5 @@
 ---
-title: "GAGA phylogeny with HGT highlights"
+title: "GAGA phylogeny with HGA highlights"
 output:
   html_document:
     toc: true
@@ -39,7 +39,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
 
-Load the necessary R libraries
+Load libraries
 ```{r libraries}
 #if (!requireNamespace("BiocManager", quietly = TRUE))
    #install.packages("BiocManager")
@@ -68,16 +68,15 @@ library(TDbook)
 ```
 
 ## Load data 
-(GAGA_dated_phylogeny_newick_woutgroup_DatesPeters2017_CurrBio.tre)
 ```{r}
 # Load the id2species table
 GAGA.data<-read.table("./0_data/Tables/all.GAGA.data.tsv",sep="\t",T)
 
-# Load tree itself
+# Load tree
 GAGA2.tree<-read.tree("./0_data/trees/GAGA_dated_phylogeny_newick_woutgroup_DatesPeters2017_CurrBio.tre")
 ```
 
-## Subset tree with treeio
+## Subset tree with treeio to remove non-relevant outgroups for the analysis
 ```{r}
 # Remove Outgroup tips from the tree
 tips_to_remove<-c("OUTG-0008", "OUTG-0007", "OUTG-0006", "OUTG-0005", "OUTG-0004", "OUTG-0003","OUTG-0002", "OUTG-0001")
@@ -88,7 +87,7 @@ subset_tree<-drop.tip(GAGA2.tree, tips_to_remove)
 GAGA2.data<-GAGA.data %>%
   dplyr::filter(!grepl("OUTG", GAGA.data$label))
 
-# Rename the label column to GAGAid to avoid confusion
+# Rename the label column to GAGAid
 GAGA2.data<-rename(GAGA2.data, GAGAid = label)
 ```
 
@@ -139,7 +138,7 @@ p3 <- p2 +
 p3
 ```
 
-# A.1) LGT data: Include the LGT data in the circular phylogeny
+# A.1) HGT data: Include HGT data in the circular phylogeny
 ```{r}
 library(readxl)
 library(openxlsx)
@@ -148,8 +147,7 @@ LGTs<-read_excel("./0_data/Tables/LGTs.LocusLevel.UniProt.Info.Reannotated.xlsx"
 ```
 
 
-# A.2) LGT data: Add the LGT candidate numbers per genome to the phylogeny
-Plot the circular phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified LGTs.
+# A.2) HGT data: Add the HGT candidate numbers per genome to the phylogeny
 ```{r}
 #Create a tally dataframe that counts how many LGT candidates we have per species.
 LGT.tally<-as.data.frame(table(select(LGTs,.id)))
@@ -161,9 +159,6 @@ p5<-p3 %<+% LGT.tally
 #Plot the phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified LGTs
 p6<-p5+geom_tippoint(aes(size=LGT.count),col="red", alpha=.5)
 p6
-#ggsave(p6,file="./plots/GAGA_dated_phylogenies/GAGA.phylogeny.LGTs.dots.pdf",width = 12,height=24) #save the tree in a pdf
-
-#write.table(LGT.tally, file="GAGAspecies_with_lgts.tsv", sep=",", col.names = NA)
 ```
 
 
@@ -296,8 +291,6 @@ tp2 <- tp1 +
 tp2<-tp2+scale_fill_manual(values=c("grey20","lightgreen","grey80","grey90","grey60"))
 
 tp2
-
-ggsave("./plots/GAGA.new.phylo.HGTs.pdf", width=20, height=25)
 ```
 
 
@@ -309,15 +302,10 @@ LGT.complete<-LGTs %>%
 # Change order
 LGT.complete<-LGT.complete %>% 
   relocate(species, subfamily, Protein.names,prokaryote_origin,order_prokaryote_origin,class_prokaryote_origin, .after = .id)
-
-# Save dataframe as supplementary table
-write.csv(LGT.complete, "./0_data/Tables/497_HQ_LGTs_all_info.csv", row.names=FALSE)
-write.xlsx(LGT.complete,"./0_data/Tables/497_HQ_LGTs_all_info.xlsx")
 ```
 
 
-# B.1) Pre-curated LGT data: LGT candidates after automated filtering and before manual curation & prokaryotic gene annotation
-After automated filtering of all 13,664 predicted LGT candidates, 1,148 HGT candidates across XY genomes remained for further manual curation and prokaryotic gene annotation, including also the stLFR genomes.
+# B.1) Pre-curated HGT data: HGT candidates after automated filtering and before manual curation & prokaryotic gene annotation
 ```{r}
 # Load data
 preCurated.LGTs<-read_excel("./0_data/Tables/GAGA.HGTs.afterFiltering.all.genomes.xlsx")
@@ -336,12 +324,9 @@ preCurated.LGTs$nr_predicted_loci <- str_count(preCurated.LGTs$cand.start, ";") 
 HGT_CDS_sum <- sum(preCurated.LGTs$nr_predicted_loci)
 preCurated.LGTs$species<-as.factor(preCurated.LGTs$species)
 HGT_species <- levels(preCurated.LGTs$species)
-
-write.xlsx(preCurated.LGTs,"./Supplementary_Tables/GAGA.HGTs.afterFiltering.all.genomes.xlsx")
 ```
 
 # B.2) Pre-curated LGT data: Add the LGT candidate numbers per genome to the phylogeny
-Plot the circular phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified pre-curated LGTs.
 ```{r}
 #Create a tally dataframe that counts how many LGT candidates we have per species.
 preCurated.LGT.tally<-as.data.frame(table(select(preCurated.LGTs,.id)))
@@ -372,10 +357,8 @@ pl2
 
 plot1<-pl2 %<+% preCurated.LGT.tally
 
-#Plot the phylogeny and add red dot to the tip, where the size of the red dot represents the number of identified LGTs
+# Plot phylogeny and add red dot to the tip, where dot size represents the number of identified HGAs
 plot2<-plot1+geom_tippoint(aes(size=LGT.count),col="red", alpha=.5)
 plot2
-
-ggsave("./Supplementary_Figures/GAGA.preCurated.HGTs.pdf")
 ````
 
