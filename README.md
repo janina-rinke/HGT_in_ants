@@ -1,19 +1,19 @@
-# Horizontal Gene Acquisition in Ants
+# Horizontal Gene Transfer in Ants
 
 ## Introduction to the Code Repositories
 
-This repository holds all the code to evaluate horizontally acquired genes (HGAs) deriving from bacteria in 163 ant genomes, previously identified by an automated Horizontal Gene Transfer (HGT) finder pipeline. All the code for the previous, automated detection of potential HGTs/LGTs in ant genomes can be found [HERE](https://github.com/dinhe878/GAGA-Metagenome-LGT).
+This repository holds all the code to evaluate horizontally transferred genes (HGTs) from prokaryotic donors in 163 ant genomes, previously identified by an automated Horizontal Gene Transfer (HGT) finder pipeline. All the code for the previous, automated detection of potential HGTs/LGTs in ant genomes can be found [HERE](https://github.com/dinhe878/GAGA-Metagenome-LGT).
 
 
-This project is a part of the Global Ant Genomics Alliance (GAGA).
+## Validation and quality assessment of HGT candidates
 
-## Information about Code & Scripts
 
-### 01. Markdown Scripts (`.md`)
-This folder holds all markdown scripts for different analyses to be conducted within a Linux bash coding environment.
+### Calculation of reads overlapping HGT boundaries
 
-#### Calculation of reads overlapping HGT boundaries
-`bedtools` and `samtools` were used to map raw sequencing reads to the respective genomes and to calculate reads overlapping the start, end, and total sequence length of HGT candidates.
+[*01.countBoundaryReads.sh*](HGT_validation/01.countBoundaryReads.sh)
+
+We used `bedtools` and `samtools` to map raw PacBio sequencing reads (from `bam` files) to the respective genomes and to calculate reads overlapping the start, end, and total sequence length of HGT candidates. All coordinates were stored in bed files (`LGTs.candidateloci.loose.bed`). HGT boundaries were expanded based on the average read length distribution of the respective genome. Based on plots produced by this script, we decided to expand HGT boundaries in PacBio genomes by 1000 bp each side and in stLFR genomes by 25 bp each side. All reads overlapping the HGT boundaries were counted and stored in a bed file with start+stop coordinates of HGTs as separate entries. To extract reads overlapping with the expanded HGT boundary, `bedtools intersect` was used and the option `-F 1` was added to require that the entire stretch defined in the bed file is covered by a given read. We further filtered reads that did not map well to the HGT boundary region (e.g. they could also map somewhere else) and removed multimapping reads.
+
 ```bash
 #Calculate extension based on average read length distribution, count one read value per boundary
 ./markdown_scripts/01_countBoundaryReads.md
