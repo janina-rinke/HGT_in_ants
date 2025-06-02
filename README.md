@@ -13,29 +13,28 @@ This HGT finder pipeline yielded 13,664 initial HGT candidates for downstream an
 [*01.analyseLGTs.Rmd*](01_HGT_detection_and_validation/01.analyseLGTs.Rmd)
 
 
-### HGT filtering
 After that, HGT filtering steps were employed based on the previously produced and examined HGT candidate overview plots. Filters were further determined based on manual assessment of HGT candidates from seven randomly chosen GAGA genomes, as well as plotted parameter distributions of all predicted HGTs:
 
 [*02.LGTfiltering.Rmd*](01_HGT_detection_and_validation/02.LGTfiltering.Rmd)
 
 The following filter thresholds were applied based on a step-by-step filtering process:
 
-- Unfiltered: 13664 candidates, 163 genomes
-- 1st filtering step: 5355 remaining candidates, 142 genomes
-Filtered by e-value (>1e-25, removed 7616 candidates)
-Filtered by ct4 (ct4 > 0.25, removed 2.646 candidates)
-Filtered by ce (ce > 1.5, removed 485 candidates)
-Filtered by BitDiffSum (BitDiffSum > 150, removed 4610 candidates)
-Filtered by candidate length (length > 100, removed 2209 candidates)
+0) Unfiltered: 13664 candidates, 163 genomes
 
-- 2nd filtering step: 5173 remaining candidates, 141 genomes
-Filtering out candidates starting within first 1000 bp of scaffold (cand.start >1000 bp, removed 182 candidates)
-- 3rd filtering step: 5081 remaining candidates, 138 genomes
-Filtering out candidates within last 1000 bp at end of scaffold (cand.end != scaffold.length - 1000, removed 92 candidates)
-- 4th filtering step: 4785 remaining candidates
-Filtering out all candidates with 0 or only 1 read at the boundaries (reads_start & reads_end > 1, removed 251 candidates)
-- 5th filtering step: 1148 candidates
-Merging all candidates within 20 kb range reduces the number to 1148 candidate regions.
+1) 5355 remaining candidates, 142 genomes
+- Filtered by e-value (>1e-25, removed 7616 candidates)
+- Filtered by ct4 (ct4 > 0.25, removed 2.646 candidates)
+- Filtered by ce (ce > 1.5, removed 485 candidates)
+- Filtered by BitDiffSum (BitDiffSum > 150, removed 4610 candidates)
+- Filtered by candidate length (length > 100, removed 2209 candidates)
+
+2) 5173 remaining candidates, 141 genomes
+- Filtering out candidates starting within first 1000 bp of scaffold (cand.start >1000 bp, removed 182 candidates)
+3) 5081 remaining candidates, 138 genomes
+- Filtering out candidates within last 1000 bp at end of scaffold (cand.end != scaffold.length - 1000, removed 92 candidates)
+4) 4785 remaining candidates
+- Filtering out all candidates with 0 or only 1 read at the boundaries (reads_start & reads_end > 1, removed 251 candidates)
+5) Merging candidates in 20 kb range: 1148 candidate regions.
 
 
 ### Calculation of reads overlapping HGT boundaries
