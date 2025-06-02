@@ -1,7 +1,5 @@
 # Horizontal Gene Transfer in Ants
 
-## Introduction to the Code Repositories
-
 This repository holds all the code to evaluate horizontally transferred genes (HGTs) from prokaryotic donors in 163 ant genomes, previously identified by an automated Horizontal Gene Transfer (HGT) finder pipeline. All the code for the previous, automated detection of potential HGTs/LGTs in ant genomes can be found [HERE](https://github.com/dinhe878/GAGA-Metagenome-LGT).
 
 
@@ -44,24 +42,25 @@ Based on plots produced by this script, we decided to expand HGT boundaries in P
 
 After filtering, we counted boundary reads again only for the 497 remaining high-quality HGT candidates using the summary script [countReads_HQ_HGTcandidates.sh](01_HGT_detection_and_validation/countReads_HQ_HGTcandidates.sh). Finally, all final read count files were merged together.
 
-### Prokaryotic gene annotation 
-`prodigal`, `kraken2`, and `dfast` were run to annotate putative prokaryotic HGT sequences in ant genomes. For all downstream analyses, only `dfast` results were used.
+## 2 Prokaryotic gene annotation 
+`prodigal`, `kraken2`, and `dfast` were run to annotate the remaining high-quality HGT candidate sequences in the ant genomes. For all downstream analyses following prokaryotic gene annotation, only `dfast` results were used.
 
-```bash
-./markdown_scripts/03_Prokaryotic_Gene_Annotation_dfast.md
-```
+[*01.Prokaryotic_Gene_Annotation_dfast.sh*](02_Prokaryotic_gene_annotation/01.Prokaryotic_Gene_Annotation_dfast.sh)
 
-#### Check completeness of HGT candidates
-Input files are files obtained from `dfast`.
-```bash
-./markdown_scripts/04_HGT_completeness_check.md
-```
+We searched against `nr` (https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA), `nt` https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA), and `UniRef90` (https://www.uniprot.org/help/uniref) databases.
 
-#### Re-annotation of incomplete HGT candidates
-All candidates were extended by 1000 bp in 5' and 3' direction and re-annotated with `dfast` to identify HGTs which were annotated incompletely.
-```bash
-./markdown_scripts/05_reannotation.DFAST.md
-```
+### Check HGT completeness
+All annotated HGT candidates were checked for their completeness using the obtained DFAST results. We extracted for every HGT candidate the best uniprot hit from DFAST. Further, we extracted the start and stop codon of each HGT candidate to check for complete ORFs using `seqkit` and counted the number of predicted CDS per HGT:
+
+[*02.HGT_completeness_check.sh*](02_Prokaryotic_gene_annotation/02.HGT_completeness_check.sh)
+
+
+### Re-annotation of incomplete HGT candidates
+All candidates were extended by 1000 bp in 5' and 3' direction and re-annotated with DFAST to identify HGTs which were previously annotated incompletely.
+
+[*03.reannotation.DFAST.sh*](02_Prokaryotic_gene_annotation/03.reannotation.DFAST.sh)
+
+
 
 #### Check for additional candidates within all GAGA genomes
 We used this script to identify putative HGTs that were previously filtered out due to our strict filtering criteria. All resulting candidates were intersected with initially predicted HGT candidates by the automated HGT finder pipeline.

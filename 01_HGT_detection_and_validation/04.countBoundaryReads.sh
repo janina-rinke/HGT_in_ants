@@ -1,3 +1,6 @@
+#!/usr/bin/bash
+
+
 # Calculate the number of reads overlapping HGT boundaries and create a bed file with start+stop coordinates of HGTs as separate entries
 
 # for all HGT candidates
