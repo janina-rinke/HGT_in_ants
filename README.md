@@ -5,7 +5,21 @@
 This repository holds all the code to evaluate horizontally transferred genes (HGTs) from prokaryotic donors in 163 ant genomes, previously identified by an automated Horizontal Gene Transfer (HGT) finder pipeline. All the code for the previous, automated detection of potential HGTs/LGTs in ant genomes can be found [HERE](https://github.com/dinhe878/GAGA-Metagenome-LGT).
 
 
-## 1 Validation and quality assessment of HGT candidates
+## 1 HGT detection
+The detection of potential HGTs with protein-coding hits in the 163 ant genomes of interest obtained by our bioinformatic HGT finder pipeline is explained in detail at (`https://github.com/dinhe878/GAGA-Metagenome-LGT`). 
+
+This HGT finder pipeline yielded 13,664 initial HGT candidates for downstream analyses. We produced overview plots for each candidate to aid the determination of HGT quality and processing of HGT candidates in downstream analyses:
+
+[*01.analyseLGTs.Rmd*](01_HGT_detection/01.analyseLGTs.Rmd)
+
+
+
+#### HGT filtering of predicted candidates with pre-defined thresholds
+This script contains all filtering steps which were used to exclude false-positives and filter the predicted HGTs. Filters were determined based on manual assessment of HGT candidates from seven randomly chosen GAGA genomes, as well as plotted parameter distributions of all predicted HGTs.
+```bash
+./r_scripts/02_LGTfiltering.Rmd
+```
+## 2 Validation and quality assessment of HGT candidates
 
 
 ### Calculation of reads overlapping HGT boundaries
@@ -14,9 +28,9 @@ This repository holds all the code to evaluate horizontally transferred genes (H
 
 We used `bedtools` and `samtools` to map raw PacBio sequencing reads (from `bam` files) to the respective genomes and to calculate reads overlapping the start, end, and total sequence length of HGT candidates. All coordinates were stored in bed files (`LGTs.candidateloci.loose.bed`). HGT boundaries were expanded based on the average read length distribution of the respective genome. Based on plots produced by this script, we decided to expand HGT boundaries in PacBio genomes by 1000 bp each side and in stLFR genomes by 25 bp each side. All reads overlapping the HGT boundaries were counted and stored in a bed file with start+stop coordinates of HGTs as separate entries. To extract reads overlapping with the expanded HGT boundary, `bedtools intersect` was used and the option `-F 1` was added to require that the entire stretch defined in the bed file is covered by a given read. We further filtered reads that did not map well to the HGT boundary region (e.g. they could also map somewhere else) and removed multimapping reads.
 
-Later on, we counted boundary reads again only for the 497 remaining high-quality HGT candidates using a short-cut script [countReads_HQ_HGTcandidates.sh](01_HGT_validation/countReads_HQ_HGTcandidates.sh). Finally, all final read count files were merged together.
+After filtering, we counted boundary reads again only for the 497 remaining high-quality HGT candidates using the summary script [countReads_HQ_HGTcandidates.sh](01_HGT_validation/countReads_HQ_HGTcandidates.sh). Finally, all final read count files were merged together.
 
-#### Prokaryotic gene annotation 
+### Prokaryotic gene annotation 
 `prodigal`, `kraken2`, and `dfast` were run to annotate putative prokaryotic HGT sequences in ant genomes. For all downstream analyses, only `dfast` results were used.
 
 ```bash
@@ -65,21 +79,6 @@ This script deals with ankyrin repeat HGAs detected in ants and extracts ANK nuc
 ./markdown_scripts/10_Ankyrin_repeats.md
 ```
 
-
-### 02. R Scripts (`.Rmd`)
-All scripts have been written in RStudio 4.3.1.
-
-#### GAGA HGT finder analysis
-Identification of HGTs with protein-coding hits and calculation of overview plots for all HGT candidates detected by the automated HGT finder pipeline (`https://github.com/dinhe878/GAGA-Metagenome-LGT`). These overview plots were used as a starting point for all downstream analyses and to determine HGT quality, as well as filters, for the identification of true HGTs.
-```bash
-./r_scripts/01_analyseLGTs.Rmd
-```
-
-#### HGT filtering of predicted candidates with pre-defined thresholds
-This script contains all filtering steps which were used to exclude false-positives and filter the predicted HGTs. Filters were determined based on manual assessment of HGT candidates from seven randomly chosen GAGA genomes, as well as plotted parameter distributions of all predicted HGTs.
-```bash
-./r_scripts/02_LGTfiltering.Rmd
-```
 
 #### Visualization of average read length in PacBio and stLFR genomes
 We calculated average read lengths for both PacBio and stLFR genomes separately. This was used as a basis to determine HGT boundary expansions in the `./markdown_scripts/01_countBoundaryReads.md` script to calculate read overlaps accordingly. 

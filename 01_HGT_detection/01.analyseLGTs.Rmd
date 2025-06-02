@@ -1,5 +1,5 @@
 ---
-title: "GAGA LGTfinder analysis"
+title: "GAGA HGTfinder analysis"
 output:
   html_document:
     toc: true
