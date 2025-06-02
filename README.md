@@ -10,7 +10,7 @@ This repository holds all the code to evaluate horizontally transferred genes (H
 
 ### Calculation of reads overlapping HGT boundaries
 
-[*01.countBoundaryReads.sh*](HGT_validation/01.countBoundaryReads.sh)
+[*01.countBoundaryReads.sh*](01_HGT_validation/01.countBoundaryReads.sh)
 
 We used `bedtools` and `samtools` to map raw PacBio sequencing reads (from `bam` files) to the respective genomes and to calculate reads overlapping the start, end, and total sequence length of HGT candidates. All coordinates were stored in bed files (`LGTs.candidateloci.loose.bed`). HGT boundaries were expanded based on the average read length distribution of the respective genome. Based on plots produced by this script, we decided to expand HGT boundaries in PacBio genomes by 1000 bp each side and in stLFR genomes by 25 bp each side. All reads overlapping the HGT boundaries were counted and stored in a bed file with start+stop coordinates of HGTs as separate entries. To extract reads overlapping with the expanded HGT boundary, `bedtools intersect` was used and the option `-F 1` was added to require that the entire stretch defined in the bed file is covered by a given read. We further filtered reads that did not map well to the HGT boundary region (e.g. they could also map somewhere else) and removed multimapping reads.
 
