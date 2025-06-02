@@ -5,7 +5,7 @@
 This repository holds all the code to evaluate horizontally transferred genes (HGTs) from prokaryotic donors in 163 ant genomes, previously identified by an automated Horizontal Gene Transfer (HGT) finder pipeline. All the code for the previous, automated detection of potential HGTs/LGTs in ant genomes can be found [HERE](https://github.com/dinhe878/GAGA-Metagenome-LGT).
 
 
-## Validation and quality assessment of HGT candidates
+## 1 Validation and quality assessment of HGT candidates
 
 
 ### Calculation of reads overlapping HGT boundaries
@@ -14,12 +14,7 @@ This repository holds all the code to evaluate horizontally transferred genes (H
 
 We used `bedtools` and `samtools` to map raw PacBio sequencing reads (from `bam` files) to the respective genomes and to calculate reads overlapping the start, end, and total sequence length of HGT candidates. All coordinates were stored in bed files (`LGTs.candidateloci.loose.bed`). HGT boundaries were expanded based on the average read length distribution of the respective genome. Based on plots produced by this script, we decided to expand HGT boundaries in PacBio genomes by 1000 bp each side and in stLFR genomes by 25 bp each side. All reads overlapping the HGT boundaries were counted and stored in a bed file with start+stop coordinates of HGTs as separate entries. To extract reads overlapping with the expanded HGT boundary, `bedtools intersect` was used and the option `-F 1` was added to require that the entire stretch defined in the bed file is covered by a given read. We further filtered reads that did not map well to the HGT boundary region (e.g. they could also map somewhere else) and removed multimapping reads.
 
-```bash
-#Calculate extension based on average read length distribution, count one read value per boundary
-./markdown_scripts/01_countBoundaryReads.md
-# Read counts only for remaining HQ HGT candidates, count 3 values: start, end, complete HGT + extension
-./markdown_scripts/02_count3ValueBoundaryReads_HQ_LGTs.md
-```
+Later on, we counted boundary reads again only for the 497 remaining high-quality HGT candidates using a short-cut script [countReads_HQ_HGTcandidates.sh](01_HGT_validation/countReads_HQ_HGTcandidates.sh). Finally, all final read count files were merged together.
 
 #### Prokaryotic gene annotation 
 `prodigal`, `kraken2`, and `dfast` were run to annotate putative prokaryotic HGT sequences in ant genomes. For all downstream analyses, only `dfast` results were used.
