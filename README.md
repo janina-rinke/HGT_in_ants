@@ -25,9 +25,9 @@ The following filter thresholds were applied based on a step-by-step filtering p
 3) Filtered by ce (ce > 1.5, removed 485 candidates)
 4) Filtered by BitDiffSum (BitDiffSum > 150, removed 4610 candidates)
 5) Filtered by candidate length (length > 100, removed 2209 candidates)
-6) Filtering out candidates starting within first 1000 bp of scaffold (cand.start >1000 bp, removed 182 candidates)
-7) Filtering out candidates within last 1000 bp at end of scaffold (cand.end != scaffold.length - 1000, removed 92 candidates)
-8) Filtering out all candidates with 0 or 1 read at boundaries (reads_start & reads_end > 1, removed 251 candidates)
+6) Filtering out candidates within first 1000 bp of scaffold (removed 182 candidates)
+7) Filtering out candidates within last 1000 bp of scaffold (removed 92 candidates)
+8) Filtering out candidates with 0/1 read at boundaries (reads_start & reads_end > 1, removed 251 candidates)
 9) Merging candidates in 20 kb range: 1148 candidate regions.
 
 
