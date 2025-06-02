@@ -1,5 +1,3 @@
-# Distribution plots of average read lengths in all GAGA genomes 
-
 ---
 title: "R Notebook: Read lengths distribution plots"
 output: html_notebook
