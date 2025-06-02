@@ -1,6 +1,5 @@
 ---
 title: "LGT filtering of predicted candidates"
-author: "Janina Rinke"
 output: 
   html_document:
     toc: true
@@ -51,17 +50,14 @@ library(tidyverse)
 library(stringr)
 ```
 
-# Load all good candidates for all GAGA species (1st filter: Take only good candidates from both databases)
-
+# Load data
 Load all tsv files for the different GAGA ids in a list of data frames.
 ```{r}
 tsv2load<-"./0_data/*/results/*.*.lgt.good.candidates.tsv" #provides the path to all files matching the pattern
 dataFiles <- lapply(Sys.glob(tsv2load), read.delim2,sep="\t")                                       # creates a large list out of all files
 ```
 
-# add the name
-Add the GAGA id as a name to the different list elements.
-Add the database origin as a name to the different list elements.
+Add the GAGA id + database origin as a name to the different list elements.
 Set the GAGA-id and database origin separated with a "." as a name for each element of the list "dataFiles".
 Each element in the list is one genome, either from the noAnt or the eukaryotic database including the candidates.
 ```{r large list LGT candidates}
@@ -69,15 +65,13 @@ ids<-gsub(".*/(.+-[0-9]+)\\..+.lgt.good.candidates.tsv","\\1",Sys.glob(tsv2load)
 type<-gsub(".*/(.+-[0-9]+)\\.(.+).lgt.good.candidates.tsv","\\2",Sys.glob(tsv2load))        # create a column "type" out of the file names (either euk or noAnt)
 names(dataFiles)<-paste(ids,type,sep=".")                                                   # Give each element in the large list a name e.g. GAGA-0515.euk
 ```
-The list "dataFiles" contains `r length(dataFiles)` elements from 163 genomes with LGT candidates predicted either by a euk database or a noAnt database. Each genome can have one noAnt candidate table and one euk candidate table, which means out of possible 326 (163 genomes x 2 database predictions) elements, only 7 elements were missing from the genomes and almost all GAGA genomes had both database LGT prediction tables.
+
 
 # Combine all GAGA ids
 Combine tsv files from all GAGA ids in the large list element ("dataFiles") to one big data frame ("df").
 ```{r make large dataframe}
 df<-rbindlist(dataFiles,idcol = T, fill=TRUE) #the fill=TRUE option fills missing columns
 ```
-The unfiltered df containes `r length(df)` candidates from all 162 selected genomes together.
-Each row in the dataframe represents one candidate.
 
 
 ```{r}
@@ -280,7 +274,7 @@ write.table(df_outfiltered_length,"/global/scratch2/j_rink02/master/lgt/2_analys
 ```
 
 
-#Filter out candidates at beginning of scaffold
+# Filter out candidates at beginning of scaffold
 Remove anything at the beginning of a scaffold within the first 1000 bp.
 These are more likely to be misassemblies.
 ```{r}
@@ -440,61 +434,6 @@ length(unique(w1))#[1] 134
 z= dfC.new.filtered$.id
 z1=sapply(strsplit(z,split = '.', fixed = TRUE), function(x) (x[1]))
 length(unique(z1))#[1] 134
-```
-
-# Summary of the LGT filters
-Original: df 13664 candidates, 162 genomes
-Without any filters; containing only the candidates predicted by the LGT pipeline with 13664 candidates in all 162 genomes. Hereby, all 162 contain at least one predicted candidate (13664 candidates, 162 genomes)
-
-1st filtering step: dfFilter 5355 remaining candidates, 142 genomes
-When looking at each filter separately:
-Filtered by e-value (>1e-25, removed 7616 candidates)
-Filtered by ct4 (ct4 > 0.25, removed 2.646 candidates)
-Filtered by ce (ce > 1.5, removed 485 candidates)
-Filtered by BitDiffSum (BitDiffSum > 150, removed 4610 candidates)
-Filtered by candidate length (length > 100, removed 2209 candidates)
-
-2nd filtering step: dfFilter1 5173 remaining candidates, 141 genomes
-Filtering out candidates starting within the first 1000 bp of the scaffold (cand.start >1000 bp, removed 182 candidates)
-
-3rd filtering step: dfFilter2 5081 remaining candidates, 138 genomes
-Filtering out all candidates within the last 1000 bp at the end of scaffold(cand.end != scaffold.length - 1000, removed 92 candidates)
-
-4th filtering step: dfFilter3 4785 candidates
-Filtering out all candidates with 0 or only 1 read at the boundaries (reads_start & reads_end > 1, removed 251 candidates)
-
-5th filtering step: dfC.new.filtered 1148 candidates
-Merging all candidates within 20kb range further reduces the number to 1148 candidate regions.
-
-# Merge the old .tsv file with candidates already evaluated together with the new tsv files based on the newly applied filters.
-1. Load the two tsv files into R
-```{r}
-# Loaded the tsv files into the environment by hand to not lose any data
-Evaluated_df <- GAGA.LGT.162.filtered.good.candidates.taxonomy
-
-newlyfiltered_df <- GAGA.LGT.162.new.filtered
-```
-2. Merge the two dataframes,such that only the newly added candidates need to be evaluated again.
-This means, keep all rows from the newlyfiltered_df, but add the information from the evaluated_df (left_join)
-```{r}
-complete_df <- merge(x=newlyfiltered_df, y =Evaluated_df, by = "locus", all.x = TRUE)
-head(complete_df)
-```
-3. Edit the complete_df to start the manual investigation
-```{r}
-complete_df$cand.locus.y <- NULL
-complete_df$cand.start.y <- NULL
-complete_df$cand.end.y <- NULL
-complete_df$bestProHit.y <- NULL
-complete_df$BitDiffSum.y <- NULL
-complete_df$start.y <- NULL
-complete_df$end.y <- NULL
-complete_df$gc.y <- NULL
-complete_df$gcs.y <- NULL
-complete_df$ce.y <- NULL
-complete_df$.id.y <- NULL
-
-write.table(complete_df,"./2_analysis/GAGA.LGT.162.evaluation.tsv",sep="\t",quote = F,row.names = F)
 ```
 
 

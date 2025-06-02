@@ -5,21 +5,37 @@
 This repository holds all the code to evaluate horizontally transferred genes (HGTs) from prokaryotic donors in 163 ant genomes, previously identified by an automated Horizontal Gene Transfer (HGT) finder pipeline. All the code for the previous, automated detection of potential HGTs/LGTs in ant genomes can be found [HERE](https://github.com/dinhe878/GAGA-Metagenome-LGT).
 
 
-## 1 HGT detection
-The detection of potential HGTs with protein-coding hits in the 163 ant genomes of interest obtained by our bioinformatic HGT finder pipeline is explained in detail at (`https://github.com/dinhe878/GAGA-Metagenome-LGT`). 
+## 1 Detection, validation and quality assessment of HGT candidates
+The detection of potential HGTs with protein-coding hits in the 163 ant genomes of interest obtained by our bioinformatic HGT finder pipeline is explained in detail [HERE](https://github.com/dinhe878/GAGA-Metagenome-LGT).
 
-This HGT finder pipeline yielded 13,664 initial HGT candidates for downstream analyses. We produced overview plots for each candidate to aid the determination of HGT quality and processing of HGT candidates in downstream analyses:
+This HGT finder pipeline yielded 13,664 initial HGT candidates for downstream analyses. We produced overview plots for each candidate to aid the examination of HGT quality and processing of HGT candidates in downstream analyses:
 
-[*01.analyseLGTs.Rmd*](01_HGT_detection/01.analyseLGTs.Rmd)
+[*01.analyseLGTs.Rmd*](01_HGT_detection_and_validation/01.analyseLGTs.Rmd)
 
 
+### HGT filtering
+After that, HGT filtering steps were employed based on the previously produced and examined HGT candidate overview plots. Filters were further determined based on manual assessment of HGT candidates from seven randomly chosen GAGA genomes, as well as plotted parameter distributions of all predicted HGTs:
 
-#### HGT filtering of predicted candidates with pre-defined thresholds
-This script contains all filtering steps which were used to exclude false-positives and filter the predicted HGTs. Filters were determined based on manual assessment of HGT candidates from seven randomly chosen GAGA genomes, as well as plotted parameter distributions of all predicted HGTs.
-```bash
-./r_scripts/02_LGTfiltering.Rmd
-```
-## 2 Validation and quality assessment of HGT candidates
+[*02.LGTfiltering.Rmd*](01_HGT_detection_and_validation/02.LGTfiltering.Rmd)
+
+The following filter thresholds were applied based on a step-by-step filtering process:
+
+- Unfiltered: 13664 candidates, 163 genomes
+- 1st filtering step: 5355 remaining candidates, 142 genomes
+Filtered by e-value (>1e-25, removed 7616 candidates)
+Filtered by ct4 (ct4 > 0.25, removed 2.646 candidates)
+Filtered by ce (ce > 1.5, removed 485 candidates)
+Filtered by BitDiffSum (BitDiffSum > 150, removed 4610 candidates)
+Filtered by candidate length (length > 100, removed 2209 candidates)
+
+- 2nd filtering step: 5173 remaining candidates, 141 genomes
+Filtering out candidates starting within first 1000 bp of scaffold (cand.start >1000 bp, removed 182 candidates)
+- 3rd filtering step: 5081 remaining candidates, 138 genomes
+Filtering out candidates within last 1000 bp at end of scaffold (cand.end != scaffold.length - 1000, removed 92 candidates)
+- 4th filtering step: 4785 remaining candidates
+Filtering out all candidates with 0 or only 1 read at the boundaries (reads_start & reads_end > 1, removed 251 candidates)
+- 5th filtering step: 1148 candidates
+Merging all candidates within 20 kb range reduces the number to 1148 candidate regions.
 
 
 ### Calculation of reads overlapping HGT boundaries
