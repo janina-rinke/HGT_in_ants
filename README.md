@@ -20,21 +20,15 @@ After that, HGT filtering steps were employed based on the previously produced a
 The following filter thresholds were applied based on a step-by-step filtering process:
 
 0) Unfiltered: 13664 candidates, 163 genomes
-
-1) 5355 remaining candidates, 142 genomes
-- Filtered by e-value (>1e-25, removed 7616 candidates)
-- Filtered by ct4 (ct4 > 0.25, removed 2.646 candidates)
-- Filtered by ce (ce > 1.5, removed 485 candidates)
-- Filtered by BitDiffSum (BitDiffSum > 150, removed 4610 candidates)
-- Filtered by candidate length (length > 100, removed 2209 candidates)
-
-2) 5173 remaining candidates, 141 genomes
-- Filtering out candidates starting within first 1000 bp of scaffold (cand.start >1000 bp, removed 182 candidates)
-3) 5081 remaining candidates, 138 genomes
-- Filtering out candidates within last 1000 bp at end of scaffold (cand.end != scaffold.length - 1000, removed 92 candidates)
-4) 4785 remaining candidates
-- Filtering out all candidates with 0 or only 1 read at the boundaries (reads_start & reads_end > 1, removed 251 candidates)
-5) Merging candidates in 20 kb range: 1148 candidate regions.
+1) Filtered by e-value (>1e-25, removed 7616 candidates)
+2) Filtered by ct4 (ct4 > 0.25, removed 2.646 candidates)
+3) Filtered by ce (ce > 1.5, removed 485 candidates)
+4) Filtered by BitDiffSum (BitDiffSum > 150, removed 4610 candidates)
+5) Filtered by candidate length (length > 100, removed 2209 candidates)
+6) Filtering out candidates starting within first 1000 bp of scaffold (cand.start >1000 bp, removed 182 candidates)
+7) Filtering out candidates within last 1000 bp at end of scaffold (cand.end != scaffold.length - 1000, removed 92 candidates)
+8) Filtering out all candidates with 0 or 1 read at boundaries (reads_start & reads_end > 1, removed 251 candidates)
+9) Merging candidates in 20 kb range: 1148 candidate regions.
 
 
 ### Calculation of reads overlapping HGT boundaries
