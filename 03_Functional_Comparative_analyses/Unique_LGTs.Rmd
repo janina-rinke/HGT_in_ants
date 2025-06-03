@@ -1,6 +1,5 @@
 ---
-title: "Species-specific LGTs"
-author: "Janina Rinke"
+title: "Species-specific HGTs"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   html_document:
@@ -245,7 +244,6 @@ Funct %>%
 
 
 ## Plot Overview plots for global LGTs
-
 ````{r}
 
 LGTs$Reannotated.CDS.lengths<-as.numeric(LGTs$Reannotated.CDS.lengths)

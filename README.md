@@ -75,92 +75,31 @@ We used the package *uniprotR* to obtain additional information for all HGT cand
 
 
 ## 3 Functional and Comparative analyses
- 
-#### Running gene trees on HGTs of interest
-We ran gene trees on the clade-specific prokaryotic protein HGT sequences (Lysozymes, MurNAc etherases, CFA synthases) and their closest blast homologs to conduct phylogenetic analyses.
-```bash
-./markdown_scripts/07_Run_GeneTrees.md
-```
+We mapped paired and unpaired RNAseq reads to the genomes using STAR. RNAseq data was made available and collected by the GAGA project. Information about available RNAseq data for each investigated species, including the sampling of different ant castes and developmental stages, can be obtained from Tab. S1A in Vizueta et al (2025). RNAseq data was available for 130 of the 163 studied ant species and subsequently mapped to the genomes to assess gene expression of the HGT loci: 
 
-#### Checking for selection among clade-specific HGTs
-We checked for selection using `HyPhy` on the clade-specific HGTs (Lysozymes, MurNAc etherases, CFA synthases).
-```bash
-./markdown_scripts/08_Selection_analyses.md
-```
+[*01.run_rna_mapping_wholegenome.pl*](03_Functional_Comparative_analyses/01.run_rna_mapping_wholegenome.pl)
 
-#### Predict gene models for selected HGTs
-We reconstructed gene models for specific HGTs, such as Lysozymes using `StringTie`.
-```bash
-./markdown_scripts/09_run.stringtie.md
-```
+### Gene expression analysis of HGTs
+We obtained a summary CDS-level table, as well as a locus-level table with summarized information as described above. Subsequently, we investigated HGT expression for all high-quality HGT candidates. Here, we calculated the sum of unique read counts per CDS from bam files for each HGT region:
 
-#### Additional analysis for Ankyrin repeat HGAs in ants
-This script deals with ankyrin repeat HGAs detected in ants and extracts ANK nucleotide sequences. 
-```bash
-./markdown_scripts/10_Ankyrin_repeats.md
-```
+[*02.calculateExpression.Rmd*](03_Functional_Comparative_analyses/02.calculateExpression.Rmd)
+
+To plot the coverage of gene expression for all HGTs, we used unique read counts as input and added up all read counts for all life stages within each respective HGT candidate. RNAseq coverage was visualized for each HGT candidate in R:
+
+[*03.plotRNAseqCoverage.Rmd*](03_Functional_Comparative_analyses/03.plotRNAseqCoverage.Rmd)
+
+We further reconstructed gene models for specific HGTs, such as Lysozymes using `StringTie`:
+
+[*04.run.stringtie.sh*](03_Functional_Comparative_analyses/04.run.stringtie.sh)
 
 
-#### Calculate expression of HGTs and candidate completeness
-Here, we obtained a summary CDS-level table, as well as a locus-level table with summarized information, including expression based on RNAseq data, for all high-quality HGT candidates.
-```bash
-./r_scripts/04_calculateExpression.Rmd
-```
+### Synteny of clade-specific HGTs
+To infer synteny of genes, all clade-specific HGT regions were extended by 40 kb up- and downstream and all ant genes and protein sequences within this flanking region were extracted. `Minimap2` was then used to conduct an all-vs-all alignment after which OrthoFinder was used to determine orthogroups across species. The extent of synteny was subsequently plotted with the R package `gggenomes`.
 
-#### Plot coverage of gene expression for all HGTs
-We used unique read counts as input and added up all read counts for all life stages within each respective HGT candidate. RNAseq coverage was visualized for each HGT candidate.
-
-```bash
-./r_scripts/05_plotRNAseqCoverage.Rmd
-```
+[*05.Synteny.Rmd*](03_Functional_Comparative_analyses/05.Synteny.Rmd)
 
 
-#### Visualize HGT candidates and plot GAGA phylogeny with HGTs
-This script was used to plot all HGTs detected by the automatic HGT finder pipeline, which is visualized in **Figure 1**. 
-```bash
-./r_scripts/07_map2phylogeny.Rmd
-```
+### Phylogenetic analyses
+We ran gene trees on the clade-specific prokaryotic protein HGT sequences (Lysozymes, MurNAc etherases, CFA synthases) and their closest blast homologs to conduct phylogenetic analyses. We retrieved the five most similar homologs for each candidate via BLASTp against the NCBI non-redundant (nr) protein database. Multiple sequence alignments were performed using MAFFT with default settings. Phylogenetic trees were then constructed using maximum likelihood inference in IQTREE2, with node support assessed through 100 bootstrap replicates. Substitution model selection was performed automatically using ModelFinder, which is integrated within IQ-TREE and selects the best-fitting model based on statistical criteria such as the Bayesian Information Criterion (BIC):
 
-
-#### Synteny of clade-specific HGTs
-All clade-specific HGT regions were extended by 40 kb up- and downstream to infer synteny of genes.
-```bash
-./r_scripts/09_Synteny.Rmd
-```
-
-#### Detail analyses of other HGTs
-This script was used to investigate HGTs other than ankyrin repeats and clade-specific HGAs.
-```bash
-./r_scripts/10_Other_LGTs.Rmd 
-```
-
-#### Detail analyses of Ankyrin repeat HGAs
-This script was used to investigate in detail the ankyrin-repeat HGAs in ants including plotting of ankyrin repeats onto the GAGA phylogeny.
-```bash
-./r_scripts/11_ANKs_analysis.Rmd 
-```
-
-#### Plot a subset of branches of the GAGA phylogeny
-This script was used to plot only a subset of relevant branches of the inferred GAGA ant phylogeny.
-```bash
-./r_scripts/12_plotGAGA.tree.Rmd 
-```
-
-#### Overview of species-specific LGTs
-This script produces some summarized overview plots related to putatively uniquely-occurring HGAs in ants.
-
-```bash
-./r_scripts/13_Unique_LGTs.Rmd 
-```
-
-
-
-#### Run RNAseq mapping with StringTie
-```bash
-./perl_scripts/2_run_rna_mapping_wholegenome.pl
-```
-### 04. Python Scripts (`.py`)
-Script used to create a pie chart visualization of the bacterial donors of HGTs. 
-```bash
-./python_scripts/1_Bacterial_distribution_piechart.ipynb
-```
+[*06.Run_GeneTrees.sh*](03_Functional_Comparative_analyses/06.Run_GeneTrees.sh)

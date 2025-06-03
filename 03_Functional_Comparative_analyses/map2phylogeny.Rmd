@@ -1,5 +1,5 @@
 ---
-title: "GAGA phylogeny with HGA highlights"
+title: "GAGA phylogeny with HGT highlights"
 output:
   html_document:
     toc: true

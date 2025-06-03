@@ -5,7 +5,7 @@ output:
   html_notebook: default
 ---
 
-What you need:
+Required input:
 - genome fasta file
 - gene annotation file as gff
 - LGT locus as e.g. "GAGA-0098.Scaffold31.1152742-1153911"
