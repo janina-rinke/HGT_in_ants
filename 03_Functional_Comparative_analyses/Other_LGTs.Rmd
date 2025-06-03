@@ -1,5 +1,5 @@
 ---
-title: "Other HGAs"
+title: "Other HGTs"
 author: "Janina Rinke"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
@@ -10,8 +10,6 @@ output:
 </STYLE>
 ---
 
-This script evaluates all other HGAs which have not previously been identified as ankyrin-repeat related, ancient, or orthologous HGAs occurring in groups. 
-All of these other HGAs are investigated for their occurrence in ant species based on the CDS sequences of HGA loci (1,053 CDS in 497 HGA loci), their expression, and full-length annotation in order to infer HGAs with putative functionality apart from phylogenetic re-occurrence across related taxa in our dataset.
 ```{r global-options, include=FALSE}
 # Define the global chunk options
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
