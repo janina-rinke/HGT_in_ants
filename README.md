@@ -42,32 +42,40 @@ Based on plots produced by this script, we decided to expand HGT boundaries in P
 
 After filtering, we counted boundary reads again only for the 497 remaining high-quality HGT candidates using the summary script [countReads_HQ_HGTcandidates.sh](01_HGT_detection_and_validation/countReads_HQ_HGTcandidates.sh). Finally, all final read count files were merged together.
 
-## 2 Prokaryotic gene annotation 
-`prodigal`, `kraken2`, and `dfast` were run to annotate the remaining high-quality HGT candidate sequences in the ant genomes. For all downstream analyses following prokaryotic gene annotation, only `dfast` results were used.
+## 2 Prokaryotic HGT annotation 
+`prodigal`, `kraken2`, and `dfast` were run searching against `nr` (https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA), `nt` https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA), and `UniRef90` (https://www.uniprot.org/help/uniref) databases downloaded from NCBI as well as against `COG` and `tigrfam` databases, to annotate the remaining high-quality HGT candidate sequences in the ant genomes. For all downstream analyses following prokaryotic gene annotation, only `dfast` results were used.
 
 [*01.Prokaryotic_Gene_Annotation_dfast.sh*](02_Prokaryotic_gene_annotation/01.Prokaryotic_Gene_Annotation_dfast.sh)
-
-We searched against `nr` (https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA), `nt` https://ftp.ncbi.nlm.nih.gov/blast/db/FASTA), and `UniRef90` (https://www.uniprot.org/help/uniref) databases.
 
 ### Check HGT completeness
 All annotated HGT candidates were checked for their completeness using the obtained DFAST results. We extracted for every HGT candidate the best uniprot hit from DFAST. Further, we extracted the start and stop codon of each HGT candidate to check for complete ORFs using `seqkit` and counted the number of predicted CDS per HGT:
 
 [*02.HGT_completeness_check.sh*](02_Prokaryotic_gene_annotation/02.HGT_completeness_check.sh)
 
+To obtain all information from the DFAST gffs for our HGT candidates, query coverage and subject coverage were added as additional information for every HGT candidate to estimate completeness and functionality of the HGT:
+
+[*03.screenDfastGFFs.Rmd*](02_Prokaryotic_gene_annotation/03.screenDfastGFFs.Rmd)
 
 ### Re-annotation of incomplete HGT candidates
-All candidates were extended by 1000 bp in 5' and 3' direction and re-annotated with DFAST to identify HGTs which were previously annotated incompletely.
+All candidates were extended by 1000 bp in 5' and 3' direction and re-annotated with DFAST to identify HGTs which were previously annotated incompletely. We further modified `gff` files obtained from DFAST to obtain coordinates in reference to the genomes using the script `Modify_gffs.pl`.
 
-[*03.reannotation.DFAST.sh*](02_Prokaryotic_gene_annotation/03.reannotation.DFAST.sh)
+[*04.reannotation.DFAST.sh*](02_Prokaryotic_gene_annotation/04.reannotation.DFAST.sh)
+
+### Check for additional HGT candidates within all GAGA genomes
+Finally, we used the annotated HGT genes to identify putative additional HGT candidates that were previously filtered out due to our strict filtering criteria. All resulting candidates were intersected with initially predicted HGT candidates by the automated HGT finder pipeline.
+
+[*05.Blast_GAGA_genomes.sh*](02_Prokaryotic_gene_annotation/05.Blast_GAGA_genomes.sh)
+
+
+### Integrate information from Uniprot
+We used the package *uniprotR* to obtain additional information for all HGT candidates and integrated this information into our summarized tables for functional analyses and as a basis for in-depth analyses of clade-specific HGTs.
+
+[*06.retrieveUniproInfo.Rmd*](02_Prokaryotic_gene_annotation/06.retrieveUniproInfo.Rmd)
 
 
 
-#### Check for additional candidates within all GAGA genomes
-We used this script to identify putative HGTs that were previously filtered out due to our strict filtering criteria. All resulting candidates were intersected with initially predicted HGT candidates by the automated HGT finder pipeline.
-```bash
-./markdown_scripts/06_Blast_GAGA_genomes.md
-```
-
+## 3 Functional and Comparative analyses
+ 
 #### Running gene trees on HGTs of interest
 We ran gene trees on the clade-specific prokaryotic protein HGT sequences (Lysozymes, MurNAc etherases, CFA synthases) and their closest blast homologs to conduct phylogenetic analyses.
 ```bash
@@ -93,12 +101,6 @@ This script deals with ankyrin repeat HGAs detected in ants and extracts ANK nuc
 ```
 
 
-#### Visualization of average read length in PacBio and stLFR genomes
-We calculated average read lengths for both PacBio and stLFR genomes separately. This was used as a basis to determine HGT boundary expansions in the `./markdown_scripts/01_countBoundaryReads.md` script to calculate read overlaps accordingly. 
-```bash
-./r_scripts/03_Distribution_plots_avg_read_length.Rmd
-```
-
 #### Calculate expression of HGTs and candidate completeness
 Here, we obtained a summary CDS-level table, as well as a locus-level table with summarized information, including expression based on RNAseq data, for all high-quality HGT candidates.
 ```bash
@@ -112,11 +114,6 @@ We used unique read counts as input and added up all read counts for all life st
 ./r_scripts/05_plotRNAseqCoverage.Rmd
 ```
 
-#### Obtain all information from dfast gffs for candidates
-Query coverage and subject coverage were added as additional information for every HGT candidate to estimate completeness and functionality of the HGT.
-```bash
-./r_scripts/06_screenDfastGFFs.Rmd
-```
 
 #### Visualize HGT candidates and plot GAGA phylogeny with HGTs
 This script was used to plot all HGTs detected by the automatic HGT finder pipeline, which is visualized in **Figure 1**. 
@@ -124,11 +121,6 @@ This script was used to plot all HGTs detected by the automatic HGT finder pipel
 ./r_scripts/07_map2phylogeny.Rmd
 ```
 
-#### Retrieve additional information from UniProt
-We used the package *uniprotR* to obtain additional information for all HGT candidates and integrated this information into our summarized tables for functional analyses and as a basis for in-depth analyses of clade-specific LGTs.
-```bash
-./r_scripts/08_retrieveUniprotInfo.Rmd
-```
 
 #### Synteny of clade-specific HGTs
 All clade-specific HGT regions were extended by 40 kb up- and downstream to infer synteny of genes.
@@ -161,13 +153,7 @@ This script produces some summarized overview plots related to putatively unique
 ./r_scripts/13_Unique_LGTs.Rmd 
 ```
 
-### 03. Perl Scripts (`.pl`)
-Code to analyse RNAseq reads obtained from GAGA and conduct the RNAseq mapping for all high-quality HGT candidates to investigate gene expression.
 
-#### Modify all gff files obtained from dfast to obtain coordinates in reference to the genomes
-```bash
-./perl_scripts/1_Modify_gffs.pl
-```
 
 #### Run RNAseq mapping with StringTie
 ```bash

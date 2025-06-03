@@ -1,6 +1,5 @@
 ---
-title: "Retrieve information for all LGTs from UniProt"
-author: "Janina Rinke"
+title: "Retrieve information for all HGTs from UniProt"
 output: 
   html_document:
     toc: true
