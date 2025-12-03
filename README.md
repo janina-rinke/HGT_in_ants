@@ -104,7 +104,7 @@ We ran gene trees on the clade-specific prokaryotic protein HGT sequences (Lysoz
 
 [*06.Run_GeneTrees.sh*](03_Functional_Comparative_analyses/06.Run_GeneTrees.sh)
 
-## 4 XGPRT HGT functional analyses
+## 4 Analysis of an XGPRT HGT in *Cardiocondyla*
 We analysed in detail one HGT case from an enterobacterial donor into the genome of the ant *Cardiocondyla obscurior*. Using previously published RNAseq datasets, we tested for HGT co-expression between the *Cardiocondyla*-associated intracellular endosymbiont *Candidatus Westeberhardia cardiocondylae* and the ant host genome.
 
 ### XGPRT Gene expression analysis
