@@ -103,3 +103,38 @@ To infer synteny of genes, all clade-specific HGT regions were extended by 40 kb
 We ran gene trees on the clade-specific prokaryotic protein HGT sequences (Lysozymes, MurNAc etherases, CFA synthases) and their closest blast homologs to conduct phylogenetic analyses. We retrieved the five most similar homologs for each candidate via BLASTp against the NCBI non-redundant (nr) protein database. Multiple sequence alignments were performed using MAFFT with default settings. Phylogenetic trees were then constructed using maximum likelihood inference in IQTREE2, with node support assessed through 100 bootstrap replicates. Substitution model selection was performed automatically using ModelFinder, which is integrated within IQ-TREE and selects the best-fitting model based on statistical criteria such as the Bayesian Information Criterion (BIC):
 
 [*06.Run_GeneTrees.sh*](03_Functional_Comparative_analyses/06.Run_GeneTrees.sh)
+
+## 4 XGPRT HGT functional analyses
+We analysed in detail one HGT case from an enterobacterial donor into the genome of the ant *Cardiocondyla obscurior*. Using previously published RNAseq datasets, we tested for HGT co-expression between the *Cardiocondyla*-associated intracellular endosymbiont *Candidatus Westeberhardia cardiocondylae* and the ant host genome.
+
+### XGPRT Gene expression analysis
+We used the following reference genomes and gene annotations for the analysis:
+
+- *Cardiocondyla obscurior* reference genome [GCF_019399895.1.fna](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_019399895.1/)
+- *Cardiocondyla obscurior* gene annotation [GCF_019399895.1.gff](https://www.ncbi.nlm.nih.gov/datasets/gene/GCF_019399895.1/)
+- *Westeberhardia* reference genome [GCF_001242845.1.fna](https://www.ebi.ac.uk/ena/browser/view/LN774881)
+- *Westeberhardia* gene annotation [GCF_019399895.1.gff](https://www.ncbi.nlm.nih.gov/datasets/gene/GCF_001242845.1/)
+
+The XGPRT HGT locus was inserted into the gene annotation manually with the CDS sequence being defined based on annotation [KAL0100757.1](https://www.ncbi.nlm.nih.gov/protein/KAL0100757.1/). Both host and symbiont reference genomes and gene annotations were then concatenated for subsequent mapping.
+
+
+RNAseq Short-read files were obtained from NCBI´s main raw data repository:
+- [Queen larvae](https://www.ncbi.nlm.nih.gov/sra/SRX692538)
+- [Winged male larvae](https://www.ncbi.nlm.nih.gov/sra/SRX879678)
+- [Ergatoid male larvae](https://www.ncbi.nlm.nih.gov/sra/SRX879676)
+- [Worker larvae](https://www.ncbi.nlm.nih.gov/sra/SRX879674)
+
+
+We trimmed raw RNAseq reads using Trim Galore, mapped them against the concatenated reference genomes using STAR, and counted mapped reads using feature counts:
+
+[*01.RNAseq_read_processing.sh*](04_XGPRT_HGT_analyses/01.RNAseq_read_processing.sh)
+
+Read counts were converted to log2 counts per million (library size normalization). We performed a pearson correlation of the XGPRT HGT against each of the annotated host and endosymbiont genes, respectively, followed by Bonferroni adjustments of the p-values. After that, we specifically tested for a gene expression correlation between the XGPRT HGT and the *Westeberhardia* genes.
+
+[*02.Gene_expression_normalization_and_correlation.Rmd*](04_XGPRT_HGT_analyses/02.Gene_expression_normalization_and_correlation.Rmd)
+
+[*03.Westeberhardia_correlations.Rmd*](04_XGPRT_HGT_analyses/03.Westeberhardia_correlations.Rmd)
+
+To prepare for a weighted gene correlation network analysis (WGCNA) we created an adjacency network, using a softPower = 13 and type = unassigned. This is used to compute a TOM (Topological Overlap Matrix). A subset of this TOM which includes XGPRT and all 82 genes that significantly correlate with the XGPRT HGT in their expression patterns was then used to generate input data creating a weighted gene correlation network in Cytoscape.
+
+[*04.WGCNA.Rmd*](04_XGPRT_HGT_analyses/03.WGCNA.Rmd)

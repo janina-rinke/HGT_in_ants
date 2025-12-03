@@ -1,0 +1,316 @@
+Westeberhardia correlations
+
+```{r}
+count_data_cobs_noBB <- readRDS("./1.code/04.gene_expression_normalization_and_correlation.RMD/log2cpm_cobs_noBB.rds")
+count_data_wobs_noBB <- readRDS("./1.code/04.gene_expression_normalization_and_correlation.RMD/log2cpm_wobs_noBB.rds")
+```
+
+```{r}
+#Calculate CV of Westeberhadia genes to find suitable housekeeping gene
+cv_vector_wobs <- apply(count_data_wobs_noBB, 1, function(x) sd(x) / mean(x))
+```
+```{r}
+#mean expression Westeberhardia genes
+mean_expression_wobsgenes <- rowMeans(count_data_wobs_noBB)
+```
+
+high in expression and low CV: 
+gene-WEOB_RS00535: chaperonin GroEL 
+gene-WEOB_RS02030: molecular chaperone DnaK 
+gene-WEOB_RS00415: 50S ribosomal protein L2
+
+for gene-WEOB_RS00535: chaperonin GroEL Now normalize housekeeping gene together with Cobs gene counts
+
+```{r}
+#add count row to cobs counts
+# Extract the row from count_data_wobs_noBB
+row_to_add <- count_data_wobs_noBB["gene-WEOB_RS00535", , drop = FALSE]
+# Combine it with count_data_cobs_noBB (rows = genes)
+cobs_count_with_0535 <- rbind(count_data_cobs_noBB, row_to_add)
+
+#normalize counts
+lib_sizes_cobs_count_with_0535 <- colSums(cobs_count_with_0535)
+cpm_matrix_cobs_count_with_0535 <- t(t(cobs_count_with_0535) / lib_sizes_cobs_count_with_0535 * 1e6)
+log2cpm_cobs_with_0535 <- log2(cpm_matrix_cobs_count_with_0535 + 1)
+```
+
+Look at correlation against XGPRT
+
+```{r}
+# Initialize storage
+cor_result_cobs_with_0535 <- data.frame(
+  Gene = rownames(log2cpm_cobs_with_0535),
+  Correlation = NA,
+  P_value = NA
+)
+
+goi <- "XGPRT_LGT"
+goi %in% rownames(log2cpm_cobs_with_0535)  # Should return TRUE
+
+goi_expr_with_0535 <- as.numeric(log2cpm_cobs_with_0535[goi, ])
+goi_expr_with_0535_df <- data.frame(  Expression = goi_expr_with_0535,  Group = sample_groups)
+
+# Compute for each gene
+for (i in 1:nrow(log2cpm_cobs_with_0535)) {
+  gene_expr_with_0535 <- as.numeric(log2cpm_cobs_with_0535[i, ])
+  test <- cor.test(gene_expr_with_0535, goi_expr_with_0535, method = "pearson")
+  cor_result_cobs_with_0535$Correlation[i] <- test$estimate
+  cor_result_cobs_with_0535$P_value[i] <- test$p.value
+}
+cor_result_cobs_with_0535_padj <- cor_result_cobs_with_0535
+cor_result_cobs_with_0535_padj$Padj <- p.adjust(cor_result_cobs_with_0535$P_value, method = "bonferroni")
+
+
+write.csv2(cor_result_cobs_with_0535_padj, file = "./3.results/cor_result_cobs_with_0535_padj.csv", row.names = TRUE, quote = TRUE)
+```
+
+Plot correlation of LGT against Westeberhardia housekeeping gene
+
+```{r}
+#library(ggplot2)
+#library(egg)
+#Scatterplot of XGPRT_LGT vs. any other gene
+
+#Step 1: Choose a gene
+goi <- "XGPRT_LGT"
+gene2 <- "gene-WEOB_RS00535"  # replace with an actual gene name
+#Step 2: Plot scatter with correlation
+gene1_expr <- log2cpm_cobs_with_0535[goi, ]
+gene2_expr <- log2cpm_cobs_with_0535[gene2, ]
+
+plot_df <- data.frame(
+  Sample = colnames(log2cpm_cobs_with_0535),
+  XGPRT_LGT = as.numeric(gene1_expr),
+  OtherGene = as.numeric(gene2_expr)
+)
+plot_df$Group <- substr(plot_df$Sample, 1, 2)
+
+#Optional: Show correlation coefficient on plot
+cor_val <- round(cor(plot_df$XGPRT_LGT, plot_df$OtherGene), 3)
+
+correlation_anygene_noBB <- ggplot(plot_df, aes(x = XGPRT_LGT, y = OtherGene)) +
+  geom_point(size = 2, alpha = 0.8) +
+  geom_smooth(method = "lm", se = TRUE, color = "black", linetype = "dashed" ) +
+  annotate("text", x = max(plot_df$XGPRT_LGT), y = min(plot_df$OtherGene),
+           label = paste("r =", cor_val), hjust = 1, vjust = 0,
+           size = 10, fontface = "italic") +
+  labs(
+    title = element_blank(),
+    x = paste("XGPRT expression"),
+    y = paste("chaperonin GroEL expression")
+  ) +
+ scale_x_continuous(expand = c(0.005, 0.005))+ 
+ scale_y_continuous(expand = c(0.005, 0.005))+
+  theme_minimal()+
+  theme(
+    legend.position = "none",
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 2),
+    panel.grid = element_blank(),  # removes gridlines
+    axis.line = element_blank(),
+    axis.title = element_text(size = 17),
+    axis.text = element_text(size = 17),
+    axis.ticks.y = element_line(size = 1, color = "black"),
+    axis.ticks.x = element_line(size = 1, color = "black"),
+    axis.ticks.length.y = unit(0.3, "cm"),
+    axis.ticks.length.x = unit(0.3, "cm"))
+correlation_anygene_noBB
+fixed_plot0535 <- set_panel_size(correlation_anygene_noBB,
+                            width = unit(16, "cm"),
+                            height = unit(16, "cm"))
+ggsave("correlation_gene-WEOB_RS00535_noBB.pdf", plot=fixed_plot0535, path="./5.figure/Westeberhardia correlation/",width=8,height=9)
+```
+
+gene-WEOB_RS02030: molecular chaperone DnaK Now normalize housekeeping gene together with Cobs gene counts:
+```{r}
+#add count row to cobs counts
+# Extract the row from count_data_wobs_noBB
+row_to_add <- count_data_wobs_noBB["gene-WEOB_RS02030", , drop = FALSE]
+# Combine it with count_data_cobs_noBB (rows = genes)
+cobs_count_with_2030 <- rbind(count_data_cobs_noBB, row_to_add)
+
+#normalize counts
+lib_sizes_cobs_count_with_2030 <- colSums(cobs_count_with_2030)
+cpm_matrix_cobs_count_with_2030 <- t(t(cobs_count_with_2030) / lib_sizes_cobs_count_with_2030 * 1e6)
+log2cpm_cobs_with_2030 <- log2(cpm_matrix_cobs_count_with_2030 + 1)
+```
+
+Look at correlation against XGPRT
+
+```{r}
+# Initialize storage
+cor_result_cobs_with_2030 <- data.frame(
+  Gene = rownames(log2cpm_cobs_with_2030),
+  Correlation = NA,
+  P_value = NA
+)
+
+goi <- "XGPRT_LGT"
+goi %in% rownames(log2cpm_cobs_with_2030)  # Should return TRUE
+
+goi_expr_with_2030 <- as.numeric(log2cpm_cobs_with_2030[goi, ])
+goi_expr_with_2030_df <- data.frame(  Expression = goi_expr_with_2030,  Group = sample_groups)
+
+# Compute for each gene
+for (i in 1:nrow(log2cpm_cobs_with_2030)) {
+  gene_expr_with_2030 <- as.numeric(log2cpm_cobs_with_2030[i, ])
+  test <- cor.test(gene_expr_with_2030, goi_expr_with_2030, method = "pearson")
+  cor_result_cobs_with_2030$Correlation[i] <- test$estimate
+  cor_result_cobs_with_2030$P_value[i] <- test$p.value
+}
+cor_result_cobs_with_2030_padj <- cor_result_cobs_with_2030
+cor_result_cobs_with_2030_padj$Padj <- p.adjust(cor_result_cobs_with_2030$P_value, method = "bonferroni")
+
+
+write.csv2(cor_result_cobs_with_2030_padj, file = "./3.results/cor_result_cobs_with_2030_padj.csv", row.names = TRUE, quote = TRUE)
+```
+
+```{r}
+#library(ggplot2)
+#Scatterplot of XGPRT_LGT vs. any other gene
+
+#Step 1: Choose a gene
+goi <- "XGPRT_LGT"
+gene2 <- "gene-WEOB_RS02030"  # replace with an actual gene name
+#Step 2: Plot scatter with correlation
+gene1_expr <- log2cpm_cobs_with_2030[goi, ]
+gene2_expr <- log2cpm_cobs_with_2030[gene2, ]
+
+plot_df <- data.frame(
+  Sample = colnames(log2cpm_cobs_with_2030),
+  XGPRT_LGT = as.numeric(gene1_expr),
+  OtherGene = as.numeric(gene2_expr)
+)
+plot_df$Group <- substr(plot_df$Sample, 1, 2)
+
+#Optional: Show correlation coefficient on plot
+cor_val <- round(cor(plot_df$XGPRT_LGT, plot_df$OtherGene), 3)
+
+correlation_anygene_noBB <- ggplot(plot_df, aes(x = XGPRT_LGT, y = OtherGene)) +
+  geom_point(size = 2, alpha = 0.8) +
+  geom_smooth(method = "lm", se = TRUE, color = "black", linetype = "dashed" ) +
+  annotate("text", x = max(plot_df$XGPRT_LGT), y = min(plot_df$OtherGene),
+           label = paste("r =", cor_val), hjust = 1, vjust = 0,
+           size = 10, fontface = "italic") +
+  labs(
+    title = element_blank(),
+    x = paste("XGPRT Expression"),
+    y = paste("molecular chaperone DnaK expression")
+  ) +
+  scale_x_continuous(expand = c(0.005, 0.005))+ 
+ scale_y_continuous(expand = c(0.005, 0.005))+
+  theme_minimal()+
+  theme(
+    legend.position = "none",
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 2),
+    panel.grid = element_blank(),  # removes gridlines
+    axis.line = element_blank(),
+    axis.title = element_text(size = 17),
+    axis.text = element_text(size = 17),
+    axis.ticks.y = element_line(size = 1, color = "black"),
+    axis.ticks.x = element_line(size = 1, color = "black"),
+    axis.ticks.length.y = unit(0.3, "cm"),
+    axis.ticks.length.x = unit(0.3, "cm"))
+correlation_anygene_noBB
+fixed_plot2030 <- set_panel_size(correlation_anygene_noBB,
+                            width = unit(16, "cm"),
+                            height = unit(16, "cm"))
+ggsave("correlation_gene-WEOB_RS02030_noBB.pdf", plot=fixed_plot2030, path=""./5.figure/Westeberhardia correlation/",width=8,height=9)
+```
+
+for gene-WEOB_RS00415: 50S ribosomal protein L2 Now normalize housekeeping gene together with Cobs gene counts
+```{r}
+#add count row to cobs counts
+# Extract the row from count_data_wobs_noBB
+row_to_add <- count_data_wobs_noBB["gene-WEOB_RS00415", , drop = FALSE]
+# Combine it with count_data_cobs_noBB (rows = genes)
+cobs_count_with_0415 <- rbind(count_data_cobs_noBB, row_to_add)
+
+#normalize counts
+lib_sizes_cobs_count_with_0415 <- colSums(cobs_count_with_0415)
+cpm_matrix_cobs_count_with_0415 <- t(t(cobs_count_with_0415) / lib_sizes_cobs_count_with_0415 * 1e6)
+log2cpm_cobs_with_0415 <- log2(cpm_matrix_cobs_count_with_0415 + 1)
+```
+
+Look at correlation against XGPRT
+
+```{r}
+# Initialize storage
+cor_result_cobs_with_0415 <- data.frame(
+  Gene = rownames(log2cpm_cobs_with_0415),
+  Correlation = NA,
+  P_value = NA
+)
+
+goi <- "XGPRT_LGT"
+goi %in% rownames(log2cpm_cobs_with_0415)  # Should return TRUE
+
+goi_expr_with_0415 <- as.numeric(log2cpm_cobs_with_0415[goi, ])
+goi_expr_with_0415_df <- data.frame(  Expression = goi_expr_with_0415,  Group = sample_groups)
+
+# Compute for each gene
+for (i in 1:nrow(log2cpm_cobs_with_0415)) {
+  gene_expr_with_0415 <- as.numeric(log2cpm_cobs_with_0415[i, ])
+  test <- cor.test(gene_expr_with_0415, goi_expr_with_0415, method = "pearson")
+  cor_result_cobs_with_0415$Correlation[i] <- test$estimate
+  cor_result_cobs_with_0415$P_value[i] <- test$p.value
+}
+cor_result_cobs_with_0415_padj <- cor_result_cobs_with_0415
+cor_result_cobs_with_0415_padj$Padj <- p.adjust(cor_result_cobs_with_0415$P_value, method = "bonferroni")
+
+
+write.csv2(cor_result_cobs_with_0415_padj, file = "./3.results/cor_result_cobs_with_0415_padj.csv", row.names = TRUE, quote = TRUE)
+```
+
+```{r}
+#library(ggplot2)
+#Scatterplot of XGPRT_LGT vs. any other gene
+
+#Step 1: Choose a gene
+goi <- "XGPRT_LGT"
+gene2 <- "gene-WEOB_RS00415"  # replace with an actual gene name
+#Step 2: Plot scatter with correlation
+gene1_expr <- log2cpm_cobs_with_0415[goi, ]
+gene2_expr <- log2cpm_cobs_with_0415[gene2, ]
+
+plot_df <- data.frame(
+  Sample = colnames(log2cpm_cobs_with_0415),
+  XGPRT_LGT = as.numeric(gene1_expr),
+  OtherGene = as.numeric(gene2_expr)
+)
+plot_df$Group <- substr(plot_df$Sample, 1, 2)
+
+#Optional: Show correlation coefficient on plot
+cor_val <- round(cor(plot_df$XGPRT_LGT, plot_df$OtherGene), 3)
+
+correlation_anygene_noBB <- ggplot(plot_df, aes(x = XGPRT_LGT, y = OtherGene)) +
+  geom_point(size = 2, alpha = 0.8) +
+  geom_smooth(method = "lm", se = TRUE, color = "black", linetype = "dashed" ) +
+  annotate("text", x = max(plot_df$XGPRT_LGT), y = min(plot_df$OtherGene),
+           label = paste("r =", cor_val), hjust = 1, vjust = 0,
+           size = 10, fontface = "italic") +
+  labs(
+    title = element_blank(),
+    x = paste("XGPRT Expression"),
+    y = paste("50S ribosomal protein L2 expression")
+  ) +
+    scale_x_continuous(expand = c(0.005, 0.005))+ 
+    scale_y_continuous(expand = c(0.005, 0.005))+
+  theme_minimal()+
+  theme(
+    legend.position = "none",
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 2),
+    panel.grid = element_blank(),  # removes gridlines
+    axis.line = element_blank(),
+    axis.title = element_text(size = 17),
+    axis.text = element_text(size = 17),
+    axis.ticks.y = element_line(size = 1, color = "black"),
+    axis.ticks.x = element_line(size = 1, color = "black"),
+    axis.ticks.length.y = unit(0.3, "cm"),
+    axis.ticks.length.x = unit(0.3, "cm"))
+correlation_anygene_noBB
+
+fixed_plot0415 <- set_panel_size(correlation_anygene_noBB,
+                            width = unit(16, "cm"),
+                            height = unit(16, "cm"))
+ggsave("correlation_gene-WEOB_RS00415_noBB.pdf", plot=fixed_plot0415, path="./5.figure/Westeberhardia correlation/",width=8,height=9)
+```

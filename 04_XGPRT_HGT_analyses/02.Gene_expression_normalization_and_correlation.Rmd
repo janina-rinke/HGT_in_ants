@@ -1,0 +1,122 @@
+# Importing Raw Count Data
+# Read in count matrices for host and symbiont
+```{r}
+# Set directory with count files
+count_dir <- "./RNAseq/Read_counting/"
+```
+
+# List all count files
+cobs_files <- list.files(path = count_dir, pattern = "^gene_counts_Cobs_.*\\.txt$", full.names = TRUE)
+wobs_files <- list.files(path = count_dir, pattern = "^gene_counts_Wobs_.*\\.txt$", full.names = TRUE)
+
+```{r}
+# Extract sample names from filenames
+get_sample_name <- function(filename) {
+  parts <- strsplit(basename(filename), "_")[[1]]
+  return(parts[4])
+  }
+
+cobs_samples <- sapply(cobs_files, get_sample_name)
+wobs_samples <- sapply(wobs_files, get_sample_name)
+
+# Check that you have matching host and symbiont samples
+stopifnot(all(sort(cobs_samples) == sort(wobs_samples)))
+```
+# Combine gene-level counts into matrices
+```R
+# Cobs data
+combined_list_cobs <- list()
+for (sample in sort(cobs_samples)) {
+  cobs_file <- cobs_files[cobs_samples == sample]
+  df_cobs <- read.delim(cobs_file, comment.char = "#", header = TRUE, row.names = 1)
+  cobs_counts <- df_cobs[, ncol(df_cobs), drop = FALSE]
+  colnames(cobs_counts) <- paste0(sample)
+  combined_list_cobs[[sample]] <- cobs_counts
+}
+count_data_cobs <- do.call(cbind, combined_list_cobs)
+count_data_cobs_noBB <- count_data_cobs[, !grepl("BB", colnames(count_data_cobs))]
+
+# Wobs data
+combined_list_wobs <- list()
+for (sample in sort(wobs_samples)) {
+  wobs_file <- wobs_files[wobs_samples == sample]
+  df_wobs <- read.delim(wobs_file, comment.char = "#", header = TRUE, row.names = 1)
+  wobs_counts <- df_wobs[, ncol(df_wobs), drop = FALSE]
+  colnames(wobs_counts) <- paste0(sample)
+  combined_list_wobs[[sample]] <- wobs_counts
+}
+count_data_wobs <- do.call(cbind, combined_list_wobs)
+count_data_wobs_noBB <- count_data_wobs[, !grepl("BB", colnames(count_data_wobs))]
+```
+
+# Count Normalization and CPM Calculation
+```R
+# Normalize to counts to log2 CPM (library size normalization)
+# Cobs
+lib_sizes_cobs_noBB <- colSums(count_data_cobs_noBB)
+cpm_matrix_cobs_noBB <- t(t(count_data_cobs_noBB) / lib_sizes_cobs_noBB * 1e6)
+log2cpm_cobs_noBB <- log2(cpm_matrix_cobs_noBB + 1)
+
+# Wobs
+lib_sizes_wobs_noBB <- colSums(count_data_wobs_noBB)
+cpm_matrix_wobs_noBB <- t(t(count_data_wobs_noBB) / lib_sizes_wobs_noBB * 1e6)
+log2cpm_wobs_noBB <- log2(cpm_matrix_wobs_noBB + 1)
+```
+# Gene Expression Correlations
+# Calculate gene expression correlation with XGPRT_LGT
+```R
+# Gene of interest
+goi <- "XGPRT_LGT"
+goi_expr_noBB <- as.numeric(log2cpm_cobs_noBB[goi, ])
+
+# Pearson correlation per gene (Cobs and Wobs separately)
+correlations_cobs_noBB <- apply(log2cpm_cobs_noBB, 1, function(x) cor(x, goi_expr_noBB, method = "pearson"))
+correlations_wobs_noBB <- apply(log2cpm_wobs_noBB, 1, function(x) cor(x, goi_expr_noBB, method = "pearson"))
+```
+# Calculate p-values and adjust for multiple testing
+```R
+# For Cobs
+cor_result_cobs_noBB <- data.frame(
+  Gene = rownames(log2cpm_cobs_noBB),
+  Correlation = NA,
+  P_value = NA
+)
+for (i in 1:nrow(log2cpm_cobs_noBB)) {
+  gene_expr <- as.numeric(log2cpm_cobs_noBB[i, ])
+  test <- cor.test(gene_expr, goi_expr_noBB, method = "pearson")
+  cor_result_cobs_noBB$Correlation[i] <- test$estimate
+  cor_result_cobs_noBB$P_value[i] <- test$p.value
+}
+cor_result_cobs_noBB$Padj <- p.adjust(cor_result_cobs_noBB$P_value, method = "bonferroni")
+
+# For Wobs
+cor_result_wobs_noBB <- data.frame(
+  Gene = rownames(log2cpm_wobs_noBB),
+  Correlation = NA,
+  P_value = NA
+)
+for (i in 1:nrow(log2cpm_wobs_noBB)) {
+  gene_expr <- as.numeric(log2cpm_wobs_noBB[i, ])
+  test <- cor.test(gene_expr, goi_expr_noBB, method = "pearson")
+  cor_result_wobs_noBB$Correlation[i] <- test$estimate
+  cor_result_wobs_noBB$P_value[i] <- test$p.value
+}
+cor_result_wobs_noBB$Padj <- p.adjust(cor_result_wobs_noBB$P_value, method = "bonferroni")
+```
+# Combine and export results
+```R
+# Combine, adjust, and rank correlations
+cor_result_combined_noBB <- rbind(cor_result_cobs_noBB, cor_result_wobs_noBB)
+cor_result_combined_noBB$Padj <- p.adjust(cor_result_combined_noBB$P_value, method = "bonferroni", n = sum(!is.na(cor_result_combined_noBB$P_value)))
+cor_result_combined_noBB <- cor_result_combined_noBB[order(-abs(cor_result_combined_noBB$Correlation)), ]
+cor_result_combined_noBB$log10_Padj <- -log10(cor_result_combined_noBB$Padj)
+cor_result_combined_noBB$log10_P_value <- -log10(cor_result_combined_noBB$P_value)
+
+# Save to file
+write.csv2(cor_result_combined_noBB, file = "./RNAseq/Results/correlation_results_LGT.combined_noBB.csv", row.names = FALSE)
+```
+
+
+
+
+

@@ -1,0 +1,56 @@
+# Constructing a Co-Expression Network with WGCNA
+# Filter to high-confidence gene
+```{r}
+# Remove low-count genes
+keepcobs <- rowMeans(cpm_matrix_cobs_noBB) > 10
+cpm_matrix_cobs_noBB_filtered <- cpm_matrix_cobs_noBB[keepcobs, ]
+log2cpm_cobs_noBB_filtered <- log2(cpm_matrix_cobs_noBB_filtered + 1)
+
+keepwobs <- rowMeans(cpm_matrix_wobs_noBB) > 10
+cpm_matrix_wobs_noBB_filtered <- cpm_matrix_wobs_noBB[keepwobs, ]
+log2cpm_wobsnoBB_filtered <- log2(cpm_matrix_wobs_noBB_filtered + 1)
+
+# Combined expression matrix for WGCNA (genes x samples)
+log2cpm_combined_noBB_filtered <- rbind(log2cpm_cobs_noBB_filtered, log2cpm_wobsnoBB_filtered)
+datExpr <- t(log2cpm_combined_noBB_filtered)  # transpose: samples as rows, genes as columns
+```
+# Network analysis and export for Cytoscape
+```R
+# Quality check
+gsg <- goodSamplesGenes(datExpr, verbose=3)
+if (!gsg$allOK) {
+  datExpr <- datExpr[gsg$goodSamples, gsg$goodGenes]
+}
+
+# Select soft-thresholding power
+powers <- c(1:20)
+sft <- pickSoftThreshold(datExpr, powerVector = powers, verbose = 5)
+plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+     xlab="Soft Threshold (power)", ylab="Scale Free Topology Model Fit, signed R^2", type="n")
+text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+     labels=powers, cex=0.9, col="red")
+abline(h=0.8, col="red")
+
+softPower <- 13
+adjacency <- adjacency(datExpr, power = softPower, type = "unsigned")
+TOM <- TOMsimilarity(adjacency)
+dimnames(TOM) <- list(colnames(datExpr), colnames(datExpr))
+dissTOM <- 1 - TOM
+
+# Prepare a subnetwork for genes significantly correlated with XGPRT_LGT
+sign_cor_genes <- cor_result_combined_noBB$Gene[cor_result_combined_noBB$Padj < 0.05]
+sign_cor_genes <- sign_cor_genes[sign_cor_genes != "" & !is.na(sign_cor_genes)]
+TOM_sub_cor_genes <- TOM[sign_cor_genes, sign_cor_genes]
+
+# Export to Cytoscape node- and edge-table format
+setwd("./RNAseq/Results")
+cyt <- exportNetworkToCytoscape(
+  TOM_sub_cor_genes,
+  edgeFile = "CytoscapeInput-edges_signcor.txt",
+  nodeFile = "CytoscapeInput-nodes_signcor.txt",
+  weighted = TRUE,
+  threshold = 0.05,
+  nodeNames = sign_cor_genes,
+  nodeAttr = ifelse(sign_cor_genes == "XGPRT_LGT", "GOI", "Other")
+)
+```
