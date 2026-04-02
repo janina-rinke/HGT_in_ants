@@ -104,6 +104,14 @@ We ran gene trees on the clade-specific prokaryotic protein HGT sequences (Lysoz
 
 [*06.Run_GeneTrees.sh*](03_Functional_Comparative_analyses/06.Run_GeneTrees.sh)
 
+
+### Plot HGT data onto the ant phylogeny
+To plot the data onto the ant phylogenetic tree, as conducted for Figure 1, we have mapped the HGT candidate information using the `ggtree` and `treeio` packages in `R`:
+
+[*07.map2phylogeny.Rmd*](03_Functional_Comparative_analyses/07.map2phylogeny.Rmd)
+
+
+
 ## 4 Analysis of an XGPRT HGT in *Cardiocondyla*
 We analysed in detail one HGT case from an enterobacterial donor into the genome of the ant *Cardiocondyla obscurior*. Using previously published RNAseq datasets, we tested for HGT co-expression between the *Cardiocondyla*-associated intracellular endosymbiont *Candidatus Westeberhardia cardiocondylae* and the ant host genome.
 
